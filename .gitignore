@@ -1,35 +1,171 @@
-# Gradle files
-.gradle/
+# ============================================
+# ANDROID — Build artifacts
+# ============================================
+*.apk
+*.aab
+*.ap_
+*.aar
+*.dex
+*.class
+*.so
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+
+# ============================================
+# ANDROID — Build directories
+# ============================================
 build/
-.kotlin/
-
-# Local configuration file (sdk path, etc)
-local.properties
-
-# Log/OS Files
-*.log
-
-# Android Studio generated files and folders
+*/build/
+.gradle/
 captures/
 .externalNativeBuild/
 .cxx/
-*.aab
-*.apk
-output-metadata.json
+release/
+debug/
+output.json
+*.hprof
 
-# IntelliJ
+# ============================================
+# ANDROID — Local configuration (NO commitear)
+# ============================================
+local.properties
 *.iml
-.idea/
-misc.xml
-deploymentTargetDropDown.xml
-render.experimental.xml
+sdk.dir
 
-# Keystore files
+# ============================================
+# ANDROID — Signing (CRÍTICO — nunca commitear)
+# ============================================
 *.jks
 *.keystore
+*.p12
+keystore.properties
+signing.properties
+release-keys/
 
-# Google Services (e.g. APIs or Firebase)
-google-services.json
+# ============================================
+# ANDROID — Lint / Detekt / Ktlint reports
+# ============================================
+lint-results.html
+lint-results.xml
+lint-results.sarif
+detekt-report.html
+detekt-report.xml
+ktlint-report.xml
+app/build/reports/
 
-# Android Profiling
+# ============================================
+# KOTLIN / GRADLE
+# ============================================
+.kotlin/
+kotlin-js-store/
 *.hprof
+.gradle-cache/
+
+# ============================================
+# JETPACK COMPOSE — Build artifacts
+# ============================================
+compose_reports/
+compose-metrics.json
+
+# ============================================
+# SUPABASE — Configuración local (NO commitear)
+# ============================================
+supabase/.branches/
+supabase/.temp/
+supabase/.env
+supabase/.env.local
+supabase/config.toml
+supabase/.vercel/
+
+# ============================================
+# ENVIRONMENT — Secrets (CRÍTICO)
+# ============================================
+.env
+.env.*
+!.env.example
+*.env
+!*.env.example
+secrets.properties
+api-keys.properties
+
+# ============================================
+# MAPLIBRE / MAPAS — Cache y tiles locales
+# ============================================
+maplibre-cache/
+tiles/
+*.mbtiles
+*.pmtiles
+offline-maps/
+.cache/maplibre/
+
+# ============================================
+# ROOM — Bases de datos generadas localmente
+# ============================================
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+databases/
+schemas/  # Solo si no se quieren versionar los schemas de Room
+# NOTA: Si se usan Room Migrations, SÍ se debe commitear app/schemas/
+
+# ============================================
+# TESTING — Cobertura y artefactos
+# ============================================
+coverage/
+jacoco.exec
+jacocoTestReport/
+test-results/
+*/test-results/
+reports/
+*.exec
+
+# ============================================
+# IDE — Android Studio / IntelliJ
+# ============================================
+.idea/
+*.iws
+*.ipr
+*.iml
+.idea_modules/
+out/
+.navigation/
+*.swp
+*.swo
+*~
+.atom/
+.vscode/
+
+# ============================================
+# OS — Sistema operativo
+# ============================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ============================================
+# LOGS
+# ============================================
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ============================================
+# TEMPORALES
+# ============================================
+*.tmp
+*.temp
+*.bak
+*.orig
+*.rej
+.tmp/
+temp/
+.cache/
