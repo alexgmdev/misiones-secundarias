@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.*
+import com.groovycow.misionessecundarias.domain.model.Mission
 import com.groovycow.misionessecundarias.ui.missions.MissionDetailScreen
 import com.groovycow.misionessecundarias.ui.missions.MissionListScreen
 import com.groovycow.misionessecundarias.ui.theme.MisionesSecundariasTheme
@@ -13,21 +14,27 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MisionesSecundariasTheme {
-                var selectedMissionId by remember { mutableStateOf<String?>(null) }
+                // Guardamos el objeto Mission completo en lugar de solo el ID
+                var selectedMission by remember { mutableStateOf<Mission?>(null) }
 
-                if (selectedMissionId == null) {
+                if (selectedMission == null) {
                     MissionListScreen(
-                        onMissionClick = { id -> selectedMissionId = id }
+                        // Ahora recibimos el objeto Mission desde la lista
+                        onMissionClick = { mission -> selectedMission = mission },
+                        onBack = { /* Aquí irá el logout a futuro */ }
                     )
                 } else {
-                    // Datos simulados para probar el Detalle (HU-027)
+                    // Extraemos los datos reales del objeto seleccionado
+                    val mission = selectedMission!!
                     MissionDetailScreen(
-                        missionTitle = "Prueba de Misión",
-                        missionDescription = "Esta es una descripción de prueba para verificar la pantalla de detalle.",
-                        modality = "campo",
-                        category = "Social",
-                        approximateZone = "Barrio San Fernando",
-                        onBack = { selectedMissionId = null }
+                        missionTitle = mission.title,
+                        missionDescription = mission.description,
+                        modality = mission.modality,
+                        category = mission.category,
+                        requirements = mission.requirements,
+                        // Extraemos el nombre del publicador usando el JOIN que hicimos en el repositorio
+                        publisherName = mission.publisherProfile?.fullName ?: "Usuario Desconocido",
+                        onBack = { selectedMission = null }
                     )
                 }
             }

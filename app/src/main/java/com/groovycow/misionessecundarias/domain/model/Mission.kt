@@ -10,9 +10,15 @@ data class Mission(
     val title: String,
     val description: String,
     val category: String? = null,
+    val requirements: String? = null,
     val modality: String,
     @SerialName("date_time") val dateTime: String,
     val location: String? = null,
     @SerialName("max_participants") val maxParticipants: Int,
-    val status: String
+    val status: String,
+    @SerialName("profiles") val publisherProfile: PublisherProfile? = null
+)
+@Serializable
+data class PublisherProfile(
+    @SerialName("full_name") val fullName: String
 )

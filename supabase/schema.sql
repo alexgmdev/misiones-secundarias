@@ -75,6 +75,11 @@ CREATE POLICY "Publishers can update application status" ON applications FOR UPD
 GRANT SELECT ON public.missions TO anon, authenticated;
 GRANT SELECT ON public.profiles TO anon, authenticated;
 GRANT SELECT ON public.applications TO anon, authenticated;
+
+
+--reglas para la tabla de profiles
+GRANT SELECT ON public.profiles TO anon, authenticated;
+GRANT SELECT ON public.applications TO anon, authenticated;
 -- ==========================================
 -- 4. TRIGGER PARA AUTO-CREAR PERFILES (David - Auth)
 -- ==========================================
