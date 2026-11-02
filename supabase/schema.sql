@@ -67,6 +67,7 @@ CREATE POLICY "Publishers can update missions" ON missions FOR UPDATE USING (aut
 -- Postulaciones
 CREATE POLICY "View applications based on role" ON applications FOR SELECT USING (auth.uid() = solver_id OR auth.uid() IN (SELECT publisher_id FROM missions WHERE id = mission_id));
 CREATE POLICY "Solvers can apply" ON applications FOR INSERT WITH CHECK (auth.uid() = solver_id);
+CREATE POLICY "Solvers can delete own applications" ON applications FOR DELETE USING (auth.uid() = solver_id);
 CREATE POLICY "Publishers can update application status" ON applications FOR UPDATE USING (auth.uid() IN (SELECT publisher_id FROM missions WHERE id = mission_id));
 
 
@@ -75,6 +76,8 @@ CREATE POLICY "Publishers can update application status" ON applications FOR UPD
 GRANT SELECT ON public.missions TO anon, authenticated;
 GRANT SELECT ON public.profiles TO anon, authenticated;
 GRANT SELECT ON public.applications TO anon, authenticated;
+GRANT INSERT ON public.applications TO authenticated;
+GRANT DELETE ON public.applications TO authenticated;
 
 
 --reglas para la tabla de profiles
