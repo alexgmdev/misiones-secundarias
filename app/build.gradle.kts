@@ -104,4 +104,6 @@ dependencies {
 
     //supabase
     implementation(libs.kotlinx.serialization.json)
+
+    implementation("io.ktor:ktor-client-okhttp:2.3.12")
 }
