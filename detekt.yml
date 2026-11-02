@@ -1,0 +1,17 @@
+build:
+  maxIssues: 50 # Permite algunas advertencias sin romper el CI al inicio
+
+complexity:
+  LongMethod:
+    threshold: 60 # Permite funciones más largas (útil para Compose)
+  LongParameterList:
+    functionThreshold: 10 # Permite más parámetros (útil para Composables)
+    constructorThreshold: 10
+  TooManyFunctions:
+    thresholdInFiles: 20 # Permite más funciones en archivos de UI
+
+style:
+  MagicNumber:
+    active: false # Desactivado para permitir números en UI (ej. padding(16.dp))
+  MaxLineLength:
+    maxLineLength: 120

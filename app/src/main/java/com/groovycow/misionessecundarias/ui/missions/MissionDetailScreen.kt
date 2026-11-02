@@ -1,41 +1,137 @@
 package com.groovycow.misionessecundarias.ui.missions
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.*
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.groovycow.misionessecundarias.ui.applications.ApplicationUiState
+import com.groovycow.misionessecundarias.ui.applications.ApplicationViewModel
+import org.koin.androidx.compose.koinViewModel
+import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+
+@Composable
+fun MissionDetailRoute(
+    missionId: String,
+    missionTitle: String,
+    missionDescription: String,
+    missionDateTime: String,
+    maxParticipants: Int,
+    modality: String,
+    category: String?,
+    requirements: String?,
+    publisherName: String?,
+    approximateZone: String, // <-- Agregado aquí
+    onBack: () -> Unit,
+    applicationViewModel: ApplicationViewModel = koinViewModel()
+) {
+    val applicationState by applicationViewModel.uiState.collectAsState()
+
+    LaunchedEffect(missionId) {
+        applicationViewModel.reset()
+    }
+
+    MissionDetailScreen(
+        missionTitle = missionTitle,
+        missionDescription = missionDescription,
+        missionDateTime = missionDateTime,
+        maxParticipants = maxParticipants,
+        modality = modality,
+        category = category,
+        requirements = requirements,
+        publisherName = publisherName,
+        approximateZone = approximateZone, // <-- Agregado aquí
+        onBack = onBack,
+        onApply = { applicationViewModel.applyToMission(missionId) },
+        applicationState = applicationState
+    )
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MissionDetailScreen(
     missionTitle: String,
     missionDescription: String,
+    missionDateTime: String,
+    maxParticipants: Int,
     modality: String,
     category: String?,
     requirements: String?,
     publisherName: String?,
-    approximateZone: String, // <-- NUEVO PARÁMETRO (HU-028)
-    onBack: () -> Unit
+    approximateZone: String, // <-- Mantenemos tu parámetro
+    onBack: () -> Unit,
+    onApply: () -> Unit = {},
+    applicationState: ApplicationUiState = ApplicationUiState()
 ) {
+    val formattedDate = runCatching {
+        OffsetDateTime.parse(missionDateTime).format(
+            DateTimeFormatter.ofPattern("EEEE d 'de' MMMM 'a las' HH:mm", Locale("es", "CO"))
+        )
+    }.getOrDefault(missionDateTime)
+
     Scaffold(
+        containerColor = SandBackground,
         topBar = {
             TopAppBar(
-                title = { Text("Misión", fontWeight = FontWeight.Bold) },
+                modifier = Modifier.statusBarsPadding(),
+                title = {
+                    Text("Misión", color = ForestGreen, fontWeight = FontWeight.ExtraBold)
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver", tint = Color.Red)
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Volver",
+                            tint = EarthOrange
+                        )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = SandBackground),
+                windowInsets = WindowInsets(0, 0, 0, 0)
             )
         }
     ) { paddingValues ->
@@ -43,98 +139,315 @@ fun MissionDetailScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = missionTitle,
                 style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
+                color = ForestGreen,
+                fontWeight = FontWeight.ExtraBold,
+                textAlign = TextAlign.Center
             )
-            Spacer(modifier = Modifier.height(16.dp))
 
-            // Publicado por
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                Text("Publicado por: ", style = MaterialTheme.typography.bodyMedium)
+            category?.takeIf { it.isNotBlank() }?.let {
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = publisherName ?: "Usuario Desconocido",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontStyle = FontStyle.Italic,
+                    text = it,
+                    color = CreamSurface,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFFFF5722)
+                    modifier = Modifier
+                        .background(RiverTeal, RoundedCornerShape(20.dp))
+                        .padding(horizontal = 14.dp, vertical = 6.dp)
                 )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
+            PublisherCard(publisherName = publisherName)
+            Spacer(modifier = Modifier.height(14.dp))
 
-            // Tipo de misión
-            Text("Esta es una misión tipo: $modality", style = MaterialTheme.typography.bodyLarge)
-            if (category != null) {
-                Text("Categoría: $category", style = MaterialTheme.typography.bodyLarge)
-            }
+            Text(
+                text = "Empieza el " + formattedDate,
+                modifier = Modifier.fillMaxWidth(),
+                color = BarkBrown,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
 
+            Spacer(modifier = Modifier.height(12.dp))
+            MissionLocationPanel(modality = modality)
             Spacer(modifier = Modifier.height(16.dp))
 
-            // UBICACIÓN APROXIMADA (HU-028)
-            if (modality == "campo") {
-                Text("Ubicación Aproximada:", fontWeight = FontWeight.Bold)
-                Card(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF9C4)), // Color amarillento
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(text = approximateZone, style = MaterialTheme.typography.bodyLarge)
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "(La dirección exacta se revelará al ser aceptado)",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.DarkGray
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-            }
+            InfoLabel(
+                title = "Tipo de misión",
+                value = if (modality.equals("remota", ignoreCase = true)) {
+                    "Misión remota"
+                } else {
+                    "Misión de campo"
+                },
+                accentColor = RiverTeal,
+                backgroundColor = LightRiver
+            )
 
-            // Requerimientos
-            Text("Para esta misión necesitarás:", fontWeight = FontWeight.Bold)
-            Card(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFF0F0F0)),
-                shape = RoundedCornerShape(8.dp)
-            ) {
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // --- AQUÍ ESTÁ TU UBICACIÓN APROXIMADA (HU-028) ---
+            if (modality.equals("campo", ignoreCase = true)) {
+                InfoSection(
+                    title = "Ubicación aproximada",
+                    text = "$approximateZone\n\n(La dirección exacta se revelará al ser aceptado)",
+                    accentColor = EarthOrange,
+                    backgroundColor = LightEarth
+                )
+                Spacer(modifier = Modifier.height(14.dp))
+            }
+            // ---------------------------------------------------
+
+            InfoSection(
+                title = "Para esta misión necesitarás",
+                text = requirements?.takeIf { it.isNotBlank() }
+                    ?: "No hay requerimientos específicos.",
+                accentColor = LeafGreen,
+                backgroundColor = LightLeaf
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+            InfoSection(
+                title = "Descripción de la misión",
+                text = missionDescription,
+                accentColor = EarthOrange,
+                backgroundColor = LightEarth
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+            InfoSection(
+                title = "Participantes",
+                text = "Cupo máximo: " + maxParticipants + " participantes. Los participantes aceptados aparecerán aquí.",
+                accentColor = RiverTeal,
+                backgroundColor = LightRiver
+            )
+
+            applicationState.message?.let { message ->
+                Spacer(modifier = Modifier.height(14.dp))
                 Text(
-                    text = requirements ?: "No hay requerimientos específicos.",
-                    modifier = Modifier.padding(16.dp)
+                    text = message,
+                    color = if (applicationState.isError) AlertCoral else ForestGreen,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(CreamSurface, RoundedCornerShape(12.dp))
+                        .border(
+                            2.dp,
+                            if (applicationState.isError) AlertCoral else LeafGreen,
+                            RoundedCornerShape(12.dp)
+                        )
+                        .padding(12.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Descripción
-            Text("Descripción de la misión:", fontWeight = FontWeight.Bold)
-            Card(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFF0F0F0)),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Text(text = missionDescription, modifier = Modifier.padding(16.dp))
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Botón Verde
+            Spacer(modifier = Modifier.height(18.dp))
             Button(
-                onClick = { /* Jhojan integrará la postulación aquí */ },
-                modifier = Modifier.fillMaxWidth().height(50.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8BC34A)),
-                shape = RoundedCornerShape(8.dp)
+                onClick = onApply,
+                enabled = !applicationState.isSubmitting && !applicationState.wasSubmitted,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(58.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = LeafGreen,
+                    contentColor = CreamSurface,
+                    disabledContainerColor = LightLeaf,
+                    disabledContentColor = ForestGreen
+                ),
+                shape = RoundedCornerShape(14.dp)
             ) {
-                Text("Postularme a la Misión", color = Color.White, fontWeight = FontWeight.Bold)
+                if (applicationState.isSubmitting) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = CreamSurface,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(
+                        text = if (applicationState.wasSubmitted) {
+                            "Postulación enviada"
+                        } else {
+                            "Postularse a la misión"
+                        },
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
         }
     }
 }
+
+@Composable
+private fun PublisherCard(publisherName: String?) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(CreamSurface, RoundedCornerShape(14.dp))
+            .border(2.dp, EarthOrange, RoundedCornerShape(14.dp))
+            .padding(14.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text("Publicado por", color = BarkBrown, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+            text = publisherName ?: "Usuario desconocido",
+            color = EarthOrange,
+            fontWeight = FontWeight.ExtraBold,
+            textAlign = TextAlign.End,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+private fun MissionLocationPanel(modality: String) {
+    val isRemote = modality.equals("remota", ignoreCase = true)
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(190.dp),
+        shape = RoundedCornerShape(18.dp),
+        border = BorderStroke(3.dp, RiverTeal),
+        colors = CardDefaults.cardColors(containerColor = LightRiver),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            if (isRemote) {
+                Text(
+                    text = "Esta misión es remota y no requiere una ubicación física.",
+                    color = ForestGreen,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(24.dp)
+                )
+            } else {
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    drawCircle(
+                        color = LightLeaf,
+                        radius = size.minDimension * 0.34f,
+                        center = Offset(size.width * 0.2f, size.height * 0.3f)
+                    )
+                    drawCircle(
+                        color = CreamSurface,
+                        radius = size.minDimension * 0.28f,
+                        center = Offset(size.width * 0.78f, size.height * 0.73f)
+                    )
+                    for (step in 0..7) {
+                        val x = size.width * step / 7f
+                        drawLine(
+                            color = MapLine,
+                            start = Offset(x, 0f),
+                            end = Offset(
+                                (x + size.width * 0.25f).coerceAtMost(size.width),
+                                size.height
+                            ),
+                            strokeWidth = 4f
+                        )
+                    }
+                    for (step in 0..5) {
+                        val y = size.height * step / 5f
+                        drawLine(
+                            color = MapLine,
+                            start = Offset(0f, y),
+                            end = Offset(
+                                size.width,
+                                (y + size.height * 0.2f).coerceAtMost(size.height)
+                            ),
+                            strokeWidth = 4f
+                        )
+                    }
+                }
+                Text(
+                    text = "MAPA DE UBICACIÓN",
+                    color = ForestGreen,
+                    fontWeight = FontWeight.ExtraBold,
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(12.dp)
+                        .background(CreamSurface.copy(alpha = 0.9f), RoundedCornerShape(8.dp))
+                        .padding(horizontal = 10.dp, vertical = 5.dp)
+                )
+                Icon(
+                    imageVector = Icons.Default.LocationOn,
+                    contentDescription = "Ubicación aproximada de la misión",
+                    tint = AlertCoral,
+                    modifier = Modifier.size(54.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun InfoLabel(
+    title: String,
+    value: String,
+    accentColor: Color,
+    backgroundColor: Color
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(backgroundColor, RoundedCornerShape(14.dp))
+            .border(2.dp, accentColor, RoundedCornerShape(14.dp))
+            .padding(14.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(title, color = BarkBrown, fontWeight = FontWeight.Bold)
+        Text(value, color = accentColor, fontWeight = FontWeight.ExtraBold)
+    }
+}
+
+@Composable
+private fun InfoSection(
+    title: String,
+    text: String,
+    accentColor: Color,
+    backgroundColor: Color
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = title,
+            color = ForestGreen,
+            fontWeight = FontWeight.ExtraBold,
+            style = MaterialTheme.typography.titleMedium
+        )
+        Spacer(modifier = Modifier.height(7.dp))
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(14.dp),
+            border = BorderStroke(2.dp, accentColor),
+            colors = CardDefaults.cardColors(containerColor = backgroundColor)
+        ) {
+            Text(
+                text = text,
+                modifier = Modifier.padding(16.dp),
+                color = BarkBrown,
+                style = MaterialTheme.typography.bodyLarge
+            )
+        }
+    }
+}
+
+private val ForestGreen = Color(0xFF214E34)
+private val LeafGreen = Color(0xFF64A95C)
+private val LightLeaf = Color(0xFFDCEFD3)
+private val RiverTeal = Color(0xFF38A89D)
+private val LightRiver = Color(0xFFCDEDEA)
+private val EarthOrange = Color(0xFFE58A3A)
+private val LightEarth = Color(0xFFFFE2C2)
+private val SandBackground = Color(0xFFF7F3E8)
+private val CreamSurface = Color(0xFFFFFCF3)
+private val BarkBrown = Color(0xFF594A3C)
+private val AlertCoral = Color(0xFFE85D3F)
+private val MapLine = Color(0xFF7ECAC2)
