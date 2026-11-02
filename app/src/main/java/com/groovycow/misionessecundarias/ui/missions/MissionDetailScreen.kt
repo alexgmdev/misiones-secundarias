@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontStyle
@@ -48,7 +49,7 @@ fun MissionDetailScreen(
                 text = missionTitle,
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.align(androidx.compose.ui.Alignment.CenterHorizontally)
+                modifier = Modifier.align(Alignment.CenterHorizontally)
             )
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -60,7 +61,7 @@ fun MissionDetailScreen(
                     style = MaterialTheme.typography.bodyMedium,
                     fontStyle = FontStyle.Italic,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFFFF5722) // Naranja como el prototipo
+                    color = Color(0xFFFF5722)
                 )
             }
 
@@ -101,11 +102,11 @@ fun MissionDetailScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Botón Verde (Estilo prototipo)
+            // Botón Verde
             Button(
                 onClick = { /* Jhojan integrará la postulación aquí */ },
                 modifier = Modifier.fillMaxWidth().height(50.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8BC34A)), // Verde del prototipo
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8BC34A)),
                 shape = RoundedCornerShape(8.dp)
             ) {
                 Text("Postularme a la Misión", color = Color.White, fontWeight = FontWeight.Bold)

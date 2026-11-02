@@ -18,14 +18,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.groovycow.misionessecundarias.domain.model.Mission
 import org.koin.androidx.compose.koinViewModel
-import java.time.LocalDateTime
+import java.time.OffsetDateTime // Importante: Usar OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MissionListScreen(
-    onMissionClick: (Mission) -> Unit, // <-- CAMBIO: Ahora recibe el objeto Mission completo
+    onMissionClick: (Mission) -> Unit,
     onBack: () -> Unit = {},
     viewModel: MissionViewModel = koinViewModel()
 ) {
@@ -44,8 +44,6 @@ fun MissionListScreen(
         }
     ) { paddingValues ->
         Column(modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp)) {
-            // (El mapa del prototipo se omite aquí por el alcance del Sprint 1)
-
             if (uiState.isLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
             } else if (uiState.error != null) {
@@ -53,7 +51,6 @@ fun MissionListScreen(
             } else {
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     items(uiState.missions) { mission ->
-                        // <-- CAMBIO: Se pasa el objeto completo en lugar del ID
                         MissionCard(mission = mission, onClick = { onMissionClick(mission) })
                     }
                 }
@@ -66,7 +63,7 @@ fun MissionListScreen(
 fun MissionCard(mission: Mission, onClick: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth().clickable { onClick() },
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFE8E0F5)), // Color lila del prototipo
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFE8E0F5)),
         shape = RoundedCornerShape(8.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -74,12 +71,11 @@ fun MissionCard(mission: Mission, onClick: () -> Unit) {
             Text(text = mission.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Formatear fecha (simulando el "mañana a las...")
             val formattedDate = try {
-                val date = java.time.OffsetDateTime.parse(mission.dateTime)
+                val date = OffsetDateTime.parse(mission.dateTime)
                 date.format(DateTimeFormatter.ofPattern("'el' d 'de' MMMM 'a las' HH:mm", Locale("es", "ES")))
             } catch (e: Exception) {
-                mission.dateTime //fallback en caso de error
+                mission.dateTime
             }
 
             Row(
@@ -87,7 +83,6 @@ fun MissionCard(mission: Mission, onClick: () -> Unit) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(text = formattedDate, style = MaterialTheme.typography.bodySmall)
-                // Si tuviéramos la distancia, iría aquí: Text("a 3km")
             }
         }
     }
