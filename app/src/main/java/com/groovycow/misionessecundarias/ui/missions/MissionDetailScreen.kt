@@ -24,6 +24,7 @@ fun MissionDetailScreen(
     category: String?,
     requirements: String?,
     publisherName: String?,
+    approximateZone: String, // <-- NUEVO PARÁMETRO (HU-028)
     onBack: () -> Unit
 ) {
     Scaffold(
@@ -74,6 +75,27 @@ fun MissionDetailScreen(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
+
+            // UBICACIÓN APROXIMADA (HU-028)
+            if (modality == "campo") {
+                Text("Ubicación Aproximada:", fontWeight = FontWeight.Bold)
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF9C4)), // Color amarillento
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(text = approximateZone, style = MaterialTheme.typography.bodyLarge)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "(La dirección exacta se revelará al ser aceptado)",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.DarkGray
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             // Requerimientos
             Text("Para esta misión necesitarás:", fontWeight = FontWeight.Bold)

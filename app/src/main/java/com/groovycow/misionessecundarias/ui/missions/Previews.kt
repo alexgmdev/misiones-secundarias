@@ -20,6 +20,7 @@ fun MissionDetailScreenPreview() {
             category = "Ecológica",
             requirements = "Guantes, ropa cómoda, agua.",
             publisherName = "prueba@misiones.com",
+            approximateZone = "Barrio Granada, Cali",
             onBack = {}
         )
     }

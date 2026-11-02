@@ -34,6 +34,7 @@ class MainActivity : ComponentActivity() {
                         requirements = mission.requirements,
                         // Extraemos el nombre del publicador usando el JOIN que hicimos en el repositorio
                         publisherName = mission.publisherProfile?.fullName ?: "Usuario Desconocido",
+                        approximateZone = "Barrio San Fernando, Cali",
                         onBack = { selectedMission = null }
                     )
                 }
