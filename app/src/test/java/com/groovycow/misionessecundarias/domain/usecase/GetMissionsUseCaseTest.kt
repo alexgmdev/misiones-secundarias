@@ -26,7 +26,20 @@ class GetMissionsUseCaseTest {
     fun `should return success with list of missions when repository succeeds`() = runTest {
         // Arrange
         val expectedMissions = listOf(
-            Mission("1", "pub1", "Test", "Desc", null, "campo", "2026-10-31", null, 2, "Publicada")
+            Mission(
+                id = "1",
+                publisherId = "pub1",
+                title = "Test",
+                description = "Desc",
+                category = "campo",
+                requirements = null,
+                modality = "Presencial", // Asegúrate de poner el valor que requiera
+                dateTime = "2026-10-31",
+                location = null,
+                maxParticipants = 2,
+                status = "Publicada", // ¡Aquí está el que faltaba!
+                publisherProfile = null
+            )
         )
         coEvery { repository.getPublishedMissions() } returns expectedMissions
 
