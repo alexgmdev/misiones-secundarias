@@ -1,8 +1,20 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.kotlin.serialization)
+}
+
+
+
+    val localProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        localPropertiesFile.inputStream().use { load(it) }
+    }
 }
 
 android {
@@ -17,6 +29,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "SUPABASE_URL", "\"${localProperties["SUPABASE_URL"] ?: ""}\"")
+        buildConfigField("String", "SUPABASE_ANON_KEY", "\"${localProperties["SUPABASE_ANON_KEY"] ?: ""}\"")
     }
 
     buildTypes {
@@ -35,6 +50,9 @@ android {
     }
 
     buildFeatures {
+        buildConfig = true
+        buildConfig = true
+        buildConfig = true
         compose = true
     }
 }
@@ -83,4 +101,9 @@ dependencies {
     // Opcional pero recomendado para el futuro (MockK y Coroutines Test)
     testImplementation("io.mockk:mockk:1.13.12")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
+
+    //supabase
+    implementation(libs.kotlinx.serialization.json)
+
+    implementation("io.ktor:ktor-client-okhttp:2.3.12")
 }
