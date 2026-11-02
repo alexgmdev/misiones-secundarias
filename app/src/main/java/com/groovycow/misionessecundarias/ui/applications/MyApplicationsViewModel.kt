@@ -16,14 +16,13 @@ data class MyApplicationsUiState(
     val error: String? = null,
     val cancellingApplicationId: String? = null,
     val actionMessage: String? = null,
-    val isActionError: Boolean = false
+    val isActionError: Boolean = false,
 )
 
 class MyApplicationsViewModel(
     private val getMyApplicationsUseCase: GetMyApplicationsUseCase,
-    private val cancelApplicationUseCase: CancelApplicationUseCase
+    private val cancelApplicationUseCase: CancelApplicationUseCase,
 ) : ViewModel() {
-
     private val _uiState = MutableStateFlow(MyApplicationsUiState())
     val uiState: StateFlow<MyApplicationsUiState> = _uiState.asStateFlow()
 
@@ -36,11 +35,13 @@ class MyApplicationsViewModel(
                     _uiState.value = MyApplicationsUiState(applications = applications)
                 },
                 onFailure = { exception ->
-                    _uiState.value = MyApplicationsUiState(
-                        error = exception.message
-                            ?: "No fue posible consultar tus postulaciones."
-                    )
-                }
+                    _uiState.value =
+                        MyApplicationsUiState(
+                            error =
+                                exception.message
+                                    ?: "No fue posible consultar tus postulaciones.",
+                        )
+                },
             )
         }
     }
@@ -49,30 +50,35 @@ class MyApplicationsViewModel(
         if (_uiState.value.cancellingApplicationId != null) return
 
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(
-                cancellingApplicationId = applicationId,
-                actionMessage = null,
-                isActionError = false
-            )
+            _uiState.value =
+                _uiState.value.copy(
+                    cancellingApplicationId = applicationId,
+                    actionMessage = null,
+                    isActionError = false,
+                )
 
             cancelApplicationUseCase(applicationId).fold(
                 onSuccess = {
-                    _uiState.value = _uiState.value.copy(
-                        applications = _uiState.value.applications.filterNot {
-                            it.id == applicationId
-                        },
-                        cancellingApplicationId = null,
-                        actionMessage = "La postulación fue cancelada correctamente."
-                    )
+                    _uiState.value =
+                        _uiState.value.copy(
+                            applications =
+                                _uiState.value.applications.filterNot {
+                                    it.id == applicationId
+                                },
+                            cancellingApplicationId = null,
+                            actionMessage = "La postulación fue cancelada correctamente.",
+                        )
                 },
                 onFailure = { exception ->
-                    _uiState.value = _uiState.value.copy(
-                        cancellingApplicationId = null,
-                        actionMessage = exception.message
-                            ?: "No fue posible cancelar la postulación.",
-                        isActionError = true
-                    )
-                }
+                    _uiState.value =
+                        _uiState.value.copy(
+                            cancellingApplicationId = null,
+                            actionMessage =
+                                exception.message
+                                    ?: "No fue posible cancelar la postulación.",
+                            isActionError = true,
+                        )
+                },
             )
         }
     }

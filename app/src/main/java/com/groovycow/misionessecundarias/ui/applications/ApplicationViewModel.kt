@@ -12,13 +12,12 @@ data class ApplicationUiState(
     val isSubmitting: Boolean = false,
     val wasSubmitted: Boolean = false,
     val message: String? = null,
-    val isError: Boolean = false
+    val isError: Boolean = false,
 )
 
 class ApplicationViewModel(
-    private val applyToMissionUseCase: ApplyToMissionUseCase
+    private val applyToMissionUseCase: ApplyToMissionUseCase,
 ) : ViewModel() {
-
     private val _uiState = MutableStateFlow(ApplicationUiState())
     val uiState: StateFlow<ApplicationUiState> = _uiState.asStateFlow()
 
@@ -30,17 +29,19 @@ class ApplicationViewModel(
 
             applyToMissionUseCase(missionId).fold(
                 onSuccess = {
-                    _uiState.value = ApplicationUiState(
-                        wasSubmitted = true,
-                        message = "Tu postulación fue registrada correctamente."
-                    )
+                    _uiState.value =
+                        ApplicationUiState(
+                            wasSubmitted = true,
+                            message = "Tu postulación fue registrada correctamente.",
+                        )
                 },
                 onFailure = { exception ->
-                    _uiState.value = ApplicationUiState(
-                        message = exception.message ?: "No fue posible registrar la postulación.",
-                        isError = true
-                    )
-                }
+                    _uiState.value =
+                        ApplicationUiState(
+                            message = exception.message ?: "No fue posible registrar la postulación.",
+                            isError = true,
+                        )
+                },
             )
         }
     }

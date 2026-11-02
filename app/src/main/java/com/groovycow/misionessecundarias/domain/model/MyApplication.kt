@@ -9,7 +9,7 @@ data class MyApplication(
     @SerialName("mission_id") val missionId: String,
     val status: String,
     @SerialName("applied_at") val appliedAt: String,
-    @SerialName("missions") val mission: AppliedMission
+    @SerialName("missions") val mission: AppliedMission,
 )
 
 @Serializable
@@ -17,5 +17,5 @@ data class AppliedMission(
     val id: String,
     val title: String,
     @SerialName("date_time") val dateTime: String,
-    val status: String
+    val status: String,
 )

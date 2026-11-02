@@ -28,12 +28,13 @@ class MainActivity : ComponentActivity() {
                     AppDestination.MainMenu -> {
                         MainMenuScreen(
                             onNavigate = { menuDestination ->
-                                destination = when (menuDestination) {
-                                    MainMenuDestination.SEARCH_MISSIONS -> AppDestination.MissionList
-                                    MainMenuDestination.MY_APPLICATIONS -> AppDestination.MyApplications
-                                    else -> AppDestination.Placeholder(menuDestination)
-                                }
-                            }
+                                destination =
+                                    when (menuDestination) {
+                                        MainMenuDestination.SEARCH_MISSIONS -> AppDestination.MissionList
+                                        MainMenuDestination.MY_APPLICATIONS -> AppDestination.MyApplications
+                                        else -> AppDestination.Placeholder(menuDestination)
+                                    }
+                            },
                         )
                     }
 
@@ -46,7 +47,7 @@ class MainActivity : ComponentActivity() {
                             onMyApplicationsClick = {
                                 destination = AppDestination.MyApplications
                             },
-                            onBack = { destination = AppDestination.MainMenu }
+                            onBack = { destination = AppDestination.MainMenu },
                         )
                     }
 
@@ -64,13 +65,14 @@ class MainActivity : ComponentActivity() {
                                 modality = mission.modality,
                                 category = mission.category,
                                 requirements = mission.requirements,
-                                publisherName = mission.publisherProfile?.fullName
-                                    ?: "Usuario Desconocido",
-                                approximateZone = "Barrio San Fernando, Cali", // <-- Aquí pasamos tu HU-028
+                                publisherName =
+                                    mission.publisherProfile?.fullName
+                                        ?: "Usuario Desconocido",
+                                approximateZone = "Barrio San Fernando, Cali",
                                 onBack = {
                                     selectedMission = null
                                     destination = AppDestination.MissionList
-                                }
+                                },
                             )
                         }
                     }
@@ -78,14 +80,14 @@ class MainActivity : ComponentActivity() {
                     AppDestination.MyApplications -> {
                         MyApplicationsScreen(
                             onBack = { destination = AppDestination.MainMenu },
-                            onExploreMissions = { destination = AppDestination.MissionList }
+                            onExploreMissions = { destination = AppDestination.MissionList },
                         )
                     }
 
                     is AppDestination.Placeholder -> {
                         FeaturePlaceholderScreen(
                             title = currentDestination.menuDestination.title,
-                            onBack = { destination = AppDestination.MainMenu }
+                            onBack = { destination = AppDestination.MainMenu },
                         )
                     }
                 }
@@ -96,8 +98,12 @@ class MainActivity : ComponentActivity() {
 
 private sealed interface AppDestination {
     data object MainMenu : AppDestination
+
     data object MissionList : AppDestination
+
     data object MissionDetail : AppDestination
+
     data object MyApplications : AppDestination
+
     data class Placeholder(val menuDestination: MainMenuDestination) : AppDestination
 }

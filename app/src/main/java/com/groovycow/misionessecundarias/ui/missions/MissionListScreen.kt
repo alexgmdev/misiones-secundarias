@@ -65,22 +65,25 @@ fun MissionListScreen(
     onMissionClick: (Mission) -> Unit,
     onMyApplicationsClick: () -> Unit = {},
     onBack: () -> Unit = {},
-    viewModel: MissionViewModel = koinViewModel()
+    viewModel: MissionViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
     var selectedModality by remember { mutableStateOf<String?>(null) }
     var filterMenuExpanded by remember { mutableStateOf(false) }
 
-    val visibleMissions = remember(uiState.missions, searchQuery, selectedModality) {
-        uiState.missions.filter { mission ->
-            val matchesSearch = searchQuery.isBlank() ||
-                mission.title.contains(searchQuery, ignoreCase = true)
-            val matchesModality = selectedModality == null ||
-                mission.modality.equals(selectedModality, ignoreCase = true)
-            matchesSearch && matchesModality
+    val visibleMissions =
+        remember(uiState.missions, searchQuery, selectedModality) {
+            uiState.missions.filter { mission ->
+                val matchesSearch =
+                    searchQuery.isBlank() ||
+                        mission.title.contains(searchQuery, ignoreCase = true)
+                val matchesModality =
+                    selectedModality == null ||
+                        mission.modality.equals(selectedModality, ignoreCase = true)
+                matchesSearch && matchesModality
+            }
         }
-    }
 
     Scaffold(
         containerColor = SandBackground,
@@ -90,7 +93,7 @@ fun MissionListScreen(
                     Text(
                         "Misiones",
                         color = ForestGreen,
-                        fontWeight = FontWeight.ExtraBold
+                        fontWeight = FontWeight.ExtraBold,
                     )
                 },
                 actions = {
@@ -103,23 +106,24 @@ fun MissionListScreen(
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Volver",
-                            tint = EarthOrange
+                            tint = EarthOrange,
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = SandBackground)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = SandBackground),
             )
-        }
+        },
     ) { paddingValues ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 16.dp)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(horizontal = 16.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 OutlinedTextField(
                     value = searchQuery,
@@ -131,52 +135,54 @@ fun MissionListScreen(
                     },
                     singleLine = true,
                     shape = RoundedCornerShape(14.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = RiverTeal,
-                        unfocusedBorderColor = LeafGreen,
-                        focusedContainerColor = CreamSurface,
-                        unfocusedContainerColor = CreamSurface
-                    )
+                    colors =
+                        OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = RiverTeal,
+                            unfocusedBorderColor = LeafGreen,
+                            focusedContainerColor = CreamSurface,
+                            unfocusedContainerColor = CreamSurface,
+                        ),
                 )
                 Spacer(modifier = Modifier.width(10.dp))
                 Box {
                     IconButton(
                         onClick = { filterMenuExpanded = true },
-                        modifier = Modifier
-                            .size(56.dp)
-                            .background(LightLeaf, RoundedCornerShape(14.dp))
-                            .border(2.dp, LeafGreen, RoundedCornerShape(14.dp))
+                        modifier =
+                            Modifier
+                                .size(56.dp)
+                                .background(LightLeaf, RoundedCornerShape(14.dp))
+                                .border(2.dp, LeafGreen, RoundedCornerShape(14.dp)),
                     ) {
                         Icon(
                             Icons.Default.Settings,
                             contentDescription = "Filtrar misiones",
-                            tint = ForestGreen
+                            tint = ForestGreen,
                         )
                     }
                     DropdownMenu(
                         expanded = filterMenuExpanded,
-                        onDismissRequest = { filterMenuExpanded = false }
+                        onDismissRequest = { filterMenuExpanded = false },
                     ) {
                         DropdownMenuItem(
                             text = { Text("Todas") },
                             onClick = {
                                 selectedModality = null
                                 filterMenuExpanded = false
-                            }
+                            },
                         )
                         DropdownMenuItem(
                             text = { Text("Misiones de campo") },
                             onClick = {
                                 selectedModality = "campo"
                                 filterMenuExpanded = false
-                            }
+                            },
                         )
                         DropdownMenuItem(
                             text = { Text("Misiones remotas") },
                             onClick = {
                                 selectedModality = "remota"
                                 filterMenuExpanded = false
-                            }
+                            },
                         )
                     }
                 }
@@ -187,16 +193,17 @@ fun MissionListScreen(
             Spacer(modifier = Modifier.height(14.dp))
 
             Text(
-                text = if (selectedModality == null) {
-                    "Misiones disponibles"
-                } else if (selectedModality == "campo") {
-                    "Misiones de campo"
-                } else {
-                    "Misiones remotas"
-                },
+                text =
+                    if (selectedModality == null) {
+                        "Misiones disponibles"
+                    } else if (selectedModality == "campo") {
+                        "Misiones de campo"
+                    } else {
+                        "Misiones remotas"
+                    },
                 style = MaterialTheme.typography.titleLarge,
                 color = ForestGreen,
-                fontWeight = FontWeight.ExtraBold
+                fontWeight = FontWeight.ExtraBold,
             )
             Spacer(modifier = Modifier.height(10.dp))
 
@@ -204,37 +211,38 @@ fun MissionListScreen(
                 uiState.isLoading -> {
                     CircularProgressIndicator(
                         modifier = Modifier.align(Alignment.CenterHorizontally),
-                        color = RiverTeal
+                        color = RiverTeal,
                     )
                 }
 
                 uiState.error != null -> {
                     MissionListMessage(
                         message = uiState.error!!,
-                        borderColor = AlertCoral
+                        borderColor = AlertCoral,
                     )
                 }
 
                 visibleMissions.isEmpty() -> {
                     MissionListMessage(
-                        message = if (searchQuery.isBlank() && selectedModality == null) {
-                            "No hay misiones disponibles todavía. ¡Vuelve pronto para una nueva aventura!"
-                        } else {
-                            "No encontramos misiones con esos criterios."
-                        },
-                        borderColor = EarthOrange
+                        message =
+                            if (searchQuery.isBlank() && selectedModality == null) {
+                                "No hay misiones disponibles todavía. ¡Vuelve pronto para una nueva aventura!"
+                            } else {
+                                "No encontramos misiones con esos criterios."
+                            },
+                        borderColor = EarthOrange,
                     )
                 }
 
                 else -> {
                     LazyColumn(
                         modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
                         items(visibleMissions, key = { it.id }) { mission ->
                             MissionCard(
                                 mission = mission,
-                                onClick = { onMissionClick(mission) }
+                                onClick = { onMissionClick(mission) },
                             )
                         }
                         item { Spacer(modifier = Modifier.height(12.dp)) }
@@ -248,25 +256,26 @@ fun MissionListScreen(
 @Composable
 private fun MissionMapPlaceholder() {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(205.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(205.dp),
         shape = RoundedCornerShape(18.dp),
         border = BorderStroke(3.dp, RiverTeal),
         colors = CardDefaults.cardColors(containerColor = LightRiver),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             Canvas(modifier = Modifier.fillMaxSize()) {
                 drawCircle(
                     color = LightLeaf,
                     radius = size.minDimension * 0.32f,
-                    center = Offset(size.width * 0.22f, size.height * 0.3f)
+                    center = Offset(size.width * 0.22f, size.height * 0.3f),
                 )
                 drawCircle(
                     color = CreamSurface,
                     radius = size.minDimension * 0.27f,
-                    center = Offset(size.width * 0.78f, size.height * 0.72f)
+                    center = Offset(size.width * 0.78f, size.height * 0.72f),
                 )
                 for (step in 0..7) {
                     val x = size.width * step / 7f
@@ -274,7 +283,7 @@ private fun MissionMapPlaceholder() {
                         color = MapLine,
                         start = Offset(x, 0f),
                         end = Offset((x + size.width * 0.25f).coerceAtMost(size.width), size.height),
-                        strokeWidth = 4f
+                        strokeWidth = 4f,
                     )
                 }
                 for (step in 0..5) {
@@ -283,7 +292,7 @@ private fun MissionMapPlaceholder() {
                         color = MapLine,
                         start = Offset(0f, y),
                         end = Offset(size.width, (y + size.height * 0.2f).coerceAtMost(size.height)),
-                        strokeWidth = 4f
+                        strokeWidth = 4f,
                     )
                 }
             }
@@ -293,52 +302,58 @@ private fun MissionMapPlaceholder() {
                 color = ForestGreen,
                 fontWeight = FontWeight.ExtraBold,
                 style = MaterialTheme.typography.labelLarge,
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(14.dp)
-                    .background(CreamSurface.copy(alpha = 0.9f), RoundedCornerShape(8.dp))
-                    .padding(horizontal = 10.dp, vertical = 6.dp)
+                modifier =
+                    Modifier
+                        .align(Alignment.TopStart)
+                        .padding(14.dp)
+                        .background(CreamSurface.copy(alpha = 0.9f), RoundedCornerShape(8.dp))
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
             )
 
             Icon(
                 imageVector = Icons.Default.LocationOn,
                 contentDescription = "Ubicación aproximada de misión",
                 tint = AlertCoral,
-                modifier = Modifier
-                    .size(54.dp)
-                    .align(Alignment.Center)
+                modifier =
+                    Modifier
+                        .size(54.dp)
+                        .align(Alignment.Center),
             )
-
         }
     }
 }
 
 @Composable
-fun MissionCard(mission: Mission, onClick: () -> Unit) {
-    val formattedDate = runCatching {
-        OffsetDateTime.parse(mission.dateTime).format(
-            DateTimeFormatter.ofPattern("d 'de' MMMM 'a las' HH:mm", Locale("es", "CO"))
-        )
-    }.getOrDefault(mission.dateTime)
+fun MissionCard(
+    mission: Mission,
+    onClick: () -> Unit,
+) {
+    val formattedDate =
+        runCatching {
+            OffsetDateTime.parse(mission.dateTime).format(
+                DateTimeFormatter.ofPattern("d 'de' MMMM 'a las' HH:mm", Locale("es", "CO")),
+            )
+        }.getOrDefault(mission.dateTime)
 
     val isRemote = mission.modality.equals("remota", ignoreCase = true)
     val accentColor = if (isRemote) RiverTeal else LeafGreen
     val backgroundColor = if (isRemote) LightRiver else LightLeaf
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(containerColor = backgroundColor),
         shape = RoundedCornerShape(14.dp),
         border = BorderStroke(3.dp, accentColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = mission.title,
@@ -347,7 +362,7 @@ fun MissionCard(mission: Mission, onClick: () -> Unit) {
                     fontWeight = FontWeight.ExtraBold,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
@@ -355,16 +370,17 @@ fun MissionCard(mission: Mission, onClick: () -> Unit) {
                     color = CreamSurface,
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.labelMedium,
-                    modifier = Modifier
-                        .background(accentColor, RoundedCornerShape(20.dp))
-                        .padding(horizontal = 10.dp, vertical = 5.dp)
+                    modifier =
+                        Modifier
+                            .background(accentColor, RoundedCornerShape(20.dp))
+                            .padding(horizontal = 10.dp, vertical = 5.dp),
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = formattedDate,
                 color = BarkBrown,
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
             )
             mission.category?.takeIf { it.isNotBlank() }?.let { category ->
                 Spacer(modifier = Modifier.height(4.dp))
@@ -372,7 +388,7 @@ fun MissionCard(mission: Mission, onClick: () -> Unit) {
                     text = category,
                     color = accentColor,
                     style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
             }
         }
@@ -382,19 +398,19 @@ fun MissionCard(mission: Mission, onClick: () -> Unit) {
 @Composable
 private fun MissionListMessage(
     message: String,
-    borderColor: Color
+    borderColor: Color,
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = CreamSurface),
         shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(3.dp, borderColor)
+        border = BorderStroke(3.dp, borderColor),
     ) {
         Text(
             text = message,
             modifier = Modifier.padding(20.dp),
             color = BarkBrown,
-            fontWeight = FontWeight.SemiBold
+            fontWeight = FontWeight.SemiBold,
         )
     }
 }
