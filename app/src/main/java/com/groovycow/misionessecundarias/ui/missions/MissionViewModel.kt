@@ -12,13 +12,12 @@ import kotlinx.coroutines.launch
 data class MissionUiState(
     val isLoading: Boolean = true,
     val missions: List<Mission> = emptyList(),
-    val error: String? = null
+    val error: String? = null,
 )
 
 class MissionViewModel(
-    private val getMissionsUseCase: GetMissionsUseCase
+    private val getMissionsUseCase: GetMissionsUseCase,
 ) : ViewModel() {
-
     private val _uiState = MutableStateFlow(MissionUiState())
     val uiState: StateFlow<MissionUiState> = _uiState.asStateFlow()
 
@@ -35,7 +34,7 @@ class MissionViewModel(
                 },
                 onFailure = { exception ->
                     _uiState.value = MissionUiState(isLoading = false, error = exception.message)
-                }
+                },
             )
         }
     }

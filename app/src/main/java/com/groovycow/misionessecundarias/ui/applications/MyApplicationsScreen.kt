@@ -61,7 +61,7 @@ import java.util.Locale
 fun MyApplicationsScreen(
     onBack: () -> Unit,
     onExploreMissions: () -> Unit = {},
-    viewModel: MyApplicationsViewModel = koinViewModel()
+    viewModel: MyApplicationsViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var applicationToCancel by remember { mutableStateOf<MyApplication?>(null) }
@@ -78,7 +78,7 @@ fun MyApplicationsScreen(
                     Text(
                         "Estado de las misiones",
                         color = ForestGreen,
-                        fontWeight = FontWeight.ExtraBold
+                        fontWeight = FontWeight.ExtraBold,
                     )
                 },
                 navigationIcon = {
@@ -86,32 +86,33 @@ fun MyApplicationsScreen(
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Volver",
-                            tint = EarthOrange
+                            tint = EarthOrange,
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = SandBackground)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = SandBackground),
             )
-        }
+        },
     ) { paddingValues ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 16.dp)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(horizontal = 16.dp),
         ) {
             when {
                 uiState.isLoading -> {
                     GameStateMessage(
                         message = "Estoy buscando tus misiones...",
-                        showProgress = true
+                        showProgress = true,
                     )
                 }
 
                 uiState.error != null -> {
                     GameStateMessage(
                         message = uiState.error!!,
-                        accentColor = AlertCoral
+                        accentColor = AlertCoral,
                     )
                 }
 
@@ -121,27 +122,27 @@ fun MyApplicationsScreen(
 
                 else -> {
                     MissionGuide(
-                        message = "Estas son las misiones en las que participas o esperas respuesta."
+                        message = "Estas son las misiones en las que participas o esperas respuesta.",
                     )
 
                     uiState.actionMessage?.let { message ->
                         Spacer(modifier = Modifier.height(10.dp))
                         GameNotice(
                             message = message,
-                            isError = uiState.isActionError
+                            isError = uiState.isActionError,
                         )
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))
                     LazyColumn(
                         modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         items(uiState.applications, key = { it.id }) { application ->
                             ApplicationStatusCard(
                                 application = application,
                                 isCancelling = uiState.cancellingApplicationId == application.id,
-                                onCancel = { applicationToCancel = application }
+                                onCancel = { applicationToCancel = application },
                             )
                         }
                         item { Spacer(modifier = Modifier.height(12.dp)) }
@@ -165,7 +166,7 @@ fun MyApplicationsScreen(
                     } else {
                         "¿Deseas cancelar tu postulación a ${application.mission.title}?"
                     },
-                    color = BarkBrown
+                    color = BarkBrown,
                 )
             },
             confirmButton = {
@@ -173,7 +174,7 @@ fun MyApplicationsScreen(
                     onClick = {
                         viewModel.cancelApplication(application.id)
                         applicationToCancel = null
-                    }
+                    },
                 ) {
                     Text("Confirmar", color = EarthOrange, fontWeight = FontWeight.Bold)
                 }
@@ -182,7 +183,7 @@ fun MyApplicationsScreen(
                 TextButton(onClick = { applicationToCancel = null }) {
                     Text("Volver", color = ForestGreen)
                 }
-            }
+            },
         )
     }
 }
@@ -191,10 +192,10 @@ fun MyApplicationsScreen(
 private fun EmptyApplicationsState(onExploreMissions: () -> Unit) {
     Column(
         modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         MissionGuide(
-            message = "Tu lista está vacía. ¡Encuentra una misión y comienza tu aventura!"
+            message = "Tu lista está vacía. ¡Encuentra una misión y comienza tu aventura!",
         )
         Spacer(modifier = Modifier.height(32.dp))
         Text(
@@ -202,26 +203,28 @@ private fun EmptyApplicationsState(onExploreMissions: () -> Unit) {
             style = MaterialTheme.typography.headlineSmall,
             color = ForestGreen,
             fontWeight = FontWeight.ExtraBold,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = "Explora actividades comunitarias en Cali y postúlate a la que más te inspire.",
             color = BarkBrown,
             textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.bodyLarge
+            style = MaterialTheme.typography.bodyLarge,
         )
         Spacer(modifier = Modifier.height(24.dp))
         Button(
             onClick = onExploreMissions,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = LeafGreen,
-                contentColor = CreamSurface
-            ),
+            colors =
+                ButtonDefaults.buttonColors(
+                    containerColor = LeafGreen,
+                    contentColor = CreamSurface,
+                ),
             shape = RoundedCornerShape(14.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(58.dp)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(58.dp),
         ) {
             Text("Explorar misiones", fontWeight = FontWeight.ExtraBold)
         }
@@ -232,11 +235,11 @@ private fun EmptyApplicationsState(onExploreMissions: () -> Unit) {
 private fun GameStateMessage(
     message: String,
     accentColor: Color = RiverTeal,
-    showProgress: Boolean = false
+    showProgress: Boolean = false,
 ) {
     Column(
         modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         MissionGuide(message = message, accentColor = accentColor)
         if (showProgress) {
@@ -249,11 +252,11 @@ private fun GameStateMessage(
 @Composable
 private fun MissionGuide(
     message: String,
-    accentColor: Color = RiverTeal
+    accentColor: Color = RiverTeal,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         GuideAvatar(accentColor = accentColor)
         Spacer(modifier = Modifier.width(10.dp))
@@ -261,14 +264,14 @@ private fun MissionGuide(
             modifier = Modifier.weight(1f),
             shape = RoundedCornerShape(20.dp),
             border = BorderStroke(3.dp, accentColor),
-            colors = CardDefaults.cardColors(containerColor = CreamSurface)
+            colors = CardDefaults.cardColors(containerColor = CreamSurface),
         ) {
             Text(
                 text = message,
                 modifier = Modifier.padding(16.dp),
                 color = BarkBrown,
                 textAlign = TextAlign.Center,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
             )
         }
     }
@@ -278,7 +281,7 @@ private fun MissionGuide(
 private fun GuideAvatar(accentColor: Color) {
     Box(
         modifier = Modifier.size(76.dp),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             val radius = size.minDimension / 2
@@ -290,24 +293,28 @@ private fun GuideAvatar(accentColor: Color) {
             Icons.Default.Person,
             contentDescription = null,
             tint = ForestGreen,
-            modifier = Modifier.size(42.dp)
+            modifier = Modifier.size(42.dp),
         )
     }
 }
 
 @Composable
-private fun GameNotice(message: String, isError: Boolean) {
+private fun GameNotice(
+    message: String,
+    isError: Boolean,
+) {
     val accent = if (isError) AlertCoral else LeafGreen
     Text(
         text = message,
         color = if (isError) AlertCoral else ForestGreen,
         fontWeight = FontWeight.Bold,
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(CreamSurface, RoundedCornerShape(12.dp))
-            .border(2.dp, accent, RoundedCornerShape(12.dp))
-            .padding(12.dp),
-        textAlign = TextAlign.Center
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(CreamSurface, RoundedCornerShape(12.dp))
+                .border(2.dp, accent, RoundedCornerShape(12.dp))
+                .padding(12.dp),
+        textAlign = TextAlign.Center,
     )
 }
 
@@ -315,63 +322,69 @@ private fun GameNotice(message: String, isError: Boolean) {
 private fun ApplicationStatusCard(
     application: MyApplication,
     isCancelling: Boolean,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
 ) {
-    val statusStyle = when (application.status) {
-        "Aceptado" -> StatusStyle(LeafGreen, LightLeaf, "¡Aceptado!")
-        "Rechazado" -> StatusStyle(AlertCoral, LightCoral, "No seleccionado")
-        else -> StatusStyle(EarthOrange, LightEarth, "Esperando respuesta")
-    }
+    val statusStyle =
+        when (application.status) {
+            "Aceptado" -> StatusStyle(LeafGreen, LightLeaf, "¡Aceptado!")
+            "Rechazado" -> StatusStyle(AlertCoral, LightCoral, "No seleccionado")
+            else -> StatusStyle(EarthOrange, LightEarth, "Esperando respuesta")
+        }
 
-    val formattedDate = runCatching {
-        OffsetDateTime.parse(application.mission.dateTime).format(
-            DateTimeFormatter.ofPattern("d 'de' MMMM 'a las' HH:mm", Locale("es", "CO"))
-        )
-    }.getOrDefault(application.mission.dateTime)
+    val formattedDate =
+        runCatching {
+            OffsetDateTime.parse(application.mission.dateTime).format(
+                DateTimeFormatter.ofPattern("d 'de' MMMM 'a las' HH:mm", Locale("es", "CO")),
+            )
+        }.getOrDefault(application.mission.dateTime)
 
-    val canCancel = runCatching {
-        val missionHasNotStarted = OffsetDateTime.parse(application.mission.dateTime)
-            .isAfter(OffsetDateTime.now())
-        val cancellableMission = application.mission.status == "Publicada" ||
-            application.mission.status == "Asignada"
-        val cancellableApplication = application.status == "Postulado" ||
-            application.status == "Aceptado"
-        missionHasNotStarted && cancellableMission && cancellableApplication
-    }.getOrDefault(false)
+    val canCancel =
+        runCatching {
+            val missionHasNotStarted =
+                OffsetDateTime.parse(application.mission.dateTime)
+                    .isAfter(OffsetDateTime.now())
+            val cancellableMission =
+                application.mission.status == "Publicada" ||
+                    application.mission.status == "Asignada"
+            val cancellableApplication =
+                application.status == "Postulado" ||
+                    application.status == "Aceptado"
+            missionHasNotStarted && cancellableMission && cancellableApplication
+        }.getOrDefault(false)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = statusStyle.background),
         border = BorderStroke(3.dp, statusStyle.accent),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
+                verticalAlignment = Alignment.Top,
             ) {
                 Text(
                     text = application.mission.title,
                     color = ForestGreen,
                     fontWeight = FontWeight.ExtraBold,
                     style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = statusStyle.label,
                     color = statusStyle.accent,
                     fontWeight = FontWeight.ExtraBold,
-                    style = MaterialTheme.typography.labelLarge
+                    style = MaterialTheme.typography.labelLarge,
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = formattedDate,
                 color = BarkBrown,
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
             )
 
             if (canCancel) {
@@ -382,22 +395,23 @@ private fun ApplicationStatusCard(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     border = BorderStroke(2.dp, statusStyle.accent),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = ForestGreen)
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = ForestGreen),
                 ) {
                     if (isCancelling) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(20.dp),
                             color = statusStyle.accent,
-                            strokeWidth = 2.dp
+                            strokeWidth = 2.dp,
                         )
                     } else {
                         Text(
-                            text = if (application.status == "Aceptado") {
-                                "Salir de la misión"
-                            } else {
-                                "Cancelar postulación"
-                            },
-                            fontWeight = FontWeight.Bold
+                            text =
+                                if (application.status == "Aceptado") {
+                                    "Salir de la misión"
+                                } else {
+                                    "Cancelar postulación"
+                                },
+                            fontWeight = FontWeight.Bold,
                         )
                     }
                 }
@@ -409,7 +423,7 @@ private fun ApplicationStatusCard(
 private data class StatusStyle(
     val accent: Color,
     val background: Color,
-    val label: String
+    val label: String,
 )
 
 private val ForestGreen = Color(0xFF214E34)

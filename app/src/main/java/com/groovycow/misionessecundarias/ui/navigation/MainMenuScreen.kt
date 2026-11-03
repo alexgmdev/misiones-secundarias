@@ -9,16 +9,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -47,7 +47,7 @@ import androidx.compose.ui.unit.dp
 
 enum class MainMenuDestination(
     val title: String,
-    val description: String
+    val description: String,
 ) {
     PROFILE("Mi perfil", "Consulta y administra tu información personal"),
     AVATAR("Personalizar avatar", "Configura la apariencia de tu avatar"),
@@ -56,65 +56,65 @@ enum class MainMenuDestination(
     SETTINGS("Ajustes", "Configura las preferencias de la aplicación"),
     SEARCH_MISSIONS("Buscar misiones", "Encuentra oportunidades de colaboración"),
     PUBLISH_MISSION("Publicar misión", "Solicita colaboración para una actividad"),
-    MY_APPLICATIONS("Estado de mis postulaciones", "Consulta tus solicitudes y su estado")
+    MY_APPLICATIONS("Estado de mis postulaciones", "Consulta tus solicitudes y su estado"),
 }
 
 @Composable
 fun MainMenuScreen(
     onNavigate: (MainMenuDestination) -> Unit,
-    username: String? = null
+    username: String? = null,
 ) {
     Scaffold(containerColor = SandBackground) { paddingValues ->
         Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(12.dp)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(12.dp),
         ) {
             NatureSideRail(onNavigate = onNavigate)
             Spacer(modifier = Modifier.width(14.dp))
             MainMenuContent(
                 username = username,
                 onNavigate = onNavigate,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             )
         }
     }
 }
 
 @Composable
-private fun NatureSideRail(
-    onNavigate: (MainMenuDestination) -> Unit
-) {
+private fun NatureSideRail(onNavigate: (MainMenuDestination) -> Unit) {
     Column(
-        modifier = Modifier
-            .width(72.dp)
-            .fillMaxHeight()
-            .background(MintPanel, RoundedCornerShape(28.dp))
-            .border(2.dp, RiverTeal, RoundedCornerShape(28.dp))
-            .padding(vertical = 14.dp),
+        modifier =
+            Modifier
+                .width(72.dp)
+                .fillMaxHeight()
+                .background(MintPanel, RoundedCornerShape(28.dp))
+                .border(2.dp, RiverTeal, RoundedCornerShape(28.dp))
+                .padding(vertical = 14.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween
+        verticalArrangement = Arrangement.SpaceBetween,
     ) {
         SideRailButton(
             icon = Icons.Default.Person,
             contentDescription = "Mi perfil",
-            onClick = { onNavigate(MainMenuDestination.PROFILE) }
+            onClick = { onNavigate(MainMenuDestination.PROFILE) },
         )
         SideRailButton(
             icon = Icons.Default.Search,
             contentDescription = "Historial",
-            onClick = { onNavigate(MainMenuDestination.HISTORY) }
+            onClick = { onNavigate(MainMenuDestination.HISTORY) },
         )
         SideRailButton(
             icon = Icons.Default.ShoppingCart,
             contentDescription = "Mochila",
-            onClick = { onNavigate(MainMenuDestination.COLLECTIONS) }
+            onClick = { onNavigate(MainMenuDestination.COLLECTIONS) },
         )
         SideRailButton(
             icon = Icons.Default.Settings,
             contentDescription = "Ajustes",
-            onClick = { onNavigate(MainMenuDestination.SETTINGS) }
+            onClick = { onNavigate(MainMenuDestination.SETTINGS) },
         )
     }
 }
@@ -123,20 +123,21 @@ private fun NatureSideRail(
 private fun SideRailButton(
     icon: ImageVector,
     contentDescription: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     IconButton(
         onClick = onClick,
-        modifier = Modifier
-            .size(52.dp)
-            .background(CreamSurface, CircleShape)
-            .border(2.dp, LeafGreen, CircleShape)
+        modifier =
+            Modifier
+                .size(52.dp)
+                .background(CreamSurface, CircleShape)
+                .border(2.dp, LeafGreen, CircleShape),
     ) {
         Icon(
             imageVector = icon,
             contentDescription = contentDescription,
             tint = ForestGreen,
-            modifier = Modifier.size(29.dp)
+            modifier = Modifier.size(29.dp),
         )
     }
 }
@@ -145,25 +146,26 @@ private fun SideRailButton(
 private fun MainMenuContent(
     username: String?,
     onNavigate: (MainMenuDestination) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier
-            .fillMaxHeight()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 4.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        modifier =
+            modifier
+                .fillMaxHeight()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 text = "Menú\nprincipal",
                 style = MaterialTheme.typography.headlineMedium,
                 color = ForestGreen,
-                fontWeight = FontWeight.ExtraBold
+                fontWeight = FontWeight.ExtraBold,
             )
             NotificationButton()
         }
@@ -173,14 +175,15 @@ private fun MainMenuContent(
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             color = BarkBrown,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 12.dp)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp),
         )
 
         Spacer(modifier = Modifier.height(12.dp))
         GameAvatar(
-            onClick = { onNavigate(MainMenuDestination.AVATAR) }
+            onClick = { onNavigate(MainMenuDestination.AVATAR) },
         )
         Spacer(modifier = Modifier.height(20.dp))
 
@@ -188,21 +191,21 @@ private fun MainMenuContent(
             text = "Ver misiones",
             backgroundColor = LightLeaf,
             borderColor = LeafGreen,
-            onClick = { onNavigate(MainMenuDestination.SEARCH_MISSIONS) }
+            onClick = { onNavigate(MainMenuDestination.SEARCH_MISSIONS) },
         )
         Spacer(modifier = Modifier.height(14.dp))
         GameMenuButton(
             text = "Publicar una misión",
             backgroundColor = LightEarth,
             borderColor = EarthOrange,
-            onClick = { onNavigate(MainMenuDestination.PUBLISH_MISSION) }
+            onClick = { onNavigate(MainMenuDestination.PUBLISH_MISSION) },
         )
         Spacer(modifier = Modifier.height(14.dp))
         GameMenuButton(
             text = "Estado de las misiones",
             backgroundColor = LightRiver,
             borderColor = RiverTeal,
-            onClick = { onNavigate(MainMenuDestination.MY_APPLICATIONS) }
+            onClick = { onNavigate(MainMenuDestination.MY_APPLICATIONS) },
         )
         Spacer(modifier = Modifier.height(16.dp))
     }
@@ -213,22 +216,24 @@ private fun NotificationButton() {
     Box(contentAlignment = Alignment.TopEnd) {
         IconButton(
             onClick = { },
-            modifier = Modifier
-                .size(52.dp)
-                .background(CreamSurface, CircleShape)
+            modifier =
+                Modifier
+                    .size(52.dp)
+                    .background(CreamSurface, CircleShape),
         ) {
             Icon(
                 Icons.Default.Notifications,
                 contentDescription = "Notificaciones",
                 tint = ForestGreen,
-                modifier = Modifier.size(31.dp)
+                modifier = Modifier.size(31.dp),
             )
         }
         Box(
-            modifier = Modifier
-                .size(13.dp)
-                .background(AlertCoral, CircleShape)
-                .border(2.dp, CreamSurface, CircleShape)
+            modifier =
+                Modifier
+                    .size(13.dp)
+                    .background(AlertCoral, CircleShape)
+                    .border(2.dp, CreamSurface, CircleShape),
         )
     }
 }
@@ -237,10 +242,11 @@ private fun NotificationButton() {
 private fun GameAvatar(onClick: () -> Unit) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
-            modifier = Modifier
-                .size(148.dp)
-                .clickable(onClick = onClick),
-            contentAlignment = Alignment.Center
+            modifier =
+                Modifier
+                    .size(148.dp)
+                    .clickable(onClick = onClick),
+            contentAlignment = Alignment.Center,
         ) {
             Canvas(modifier = Modifier.fillMaxSize()) {
                 val radius = size.minDimension / 2
@@ -250,40 +256,41 @@ private fun GameAvatar(onClick: () -> Unit) {
                 drawCircle(
                     color = LightLeaf,
                     radius = radius * 0.16f,
-                    center = center.copy(x = center.x * 0.35f, y = center.y * 0.43f)
+                    center = center.copy(x = center.x * 0.35f, y = center.y * 0.43f),
                 )
                 drawCircle(
                     color = EarthOrange,
                     radius = radius * 0.12f,
-                    center = center.copy(x = center.x * 1.75f, y = center.y * 1.55f)
+                    center = center.copy(x = center.x * 1.75f, y = center.y * 1.55f),
                 )
             }
             Icon(
                 imageVector = Icons.Default.Person,
                 contentDescription = "Personalizar avatar",
                 tint = ForestGreen,
-                modifier = Modifier.size(82.dp)
+                modifier = Modifier.size(82.dp),
             )
             Text(
                 text = "1",
                 color = CreamSurface,
                 fontWeight = FontWeight.ExtraBold,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .background(EarthOrange, CircleShape)
-                    .border(3.dp, CreamSurface, CircleShape)
-                    .padding(horizontal = 11.dp, vertical = 6.dp)
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomEnd)
+                        .background(EarthOrange, CircleShape)
+                        .border(3.dp, CreamSurface, CircleShape)
+                        .padding(horizontal = 11.dp, vertical = 6.dp),
             )
         }
         Text(
             text = "Aventurero · Nivel 1",
             color = ForestGreen,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
         )
         Text(
             text = "Toca tu avatar para personalizarlo",
             style = MaterialTheme.typography.bodySmall,
-            color = BarkBrown
+            color = BarkBrown,
         )
     }
 }
@@ -293,28 +300,29 @@ private fun GameMenuButton(
     text: String,
     backgroundColor: Color,
     borderColor: Color,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(72.dp)
-            .clickable(onClick = onClick),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(72.dp)
+                .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(containerColor = backgroundColor),
         shape = RoundedCornerShape(14.dp),
         border = androidx.compose.foundation.BorderStroke(3.dp, borderColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
             Text(
                 text = text,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.ExtraBold,
                 color = ForestGreen,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
             )
         }
     }
@@ -338,7 +346,7 @@ private val AlertCoral = Color(0xFFE85D3F)
 @Composable
 fun FeaturePlaceholderScreen(
     title: String,
-    onBack: () -> Unit
+    onBack: () -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -348,17 +356,18 @@ fun FeaturePlaceholderScreen(
                     IconButton(onClick = onBack) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Volver"
+                            contentDescription = "Volver",
                         )
                     }
-                }
+                },
             )
-        }
+        },
     ) { paddingValues ->
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
         )
     }
 }

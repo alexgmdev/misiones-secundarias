@@ -14,19 +14,20 @@ import com.groovycow.misionessecundarias.ui.missions.MissionViewModel // <-- Ase
 import org.koin.androidx.viewmodel.dsl.viewModel // <-- Y este import
 import org.koin.dsl.module
 
-val repositoryModule = module {
-    // Repositorios
-    single<MissionRepository> { MissionRepositoryImpl(get()) }
-    single<ApplicationRepository> { ApplicationRepositoryImpl(get()) }
+val repositoryModule =
+    module {
+        // Repositorios
+        single<MissionRepository> { MissionRepositoryImpl(get()) }
+        single<ApplicationRepository> { ApplicationRepositoryImpl(get()) }
 
-    // Casos de Uso
-    factory { GetMissionsUseCase(get()) }
-    factory { ApplyToMissionUseCase(get()) }
-    factory { CancelApplicationUseCase(get()) }
-    factory { GetMyApplicationsUseCase(get()) }
+        // Casos de Uso
+        factory { GetMissionsUseCase(get()) }
+        factory { ApplyToMissionUseCase(get()) }
+        factory { CancelApplicationUseCase(get()) }
+        factory { GetMyApplicationsUseCase(get()) }
 
-    // ViewModel (ESTA ES LA LÍNEA QUE FALTA)
-    viewModel { MissionViewModel(get()) }
-    viewModel { ApplicationViewModel(get()) }
-    viewModel { MyApplicationsViewModel(get(), get()) }
-}
+        // ViewModel (ESTA ES LA LÍNEA QUE FALTA)
+        viewModel { MissionViewModel(get()) }
+        viewModel { ApplicationViewModel(get()) }
+        viewModel { MyApplicationsViewModel(get(), get()) }
+    }

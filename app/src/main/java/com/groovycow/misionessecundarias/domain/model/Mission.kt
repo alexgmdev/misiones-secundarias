@@ -16,9 +16,10 @@ data class Mission(
     val location: String? = null,
     @SerialName("max_participants") val maxParticipants: Int,
     val status: String,
-    @SerialName("profiles") val publisherProfile: PublisherProfile? = null
+    @SerialName("profiles") val publisherProfile: PublisherProfile? = null,
 )
+
 @Serializable
 data class PublisherProfile(
-    @SerialName("full_name") val fullName: String
+    @SerialName("full_name") val fullName: String,
 )

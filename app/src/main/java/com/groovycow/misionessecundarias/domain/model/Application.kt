@@ -9,5 +9,5 @@ data class Application(
     @SerialName("mission_id") val missionId: String,
     @SerialName("solver_id") val solverId: String,
     val status: String,
-    @SerialName("applied_at") val appliedAt: String
+    @SerialName("applied_at") val appliedAt: String,
 )

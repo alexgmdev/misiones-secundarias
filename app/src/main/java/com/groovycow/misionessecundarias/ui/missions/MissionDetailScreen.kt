@@ -65,8 +65,9 @@ fun MissionDetailRoute(
     category: String?,
     requirements: String?,
     publisherName: String?,
+    approximateZone: String,
     onBack: () -> Unit,
-    applicationViewModel: ApplicationViewModel = koinViewModel()
+    applicationViewModel: ApplicationViewModel = koinViewModel(),
 ) {
     val applicationState by applicationViewModel.uiState.collectAsState()
 
@@ -83,9 +84,10 @@ fun MissionDetailRoute(
         category = category,
         requirements = requirements,
         publisherName = publisherName,
+        approximateZone = approximateZone,
         onBack = onBack,
         onApply = { applicationViewModel.applyToMission(missionId) },
-        applicationState = applicationState
+        applicationState = applicationState,
     )
 }
 
@@ -100,15 +102,17 @@ fun MissionDetailScreen(
     category: String?,
     requirements: String?,
     publisherName: String?,
+    approximateZone: String,
     onBack: () -> Unit,
     onApply: () -> Unit = {},
-    applicationState: ApplicationUiState = ApplicationUiState()
+    applicationState: ApplicationUiState = ApplicationUiState(),
 ) {
-    val formattedDate = runCatching {
-        OffsetDateTime.parse(missionDateTime).format(
-            DateTimeFormatter.ofPattern("EEEE d 'de' MMMM 'a las' HH:mm", Locale("es", "CO"))
-        )
-    }.getOrDefault(missionDateTime)
+    val formattedDate =
+        runCatching {
+            OffsetDateTime.parse(missionDateTime).format(
+                DateTimeFormatter.ofPattern("EEEE d 'de' MMMM 'a las' HH:mm", Locale("es", "CO")),
+            )
+        }.getOrDefault(missionDateTime)
 
     Scaffold(
         containerColor = SandBackground,
@@ -123,29 +127,30 @@ fun MissionDetailScreen(
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Volver",
-                            tint = EarthOrange
+                            tint = EarthOrange,
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = SandBackground),
-                windowInsets = WindowInsets(0, 0, 0, 0)
+                windowInsets = WindowInsets(0, 0, 0, 0),
             )
-        }
+        },
     ) { paddingValues ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 16.dp)
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(horizontal = 16.dp)
+                    .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
                 text = missionTitle,
                 style = MaterialTheme.typography.headlineSmall,
                 color = ForestGreen,
                 fontWeight = FontWeight.ExtraBold,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
             )
 
             category?.takeIf { it.isNotBlank() }?.let {
@@ -154,9 +159,10 @@ fun MissionDetailScreen(
                     text = it,
                     color = CreamSurface,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier
-                        .background(RiverTeal, RoundedCornerShape(20.dp))
-                        .padding(horizontal = 14.dp, vertical = 6.dp)
+                    modifier =
+                        Modifier
+                            .background(RiverTeal, RoundedCornerShape(20.dp))
+                            .padding(horizontal = 14.dp, vertical = 6.dp),
                 )
             }
 
@@ -169,7 +175,7 @@ fun MissionDetailScreen(
                 modifier = Modifier.fillMaxWidth(),
                 color = BarkBrown,
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -178,22 +184,37 @@ fun MissionDetailScreen(
 
             InfoLabel(
                 title = "Tipo de misión",
-                value = if (modality.equals("remota", ignoreCase = true)) {
-                    "Misión remota"
-                } else {
-                    "Misión de campo"
-                },
+                value =
+                    if (modality.equals("remota", ignoreCase = true)) {
+                        "Misión remota"
+                    } else {
+                        "Misión de campo"
+                    },
                 accentColor = RiverTeal,
-                backgroundColor = LightRiver
+                backgroundColor = LightRiver,
             )
 
             Spacer(modifier = Modifier.height(14.dp))
+
+            // --- AQUÍ ESTÁ TU UBICACIÓN APROXIMADA (HU-028) ---
+            if (modality.equals("campo", ignoreCase = true)) {
+                InfoSection(
+                    title = "Ubicación aproximada",
+                    text = "$approximateZone\n\n(La dirección exacta se revelará al ser aceptado)",
+                    accentColor = EarthOrange,
+                    backgroundColor = LightEarth,
+                )
+                Spacer(modifier = Modifier.height(14.dp))
+            }
+            // ---------------------------------------------------
+
             InfoSection(
                 title = "Para esta misión necesitarás",
-                text = requirements?.takeIf { it.isNotBlank() }
-                    ?: "No hay requerimientos específicos.",
+                text =
+                    requirements?.takeIf { it.isNotBlank() }
+                        ?: "No hay requerimientos específicos.",
                 accentColor = LeafGreen,
-                backgroundColor = LightLeaf
+                backgroundColor = LightLeaf,
             )
 
             Spacer(modifier = Modifier.height(14.dp))
@@ -201,7 +222,7 @@ fun MissionDetailScreen(
                 title = "Descripción de la misión",
                 text = missionDescription,
                 accentColor = EarthOrange,
-                backgroundColor = LightEarth
+                backgroundColor = LightEarth,
             )
 
             Spacer(modifier = Modifier.height(14.dp))
@@ -209,7 +230,7 @@ fun MissionDetailScreen(
                 title = "Participantes",
                 text = "Cupo máximo: " + maxParticipants + " participantes. Los participantes aceptados aparecerán aquí.",
                 accentColor = RiverTeal,
-                backgroundColor = LightRiver
+                backgroundColor = LightRiver,
             )
 
             applicationState.message?.let { message ->
@@ -219,15 +240,16 @@ fun MissionDetailScreen(
                     color = if (applicationState.isError) AlertCoral else ForestGreen,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(CreamSurface, RoundedCornerShape(12.dp))
-                        .border(
-                            2.dp,
-                            if (applicationState.isError) AlertCoral else LeafGreen,
-                            RoundedCornerShape(12.dp)
-                        )
-                        .padding(12.dp)
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .background(CreamSurface, RoundedCornerShape(12.dp))
+                            .border(
+                                2.dp,
+                                if (applicationState.isError) AlertCoral else LeafGreen,
+                                RoundedCornerShape(12.dp),
+                            )
+                            .padding(12.dp),
                 )
             }
 
@@ -235,31 +257,34 @@ fun MissionDetailScreen(
             Button(
                 onClick = onApply,
                 enabled = !applicationState.isSubmitting && !applicationState.wasSubmitted,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(58.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = LeafGreen,
-                    contentColor = CreamSurface,
-                    disabledContainerColor = LightLeaf,
-                    disabledContentColor = ForestGreen
-                ),
-                shape = RoundedCornerShape(14.dp)
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(58.dp),
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = LeafGreen,
+                        contentColor = CreamSurface,
+                        disabledContainerColor = LightLeaf,
+                        disabledContentColor = ForestGreen,
+                    ),
+                shape = RoundedCornerShape(14.dp),
             ) {
                 if (applicationState.isSubmitting) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(24.dp),
                         color = CreamSurface,
-                        strokeWidth = 2.dp
+                        strokeWidth = 2.dp,
                     )
                 } else {
                     Text(
-                        text = if (applicationState.wasSubmitted) {
-                            "Postulación enviada"
-                        } else {
-                            "Postularse a la misión"
-                        },
-                        fontWeight = FontWeight.ExtraBold
+                        text =
+                            if (applicationState.wasSubmitted) {
+                                "Postulación enviada"
+                            } else {
+                                "Postularse a la misión"
+                            },
+                        fontWeight = FontWeight.ExtraBold,
                     )
                 }
             }
@@ -271,13 +296,14 @@ fun MissionDetailScreen(
 @Composable
 private fun PublisherCard(publisherName: String?) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(CreamSurface, RoundedCornerShape(14.dp))
-            .border(2.dp, EarthOrange, RoundedCornerShape(14.dp))
-            .padding(14.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(CreamSurface, RoundedCornerShape(14.dp))
+                .border(2.dp, EarthOrange, RoundedCornerShape(14.dp))
+                .padding(14.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Text("Publicado por", color = BarkBrown, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.width(12.dp))
@@ -286,7 +312,7 @@ private fun PublisherCard(publisherName: String?) {
             color = EarthOrange,
             fontWeight = FontWeight.ExtraBold,
             textAlign = TextAlign.End,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         )
     }
 }
@@ -296,13 +322,14 @@ private fun MissionLocationPanel(modality: String) {
     val isRemote = modality.equals("remota", ignoreCase = true)
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(190.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(190.dp),
         shape = RoundedCornerShape(18.dp),
         border = BorderStroke(3.dp, RiverTeal),
         colors = CardDefaults.cardColors(containerColor = LightRiver),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             if (isRemote) {
@@ -311,30 +338,31 @@ private fun MissionLocationPanel(modality: String) {
                     color = ForestGreen,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(24.dp)
+                    modifier = Modifier.padding(24.dp),
                 )
             } else {
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     drawCircle(
                         color = LightLeaf,
                         radius = size.minDimension * 0.34f,
-                        center = Offset(size.width * 0.2f, size.height * 0.3f)
+                        center = Offset(size.width * 0.2f, size.height * 0.3f),
                     )
                     drawCircle(
                         color = CreamSurface,
                         radius = size.minDimension * 0.28f,
-                        center = Offset(size.width * 0.78f, size.height * 0.73f)
+                        center = Offset(size.width * 0.78f, size.height * 0.73f),
                     )
                     for (step in 0..7) {
                         val x = size.width * step / 7f
                         drawLine(
                             color = MapLine,
                             start = Offset(x, 0f),
-                            end = Offset(
-                                (x + size.width * 0.25f).coerceAtMost(size.width),
-                                size.height
-                            ),
-                            strokeWidth = 4f
+                            end =
+                                Offset(
+                                    (x + size.width * 0.25f).coerceAtMost(size.width),
+                                    size.height,
+                                ),
+                            strokeWidth = 4f,
                         )
                     }
                     for (step in 0..5) {
@@ -342,11 +370,12 @@ private fun MissionLocationPanel(modality: String) {
                         drawLine(
                             color = MapLine,
                             start = Offset(0f, y),
-                            end = Offset(
-                                size.width,
-                                (y + size.height * 0.2f).coerceAtMost(size.height)
-                            ),
-                            strokeWidth = 4f
+                            end =
+                                Offset(
+                                    size.width,
+                                    (y + size.height * 0.2f).coerceAtMost(size.height),
+                                ),
+                            strokeWidth = 4f,
                         )
                     }
                 }
@@ -354,17 +383,18 @@ private fun MissionLocationPanel(modality: String) {
                     text = "MAPA DE UBICACIÓN",
                     color = ForestGreen,
                     fontWeight = FontWeight.ExtraBold,
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(12.dp)
-                        .background(CreamSurface.copy(alpha = 0.9f), RoundedCornerShape(8.dp))
-                        .padding(horizontal = 10.dp, vertical = 5.dp)
+                    modifier =
+                        Modifier
+                            .align(Alignment.TopStart)
+                            .padding(12.dp)
+                            .background(CreamSurface.copy(alpha = 0.9f), RoundedCornerShape(8.dp))
+                            .padding(horizontal = 10.dp, vertical = 5.dp),
                 )
                 Icon(
                     imageVector = Icons.Default.LocationOn,
                     contentDescription = "Ubicación aproximada de la misión",
                     tint = AlertCoral,
-                    modifier = Modifier.size(54.dp)
+                    modifier = Modifier.size(54.dp),
                 )
             }
         }
@@ -376,16 +406,17 @@ private fun InfoLabel(
     title: String,
     value: String,
     accentColor: Color,
-    backgroundColor: Color
+    backgroundColor: Color,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(backgroundColor, RoundedCornerShape(14.dp))
-            .border(2.dp, accentColor, RoundedCornerShape(14.dp))
-            .padding(14.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(backgroundColor, RoundedCornerShape(14.dp))
+                .border(2.dp, accentColor, RoundedCornerShape(14.dp))
+                .padding(14.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(title, color = BarkBrown, fontWeight = FontWeight.Bold)
         Text(value, color = accentColor, fontWeight = FontWeight.ExtraBold)
@@ -397,27 +428,27 @@ private fun InfoSection(
     title: String,
     text: String,
     accentColor: Color,
-    backgroundColor: Color
+    backgroundColor: Color,
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
             text = title,
             color = ForestGreen,
             fontWeight = FontWeight.ExtraBold,
-            style = MaterialTheme.typography.titleMedium
+            style = MaterialTheme.typography.titleMedium,
         )
         Spacer(modifier = Modifier.height(7.dp))
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(14.dp),
             border = BorderStroke(2.dp, accentColor),
-            colors = CardDefaults.cardColors(containerColor = backgroundColor)
+            colors = CardDefaults.cardColors(containerColor = backgroundColor),
         ) {
             Text(
                 text = text,
                 modifier = Modifier.padding(16.dp),
                 color = BarkBrown,
-                style = MaterialTheme.typography.bodyLarge
+                style = MaterialTheme.typography.bodyLarge,
             )
         }
     }
