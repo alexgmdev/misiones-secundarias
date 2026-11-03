@@ -6,7 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.kotlin.serialization)
-    //alias(libs.plugins.detekt)
+    alias(libs.plugins.detekt)
     alias(libs.plugins.ktlint)
 }
 
@@ -102,15 +102,24 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 }
 
-//detekt {
-//    buildUponDefaultConfig = true
-//    allRules = false
-//    config.setFrom(files("$rootDir/detekt.yml"))
-//}
+detekt {
+    buildUponDefaultConfig = true
+    allRules = false
+    config.setFrom(files("$rootDir/detekt.yml"))
+}
 
 // ESTO EVITA QUE KTLINT INTENTE FORMATEAR LOS ARCHIVOS DE GRADLE
 ktlint {
     filter {
         exclude { element -> element.file.path.contains("build.gradle") }
+    }
+}
+
+kotlin {
+    jvmToolchain(17)
+}
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
     }
 }
