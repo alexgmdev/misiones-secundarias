@@ -13,7 +13,6 @@ import io.github.jan.supabase.gotrue.SessionStatus
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.exception.AuthRestException
 import io.github.jan.supabase.gotrue.providers.builtin.Email
-import io.github.jan.supabase.gotrue.user.UserSession
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.rpc
 import io.ktor.client.request.setBody
@@ -22,14 +21,12 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import kotlinx.serialization.json.longOrNull
 import kotlinx.serialization.json.put
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -47,7 +44,14 @@ class AuthRepositoryImpl(
         client.auth.sessionStatus.map { status ->
             when (status) {
                 is SessionStatus.LoadingFromStorage -> SessionState.LOADING
-                is SessionStatus.Authenticated, is SessionStatus.NetworkError -> SessionState.AUTHENTICATED
+                is SessionStatus.Authenticated -> SessionState.AUTHENTICATED
+                is SessionStatus.NetworkError -> {
+                    if (client.auth.currentUserOrNull() != null) {
+                        SessionState.AUTHENTICATED
+                    } else {
+                        SessionState.UNAUTHENTICATED
+                    }
+                }
                 is SessionStatus.NotAuthenticated -> SessionState.UNAUTHENTICATED
             }
         }
@@ -129,33 +133,13 @@ class AuthRepositoryImpl(
             client.auth.signOut()
         }
 
-    /**
-     * Importa al cliente de autenticación la sesión devuelta por `login-telefono` (que no incluye `user`):
-     * se arma una [UserSession] sin usuario y luego se consulta el usuario real. Si el SDK no puede
-     * serializar esa sesión, se recurre a [io.github.jan.supabase.gotrue.Auth.importAuthToken].
-     *
-     * @param body Cuerpo JSON de la respuesta 200 de la función.
-     * @throws AuthException con [AuthError.ServerError] si la respuesta no trae los tokens.
-     */
+    /** Importa los tokens del login por celular y recupera el usuario antes de continuar. */
     private suspend fun importPhoneSession(body: String) {
         val json = Json.parseToJsonElement(body).jsonObject
         val accessToken = json.string("access_token")
         val refreshToken = json.string("refresh_token")
-        val expiresIn = json["expires_in"]?.jsonPrimitive?.longOrNull ?: DEFAULT_EXPIRES_IN_SECONDS
-        try {
-            client.auth.importSession(
-                UserSession(
-                    accessToken = accessToken,
-                    refreshToken = refreshToken,
-                    expiresIn = expiresIn,
-                    tokenType = json["token_type"]?.jsonPrimitive?.contentOrNull ?: "bearer",
-                    user = null,
-                ),
-            )
-            client.auth.retrieveUserForCurrentSession(updateSession = true)
-        } catch (ignored: SerializationException) {
-            client.auth.importAuthToken(accessToken, refreshToken, retrieveUser = true)
-        }
+        client.auth.importAuthToken(accessToken, refreshToken, retrieveUser = true)
+        checkNotNull(client.auth.currentUserOrNull()) { "No fue posible cargar el usuario autenticado." }
     }
 
     private fun JsonObject.string(key: String): String =
@@ -187,7 +171,6 @@ class AuthRepositoryImpl(
 
     private companion object {
         const val PHONE_LOGIN_FUNCTION = "login-telefono"
-        const val DEFAULT_EXPIRES_IN_SECONDS = 3600L
     }
 
     /** Extrae el código de error de GoTrue (`error_code`) cuando la excepción lo trae. */

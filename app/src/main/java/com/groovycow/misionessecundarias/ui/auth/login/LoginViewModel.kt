@@ -84,6 +84,11 @@ class LoginViewModel(
         }
     }
 
+    /** Consume el ingreso exitoso para que no vuelva a navegar con un estado antiguo. */
+    fun onSignInHandled() {
+        _uiState.update { it.copy(isSignedIn = false, password = "") }
+    }
+
     private fun edit(
         field: LoginField,
         transform: (LoginUiState) -> LoginUiState,

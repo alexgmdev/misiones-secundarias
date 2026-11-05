@@ -49,4 +49,8 @@ class ApplicationViewModel(
     fun reset() {
         _uiState.value = ApplicationUiState()
     }
+
+    fun dismissMessage() {
+        _uiState.value = _uiState.value.copy(message = null)
+    }
 }

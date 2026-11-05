@@ -23,6 +23,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -34,6 +35,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -87,6 +89,7 @@ fun MissionDetailRoute(
         approximateZone = approximateZone,
         onBack = onBack,
         onApply = { applicationViewModel.applyToMission(missionId) },
+        onDismissApplicationMessage = applicationViewModel::dismissMessage,
         applicationState = applicationState,
     )
 }
@@ -105,6 +108,7 @@ fun MissionDetailScreen(
     approximateZone: String,
     onBack: () -> Unit,
     onApply: () -> Unit = {},
+    onDismissApplicationMessage: () -> Unit = {},
     applicationState: ApplicationUiState = ApplicationUiState(),
 ) {
     val formattedDate =
@@ -233,26 +237,6 @@ fun MissionDetailScreen(
                 backgroundColor = LightRiver,
             )
 
-            applicationState.message?.let { message ->
-                Spacer(modifier = Modifier.height(14.dp))
-                Text(
-                    text = message,
-                    color = if (applicationState.isError) AlertCoral else ForestGreen,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .background(CreamSurface, RoundedCornerShape(12.dp))
-                            .border(
-                                2.dp,
-                                if (applicationState.isError) AlertCoral else LeafGreen,
-                                RoundedCornerShape(12.dp),
-                            )
-                            .padding(12.dp),
-                )
-            }
-
             Spacer(modifier = Modifier.height(18.dp))
             Button(
                 onClick = onApply,
@@ -290,6 +274,28 @@ fun MissionDetailScreen(
             }
             Spacer(modifier = Modifier.height(20.dp))
         }
+    }
+
+    applicationState.message?.let { message ->
+        AlertDialog(
+            onDismissRequest = onDismissApplicationMessage,
+            containerColor = CreamSurface,
+            title = {
+                Text(
+                    text = if (applicationState.isError) "No fue posible postularte" else "Postulación registrada",
+                    color = if (applicationState.isError) AlertCoral else ForestGreen,
+                    fontWeight = FontWeight.ExtraBold,
+                )
+            },
+            text = {
+                Text(text = message, color = BarkBrown)
+            },
+            confirmButton = {
+                TextButton(onClick = onDismissApplicationMessage) {
+                    Text("Aceptar", color = ForestGreen, fontWeight = FontWeight.Bold)
+                }
+            },
+        )
     }
 }
 
