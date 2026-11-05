@@ -24,6 +24,7 @@ CREATE TABLE missions (
     title TEXT NOT NULL,
     description TEXT NOT NULL,
     category TEXT NULL,
+    requirements TEXT NULL,
     modality TEXT CHECK (modality IN ('campo', 'remota')) NOT NULL,
     date_time TIMESTAMP WITH TIME ZONE NOT NULL,
     location GEOGRAPHY(POINT) NULL,

@@ -21,6 +21,11 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
+      - name: Crear local.properties con credenciales
+        run: |
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" > local.properties
+          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> local.properties
+
       - name: Dar permisos de ejecución a Gradle
         run: chmod +x gradlew
 
@@ -33,5 +38,15 @@ jobs:
       - name: Ejecutar Pruebas Unitarias
         run: ./gradlew testDebugUnitTest
 
+      - name: Generar Reporte de Cobertura (Jacoco)
+        run: ./gradlew jacocoTestReport
+
       - name: Compilar APK de Debug
         run: ./gradlew assembleDebug
+
+      - name: Subir reporte de cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: build/reports/jacoco/jacocoTestReport/
