@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.detekt)
     alias(libs.plugins.ktlint)
+    id("jacoco")
 }
 
 val localProperties =
@@ -36,6 +37,9 @@ android {
     }
 
     buildTypes {
+        debug{
+            enableUnitTestCoverage = true
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -80,6 +84,7 @@ dependencies {
     implementation(libs.supabase.kt)
     implementation(libs.supabase.gotrue)
     implementation(libs.supabase.postgrest)
+    implementation(libs.supabase.functions)
     implementation(libs.kotlinx.serialization.json)
     implementation("io.ktor:ktor-client-okhttp:2.3.12")
 
@@ -115,11 +120,56 @@ ktlint {
     }
 }
 
-kotlin {
-    jvmToolchain(17)
-}
+
 java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(17))
     }
+}
+
+tasks.withType<Test> {
+    configure<JacocoTaskExtension> {
+        isIncludeNoLocationClasses = true
+        excludes = listOf("jdk.internal.*")
+    }
+}
+
+tasks.register<JacocoReport>("jacocoTestReport") {
+    dependsOn("testDebugUnitTest")
+
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+        csv.required.set(false)
+    }
+
+    val fileFilter = listOf(
+        "**/R.class",
+        "**/R$*.class",
+        "**/BuildConfig.*",
+        "**/Manifest*.*",
+        "**/*Test*.*",
+        "android/**/*.*",
+        "**/*ComposableSingletons*.*",
+        "**/*_Impl*.*", // Clases generadas por Room KSP
+        "**/ui/theme/*.*",
+        "**/ui/**/PreviewsKt*.*"
+    )
+
+    val debugTree = fileTree("${layout.buildDirectory.get()}/tmp/kotlin-classes/debug") {
+        exclude(fileFilter)
+    }
+
+    val mainSrc = "${project.projectDir}/src/main/java"
+
+    sourceDirectories.setFrom(files(mainSrc))
+    classDirectories.setFrom(files(debugTree))
+    executionData.setFrom(
+        fileTree(layout.buildDirectory.get()) {
+            include(
+                "outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec",
+                "jacoco/testDebugUnitTest.exec"
+            )
+        }
+    )
 }

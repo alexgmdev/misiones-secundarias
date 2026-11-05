@@ -19,9 +19,22 @@ Aplicación móvil Android para facilitar la colaboración comunitaria en Cali. 
 
 ## Configuración Inicial
 1. Clonar el repositorio.
-2. Copiar el archivo de variables de entorno: `cp .env.example .env`
-3. Solicitar las credenciales de Supabase al Líder Técnico e ingresarlas en el `.env`.
-4. Abrir el proyecto en Android Studio y sincronizar Gradle.
+2. Crear (o editar) `local.properties` en la raíz del proyecto (está ignorado por git) con la ruta del SDK y las credenciales de Supabase, que se solicitan al Líder Técnico:
+   ```properties
+   sdk.dir=/ruta/a/Android/Sdk
+   SUPABASE_URL=https://tu-proyecto.supabase.co
+   SUPABASE_ANON_KEY=tu_anon_key_aqui
+   ```
+3. Abrir el proyecto en Android Studio y sincronizar Gradle.
+
+### Checklist del dashboard de Supabase (autenticación)
+Ajustes que no se versionan y deben revisarse a mano en el proyecto:
+*   **Confirm email: OFF**.
+*   Política de clave: mínimo 8 caracteres con minúsculas, mayúsculas y dígitos.
+*   Plantilla *Reset Password* con el código `{{ .Token }}`; OTP de 6 dígitos y expiración de 900 s.
+*   SMTP propio configurado.
+*   Ejecutar en el SQL editor `supabase/changes/2026-11-03_auth_profiles_privacy.sql` y `supabase/changes/2026-11-03_login_attempts.sql` (reversa: `2026-11-03_auth_rollback.sql`). Coordinar antes con el equipo: afectan la BD compartida.
+*   Desplegar la Edge Function: `supabase functions deploy login-telefono`.
 
 ## Flujo de Trabajo (Git)
 *   `main`: Solo releases estables.
