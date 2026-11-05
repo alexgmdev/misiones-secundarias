@@ -13,6 +13,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.time.OffsetDateTime
 
+// gestión de supabase y supabase auth
 class ApplicationRepositoryImpl(
     private val supabase: SupabaseClient,
 ) : ApplicationRepository {
