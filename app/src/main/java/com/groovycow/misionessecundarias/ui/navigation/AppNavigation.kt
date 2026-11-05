@@ -3,7 +3,10 @@ package com.groovycow.misionessecundarias.ui.navigation
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -13,10 +16,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.groovycow.misionessecundarias.domain.model.Mission
 import com.groovycow.misionessecundarias.ui.applications.MyApplicationsScreen
 import com.groovycow.misionessecundarias.ui.auth.SessionViewModel
 import com.groovycow.misionessecundarias.ui.auth.StartDestination
+import com.groovycow.misionessecundarias.ui.auth.register.RegisterScreen
 import com.groovycow.misionessecundarias.ui.missions.MissionDetailRoute
 import com.groovycow.misionessecundarias.ui.missions.MissionListScreen
 import org.koin.androidx.compose.koinViewModel
@@ -25,6 +30,9 @@ import org.koin.androidx.compose.koinViewModel
 sealed interface AppDestination {
     /** Inicio de sesión (provisional: placeholder hasta HU-002). */
     data object Login : AppDestination
+
+    /** Registro de cuenta (HU-001). */
+    data object Register : AppDestination
 
     /** Configuración inicial de perfil (`perfil-inicial`; placeholder hasta HU-005). */
     data object InitialProfile : AppDestination
@@ -77,13 +85,23 @@ fun AppNavigation() {
     BackHandler(enabled = currentDestination == AppDestination.Login || currentDestination == AppDestination.InitialProfile) {
         destination = AppDestination.MainMenu
     }
+    BackHandler(enabled = currentDestination == AppDestination.Register) {
+        destination = AppDestination.Login
+    }
 
     when (currentDestination) {
         AppDestination.Login -> {
             // TODO(HU-002): reemplazar por LoginScreen. Mientras tanto "Volver" entra al menú para no bloquear el desarrollo.
-            FeaturePlaceholderScreen(
-                title = "Inicio de sesión",
+            LoginPlaceholder(
+                onRegister = { destination = AppDestination.Register },
                 onBack = { destination = AppDestination.MainMenu },
+            )
+        }
+
+        AppDestination.Register -> {
+            RegisterScreen(
+                onRegistered = { destination = AppDestination.InitialProfile },
+                onBack = { destination = AppDestination.Login },
             )
         }
 
@@ -136,6 +154,25 @@ fun AppNavigation() {
                 title = currentDestination.menuDestination.title,
                 onBack = { destination = AppDestination.MainMenu },
             )
+        }
+    }
+}
+
+/**
+ * Inicio de sesión provisional (hasta HU-002): placeholder con enlace al registro.
+ *
+ * @param onRegister Acción al elegir "Crear cuenta".
+ * @param onBack Acción de "Volver" (entra al menú para no bloquear el desarrollo).
+ */
+@Composable
+private fun LoginPlaceholder(
+    onRegister: () -> Unit,
+    onBack: () -> Unit,
+) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        FeaturePlaceholderScreen(title = "Inicio de sesión", onBack = onBack)
+        TextButton(onClick = onRegister, modifier = Modifier.align(Alignment.BottomCenter).padding(24.dp)) {
+            Text("¿No tienes cuenta? Crear cuenta")
         }
     }
 }

@@ -25,14 +25,14 @@ Trazabilidad: AR = auth-registro, AL = auth-login, AC = auth-recuperacion (requi
 
 ## PR 1: `hu/HU-001` Registro (depende de PR 0)
 
-- [ ] 1.1 (S) RED `T/domain/validation/{Email,Name}ValidatorTest.kt` (vacío, solo espacios, trim, <=60, formato) -> GREEN `domain/validation/{ValidationResult,FieldError,EmailValidator,NameValidator}.kt`. [AR Campos obligatorios, Formato de correo]
-- [ ] 1.2 (S) RED `PhoneValidatorTest` (`normalize`: espacios, guiones, `+57`, `^3\d{9}$`, null) -> GREEN `PhoneValidator.kt`. [AR Formato de celular x3]
-- [ ] 1.3 (S) RED `PasswordValidatorTest` (`unmetRules`: <8, sin mayús/minús/dígito, válida) -> GREEN `PasswordValidator.kt`. [AR Contraseña robusta x3, Confirmación]
-- [ ] 1.4 (S) RED `BirthDateValidatorTest` con `Clock.fixed(2026-11-03)`: menor, futura, exactamente 18 -> GREEN `BirthDateValidator.kt`. [AR Edad mínima x3]
-- [ ] 1.5 (M) RED `T/domain/usecase/RegisterUseCaseTest.kt`: `isPhoneAvailable=false` -> `PhoneInUse` sin `signUp`; EmailInUse; NoConnection; ServerError; éxito. GREEN `RegisterUseCase.kt`. [AR Unicidad x4, Registro exitoso, Errores x2]
-- [ ] 1.6 (M) `AuthRepository`: `isPhoneAvailable`, `signUp(RegistrationData)`; `AuthRepositoryImpl` (rpc `telefono_disponible`, `signUpWith(Email){data=…}`; DTOs privados). [AR Unicidad celular, Registro exitoso]
-- [ ] 1.7 (L) RED `T/ui/auth/register/RegisterViewModelTest.kt`: errores por campo, correo trim, no llama caso de uso si hay errores, `isLoading` evita doble envío, `isRegistered`, `error`. GREEN `RegisterViewModel.kt` + `RegisterUiState`. [AR todos los requisitos de validación, Estado de carga, Errores]
-- [ ] 1.8 (L) `ui/auth/register/RegisterScreen.kt` + `ui/auth/AuthMessages.kt` (textos de la spec) + destino `Register` y enlace desde Login; `onRegistered` -> `InitialProfile`; registrar VM/validadores en `AuthModule`. Manual: Gherkin HU-001 en dispositivo.
+- [x] 1.1 (S) RED `T/domain/validation/{Email,Name}ValidatorTest.kt` (vacío, solo espacios, trim, <=60, formato) -> GREEN `domain/validation/{ValidationResult,FieldError,EmailValidator,NameValidator}.kt`. [AR Campos obligatorios, Formato de correo]
+- [x] 1.2 (S) RED `PhoneValidatorTest` (`normalize`: espacios, guiones, `+57`, `^3\d{9}$`, null) -> GREEN `PhoneValidator.kt`. [AR Formato de celular x3]
+- [x] 1.3 (S) RED `PasswordValidatorTest` (`unmetRules`: <8, sin mayús/minús/dígito, válida) -> GREEN `PasswordValidator.kt`. [AR Contraseña robusta x3, Confirmación]
+- [x] 1.4 (S) RED `BirthDateValidatorTest` con `Clock.fixed(2026-11-03)`: menor, futura, exactamente 18 -> GREEN `BirthDateValidator.kt`. [AR Edad mínima x3]
+- [x] 1.5 (M) RED `T/domain/usecase/RegisterUseCaseTest.kt`: `isPhoneAvailable=false` -> `PhoneInUse` sin `signUp`; EmailInUse; NoConnection; ServerError; éxito. GREEN `RegisterUseCase.kt`. [AR Unicidad x4, Registro exitoso, Errores x2]
+- [x] 1.6 (M) `AuthRepository`: `isPhoneAvailable`, `signUp(RegistrationData)`; `AuthRepositoryImpl` (rpc `telefono_disponible`, `signUpWith(Email){data=…}`; DTOs privados). [AR Unicidad celular, Registro exitoso]
+- [x] 1.7 (L) RED `T/ui/auth/register/RegisterViewModelTest.kt`: errores por campo, correo trim, no llama caso de uso si hay errores, `isLoading` evita doble envío, `isRegistered`, `error`. GREEN `RegisterViewModel.kt` + `RegisterUiState`. [AR todos los requisitos de validación, Estado de carga, Errores]
+- [x] 1.8 (L) `ui/auth/register/RegisterScreen.kt` + `ui/auth/AuthMessages.kt` (textos de la spec) + destino `Register` y enlace desde Login; `onRegistered` -> `InitialProfile`; registrar VM/validadores en `AuthModule`. Manual: Gherkin HU-001 en dispositivo.
 - [ ] 1.9 (S) Push, CI verde, PR a develop.
 
 ## PR 2: `hu/HU-002` Login + Edge Function (depende de PR 0; reusa PhoneValidator de PR 1 -> mergear después de PR 1)
