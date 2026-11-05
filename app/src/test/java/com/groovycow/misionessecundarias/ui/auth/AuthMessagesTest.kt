@@ -19,6 +19,12 @@ class AuthMessagesTest {
     }
 
     @Test
+    fun recoveryMessagesUseExactSpecText() {
+        assertEquals("Ingresa el código numérico", FieldError.InvalidCode.toMessage())
+        assertEquals("Si el correo está registrado, recibirás un código", RECOVERY_CODE_SENT_MESSAGE)
+    }
+
+    @Test
     fun everyFieldErrorHasANonBlankMessage() {
         FieldError.entries.forEach { assert(it.toMessage().isNotBlank()) }
     }

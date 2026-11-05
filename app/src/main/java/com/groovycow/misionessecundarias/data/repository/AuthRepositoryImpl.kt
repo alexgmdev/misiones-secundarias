@@ -8,6 +8,7 @@ import com.groovycow.misionessecundarias.domain.repository.AuthRepository
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.exceptions.RestException
 import io.github.jan.supabase.functions.functions
+import io.github.jan.supabase.gotrue.OtpType
 import io.github.jan.supabase.gotrue.SessionStatus
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.exception.AuthRestException
@@ -104,6 +105,24 @@ class AuthRepositoryImpl(
             }
         importPhoneSession(response.bodyAsText())
     }
+
+    override suspend fun sendPasswordResetCode(email: String) =
+        translatingErrors(AuthOperation.OTHER) {
+            client.auth.resetPasswordForEmail(email)
+        }
+
+    override suspend fun verifyRecoveryCode(
+        email: String,
+        code: String,
+    ) = translatingErrors(AuthOperation.VERIFY) {
+        client.auth.verifyEmailOtp(OtpType.Email.RECOVERY, email, code)
+    }
+
+    override suspend fun updatePassword(newPassword: String) =
+        translatingErrors(AuthOperation.OTHER) {
+            client.auth.updateUser { password = newPassword }
+            Unit
+        }
 
     override suspend fun signOut() =
         translatingErrors(AuthOperation.OTHER) {

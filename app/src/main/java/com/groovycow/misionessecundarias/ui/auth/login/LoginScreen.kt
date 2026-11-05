@@ -41,6 +41,7 @@ import org.koin.androidx.compose.koinViewModel
  * @param onSignedIn Se invoca una sola vez cuando la sesión quedó iniciada; navega a `menu-principal`.
  * @param onRegister Acción al elegir "Crear cuenta".
  * @param onForgotPassword Acción al elegir "¿Olvidaste tu contraseña?"; si es null el enlace no se muestra.
+ * @param notice Mensaje informativo opcional sobre el formulario (por ejemplo, tras cambiar la contraseña).
  * @param viewModel ViewModel del inicio de sesión, obtenido con Koin.
  */
 @Composable
@@ -48,6 +49,7 @@ fun LoginScreen(
     onSignedIn: () -> Unit,
     onRegister: () -> Unit,
     onForgotPassword: (() -> Unit)? = null,
+    notice: String? = null,
     viewModel: LoginViewModel = koinViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -67,6 +69,7 @@ fun LoginScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
         ) {
             Text("Iniciar Sesión", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+            notice?.let { Text(it, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodyMedium) }
             LoginTextField(
                 label = "Correo o celular",
                 value = state.identifier,

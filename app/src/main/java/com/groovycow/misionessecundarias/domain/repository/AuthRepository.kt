@@ -60,6 +60,37 @@ interface AuthRepository {
     )
 
     /**
+     * Solicita a Supabase que envíe por correo un código numérico (OTP) de recuperación de contraseña.
+     *
+     * @param email Correo de la cuenta (sin espacios laterales).
+     * @throws com.groovycow.misionessecundarias.domain.model.AuthException si hay error de red o del servidor.
+     */
+    suspend fun sendPasswordResetCode(email: String)
+
+    /**
+     * Verifica el código de recuperación (`verifyEmailOtp` de tipo recuperación); si es válido el cliente
+     * queda con una sesión temporal que permite cambiar la contraseña.
+     *
+     * @param email Correo al que se envió el código.
+     * @param code Código numérico digitado.
+     * @throws com.groovycow.misionessecundarias.domain.model.AuthException con `InvalidOrExpiredCode` si el
+     * código es incorrecto o expiró, o por error de red o del servidor.
+     */
+    suspend fun verifyRecoveryCode(
+        email: String,
+        code: String,
+    )
+
+    /**
+     * Actualiza la contraseña del usuario de la sesión de recuperación (`updateUser { password }`).
+     *
+     * @param newPassword Nueva contraseña.
+     * @throws com.groovycow.misionessecundarias.domain.model.AuthException si la clave es débil, igual a la
+     * anterior, o hay error de red o del servidor.
+     */
+    suspend fun updatePassword(newPassword: String)
+
+    /**
      * Cierra la sesión actual.
      *
      * @throws com.groovycow.misionessecundarias.domain.model.AuthException si falla la operación.

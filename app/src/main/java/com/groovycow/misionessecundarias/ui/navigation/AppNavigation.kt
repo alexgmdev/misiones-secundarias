@@ -18,6 +18,8 @@ import com.groovycow.misionessecundarias.ui.applications.MyApplicationsScreen
 import com.groovycow.misionessecundarias.ui.auth.SessionViewModel
 import com.groovycow.misionessecundarias.ui.auth.StartDestination
 import com.groovycow.misionessecundarias.ui.auth.login.LoginScreen
+import com.groovycow.misionessecundarias.ui.auth.recovery.RequestCodeScreen
+import com.groovycow.misionessecundarias.ui.auth.recovery.ResetPasswordScreen
 import com.groovycow.misionessecundarias.ui.auth.register.RegisterScreen
 import com.groovycow.misionessecundarias.ui.missions.MissionDetailRoute
 import com.groovycow.misionessecundarias.ui.missions.MissionListScreen
@@ -30,6 +32,16 @@ sealed interface AppDestination {
 
     /** Registro de cuenta (HU-001). */
     data object Register : AppDestination
+
+    /** Solicitud del código de recuperación de contraseña (HU-003). */
+    data object RequestCode : AppDestination
+
+    /**
+     * Ingreso del código y nueva contraseña (HU-004).
+     *
+     * @property email Correo al que se envió el código.
+     */
+    data class ResetPassword(val email: String) : AppDestination
 
     /** Configuración inicial de perfil (`perfil-inicial`; placeholder hasta HU-005). */
     data object InitialProfile : AppDestination
@@ -64,6 +76,7 @@ fun AppNavigation() {
     val startDestination by sessionViewModel.startDestination.collectAsState()
     var selectedMission by remember { mutableStateOf<Mission?>(null) }
     var destination by remember { mutableStateOf<AppDestination?>(null) }
+    var loginNotice by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(startDestination) {
         if (destination == null) {
@@ -82,7 +95,7 @@ fun AppNavigation() {
     BackHandler(enabled = currentDestination == AppDestination.InitialProfile) {
         destination = AppDestination.MainMenu
     }
-    BackHandler(enabled = currentDestination == AppDestination.Register) {
+    BackHandler(enabled = currentDestination == AppDestination.Register || currentDestination == AppDestination.RequestCode) {
         destination = AppDestination.Login
     }
 
@@ -91,6 +104,29 @@ fun AppNavigation() {
             LoginScreen(
                 onSignedIn = { destination = AppDestination.MainMenu },
                 onRegister = { destination = AppDestination.Register },
+                onForgotPassword = {
+                    loginNotice = null
+                    destination = AppDestination.RequestCode
+                },
+                notice = loginNotice,
+            )
+        }
+
+        AppDestination.RequestCode -> {
+            RequestCodeScreen(
+                onCodeSent = { email -> destination = AppDestination.ResetPassword(email) },
+                onBack = { destination = AppDestination.Login },
+            )
+        }
+
+        is AppDestination.ResetPassword -> {
+            ResetPasswordScreen(
+                email = currentDestination.email,
+                onPasswordChanged = {
+                    loginNotice = PASSWORD_CHANGED_NOTICE
+                    destination = AppDestination.Login
+                },
+                onBack = { destination = AppDestination.RequestCode },
             )
         }
 
@@ -153,6 +189,9 @@ fun AppNavigation() {
         }
     }
 }
+
+/** Mensaje mostrado en el login tras restablecer la contraseña. */
+private const val PASSWORD_CHANGED_NOTICE = "Contraseña actualizada. Inicia sesión con tu nueva contraseña"
 
 /** Traduce el destino inicial resuelto por [SessionViewModel] (`null` mientras carga la sesión). */
 private fun StartDestination.toAppDestination(): AppDestination? =

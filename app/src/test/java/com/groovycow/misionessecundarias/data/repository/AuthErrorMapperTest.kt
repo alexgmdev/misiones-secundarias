@@ -67,6 +67,16 @@ class AuthErrorMapperTest {
     }
 
     @Test
+    fun mapsClientRejectionsWhileVerifyingCodeToInvalidOrExpiredCode() {
+        assertEquals(AuthError.InvalidOrExpiredCode, mapper.mapRest(null, 403, AuthOperation.VERIFY))
+        assertEquals(AuthError.InvalidOrExpiredCode, mapper.mapRest(null, 401, AuthOperation.VERIFY))
+        assertEquals(AuthError.InvalidOrExpiredCode, mapper.mapRest("otp_disabled", 400, AuthOperation.VERIFY))
+        assertEquals(AuthError.ServerError, mapper.mapRest(null, 503, AuthOperation.VERIFY))
+        assertEquals(AuthError.ServerError, mapper.mapRest("over_request_rate_limit", 429, AuthOperation.VERIFY))
+        assertEquals(AuthError.ServerError, mapper.mapRest(null, 403, AuthOperation.OTHER))
+    }
+
+    @Test
     fun mapsIoExceptionAndTimeoutToNoConnection() {
         assertEquals(AuthError.NoConnection, mapper.mapTransport(IOException("sin red")))
         assertEquals(AuthError.NoConnection, mapper.mapTransport(SocketTimeoutException("timeout")))

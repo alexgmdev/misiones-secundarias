@@ -3,6 +3,9 @@ package com.groovycow.misionessecundarias.ui.auth
 import com.groovycow.misionessecundarias.domain.model.AuthError
 import com.groovycow.misionessecundarias.domain.validation.FieldError
 
+/** Confirmación única tras solicitar el código de recuperación; idéntica exista o no la cuenta. */
+const val RECOVERY_CODE_SENT_MESSAGE = "Si el correo está registrado, recibirás un código"
+
 /**
  * Traduce un [FieldError] al mensaje en español que se muestra bajo el campo.
  *
@@ -19,6 +22,7 @@ fun FieldError.toMessage(): String =
         FieldError.PasswordMismatch -> "Las contraseñas no coinciden"
         FieldError.FutureBirthDate -> "La fecha de nacimiento no puede ser futura"
         FieldError.UnderAge -> "Debes ser mayor de 18 años"
+        FieldError.InvalidCode -> "Ingresa el código numérico"
     }
 
 /**

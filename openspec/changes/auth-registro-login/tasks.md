@@ -48,19 +48,20 @@ Trazabilidad: AR = auth-registro, AL = auth-login, AC = auth-recuperacion (requi
 
 ## PR 3: `hu/HU-003` Solicitar código (depende de PR 0; Email validator de PR 1)
 
-- [ ] 3.1 (M) RED `T/domain/usecase/RequestPasswordResetUseCaseTest.kt`: éxito neutro para todo salvo NoConnection. GREEN `RequestPasswordResetUseCase.kt`. [AC Sin divulgación, Errores red]
-- [ ] 3.2 (S) `AuthRepository.sendPasswordResetCode` + Impl (`resetPasswordForEmail`). [AC Solicitud de código]
-- [ ] 3.3 (M) RED `T/ui/auth/recovery/RequestCodeViewModelTest.kt` (vacío, formato, `isCodeSent`, `isLoading`, NoConnection) -> GREEN `RequestCodeViewModel.kt`. [AC Solicitud x3, Estado de carga]
-- [ ] 3.4 (M) `RequestCodeScreen.kt`, destino `RequestCode`, `BackHandler`, DI.
+- [x] 3.1 (M) RED `T/domain/usecase/RequestPasswordResetUseCaseTest.kt`: éxito neutro para todo salvo NoConnection. GREEN `RequestPasswordResetUseCase.kt`. [AC Sin divulgación, Errores red]
+- [x] 3.2 (S) `AuthRepository.sendPasswordResetCode` + Impl (`resetPasswordForEmail`). [AC Solicitud de código]
+- [x] 3.3 (M) RED `T/ui/auth/recovery/RequestCodeViewModelTest.kt` (vacío, formato, `isCodeSent`, `isLoading`, NoConnection) -> GREEN `RequestCodeViewModel.kt`. [AC Solicitud x3, Estado de carga]
+- [x] 3.4 (M) `RequestCodeScreen.kt`, destino `RequestCode`, `BackHandler`, DI.
 - [ ] 3.5 (S) Push, CI verde, PR. Manual: Gherkin HU-003 (correo real y no registrado = misma confirmación).
 
 ## PR 4: `hu/HU-004` Cambiar clave (depende de PR 3)
 
-- [ ] 4.1 (S) RED `RecoveryCodeValidatorTest` (`^\d{6,10}$`, vacío, no numérico) -> GREEN `RecoveryCodeValidator.kt`. [AC Código vacío o no numérico]
-- [ ] 4.2 (M) RED `T/domain/usecase/{VerifyRecoveryCode,ChangePassword}UseCaseTest.kt`: InvalidOrExpiredCode, SamePassword, WeakPassword, éxito + `signOut`. GREEN ambos casos de uso. [AC Código inválido, Restablecimiento, Errores]
-- [ ] 4.3 (M) `AuthRepository.verifyRecoveryCode` (`verifyEmailOtp(RECOVERY)`) y `updatePassword` (`updateUser{password}`) + Impl.
-- [ ] 4.4 (L) RED `T/ui/auth/recovery/ResetPasswordViewModelTest.kt`: código inválido, clave débil/confirmación, fallo tras verificar -> `codeVerified=true` solo reintenta clave, reenvío 60 s con `advanceTimeBy`, `isPasswordChanged`. GREEN `ResetPasswordViewModel.kt`. [AC Reenvío, Nueva contraseña x2, Restablecimiento, Estado de carga]
-- [ ] 4.5 (M) `ResetPasswordScreen.kt`, destino `ResetPassword(email)`, `koinViewModel { parametersOf(email) }`, éxito -> Login; DI.
+- [x] 4.1 (S) RED `RecoveryCodeValidatorTest` (`^\d{6,10}$`, vacío, no numérico) -> GREEN `RecoveryCodeValidator.kt`. [AC Código vacío o no numérico]
+- [x] 4.2 (M) RED `T/domain/usecase/{VerifyRecoveryCode,ChangePassword}UseCaseTest.kt`: InvalidOrExpiredCode, SamePassword, WeakPassword, éxito + `signOut`. GREEN ambos casos de uso. [AC Código inválido, Restablecimiento, Errores]
+- [x] 4.3 (M) `AuthRepository.verifyRecoveryCode` (`verifyEmailOtp(RECOVERY)`) y `updatePassword` (`updateUser{password}`) + Impl.
+- [x] 4.4 (L) RED `T/ui/auth/recovery/ResetPasswordViewModelTest.kt`: código inválido, clave débil/confirmación, fallo tras verificar -> `codeVerified=true` solo reintenta clave, reenvío 60 s con `advanceTimeBy`, `isPasswordChanged`. GREEN `ResetPasswordViewModel.kt`. [AC Reenvío, Nueva contraseña x2, Restablecimiento, Estado de carga]
+- [x] 4.5 (M) `ResetPasswordScreen.kt`, destino `ResetPassword(email)`, `koinViewModel { parametersOf(email) }`, éxito -> Login; DI.
+- [x] 4.7 (M) Mitigación: `CancelRecoveryUseCase` + `ResetPasswordViewModel.onAbandon()` (signOut solo si `codeVerified` y clave no cambiada; fallos ignorados), invocado desde el botón volver y el `BackHandler` de `ResetPasswordScreen`; VM nuevo por entrada (clave UUID) en `RequestCode`/`ResetPassword`. Riesgo residual: proceso matado a mitad de la recuperación (ver design.md).
 - [ ] 4.6 (S) Push, CI verde, PR. Manual: Gherkin HU-004 de extremo a extremo.
 
 ## PR 5 (cierre)

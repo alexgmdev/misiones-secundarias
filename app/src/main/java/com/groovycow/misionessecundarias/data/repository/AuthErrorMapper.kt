@@ -38,6 +38,8 @@ class AuthErrorMapper {
             errorCode == "invalid_credentials" -> mapInvalidCredentials(operation)
             statusCode >= SERVER_ERROR_MIN_STATUS -> AuthError.ServerError
             operation == AuthOperation.LOGIN -> AuthError.InvalidCredentials
+            operation == AuthOperation.VERIFY && statusCode in CLIENT_ERROR_RANGE && statusCode != RATE_LIMIT_STATUS ->
+                AuthError.InvalidOrExpiredCode
             else -> AuthError.ServerError
         }
 
@@ -63,5 +65,7 @@ class AuthErrorMapper {
 
     private companion object {
         const val SERVER_ERROR_MIN_STATUS = 500
+        const val RATE_LIMIT_STATUS = 429
+        val CLIENT_ERROR_RANGE = 400..499
     }
 }

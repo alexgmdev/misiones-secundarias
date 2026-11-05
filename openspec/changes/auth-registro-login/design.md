@@ -263,3 +263,7 @@ Capas existentes en vez de `core/`+`features/`; identificadores en inglés; caso
 - [ ] `profiles` no tiene GRANT UPDATE; cuando HU-005 lo agregue, limitar columnas (nunca `role`).
 - [ ] Sin cierre de sesión en la UI (fuera de alcance); para pruebas, borrar datos de la app.
 - [ ] Confirmar al compilar en CI la deserialización de `UserSession` sin `user` (si falla, fallback `importAuthToken`).
+
+### Riesgo residual: sesión temporal de recuperación
+
+`verifyEmailOtp(RECOVERY)` deja una sesión activa en el cliente hasta que se cambia la clave. Mitigado: `ResetPasswordViewModel.onAbandon()` cierra esa sesión al salir de `ResetPasswordScreen` (botón volver y `BackHandler`) si el código se verificó y la clave no cambió. No se usa `onCleared()`: el `ViewModelStore` es el de la Activity y `viewModelScope` ya está cancelado ahí. **Residual (no implementado):** si el proceso muere a mitad de la recuperación, la sesión persiste y el siguiente arranque iría a `MainMenu` sin que se cambie la clave. Detectarlo exigiría un flag persistido ("recuperación en curso") más lógica de arranque en `SessionViewModel`; se descartó por costo en este MVP.

@@ -28,4 +28,7 @@ enum class FieldError {
 
     /** El usuario no tiene 18 años cumplidos. */
     UnderAge,
+
+    /** El código de recuperación está vacío o no es numérico (6 a 10 dígitos). */
+    InvalidCode,
 }
