@@ -37,11 +37,11 @@ Trazabilidad: AR = auth-registro, AL = auth-login, AC = auth-recuperacion (requi
 
 ## PR 2: `hu/HU-002` Login + Edge Function (depende de PR 0; reusa PhoneValidator de PR 1 -> mergear después de PR 1)
 
-- [ ] 2.1 (M) RED `T/domain/usecase/SignInUseCaseTest.kt`: sin `@` -> normaliza celular; `normalize==null` -> InvalidCredentials sin red; reduce errores a {InvalidCredentials, NoConnection, ServerError}. GREEN `SignInUseCase.kt`. [AL Login correo/celular, Celular formato libre, Error genérico, Celular desconocido, Errores red]
-- [ ] 2.2 (M) `AuthRepository.signInWithPhone` + Impl: `functions.invoke("login-telefono")`, `importSession(user=null)` + `retrieveUserForCurrentSession(updateSession=true)`; fallback `importAuthToken`. [AL Login con celular, Correo no expuesto]
-- [ ] 2.3 (M) RED `T/ui/auth/login/LoginViewModelTest.kt` (campos vacíos, `isLoading`, `isSignedIn`, `error`) -> GREEN `LoginViewModel.kt`. [AL Campos obligatorios, Estado de carga]
-- [ ] 2.4 (M) `ui/auth/login/LoginScreen.kt`, destino Login conectado (`onSignedIn` -> `MainMenu`, enlaces a Register/RequestCode); VM en `AuthModule`.
-- [ ] 2.5 (L) `supabase/functions/login-telefono/index.ts` (JSDoc): normaliza, límite 5/15 min por celular o IP (`x-forwarded-for`), service role -> `getUserById` -> `signInWithPassword`, respuesta sin `user`, 401/429 mismo cuerpo, limpieza oportunista. [AL Correo no expuesto, Límite x5, Celular desconocido]
+- [x] 2.1 (M) RED `T/domain/usecase/SignInUseCaseTest.kt`: sin `@` -> normaliza celular; `normalize==null` -> InvalidCredentials sin red; reduce errores a {InvalidCredentials, NoConnection, ServerError}. GREEN `SignInUseCase.kt`. [AL Login correo/celular, Celular formato libre, Error genérico, Celular desconocido, Errores red]
+- [x] 2.2 (M) `AuthRepository.signInWithPhone` + Impl: `functions.invoke("login-telefono")`, `importSession(user=null)` + `retrieveUserForCurrentSession(updateSession=true)`; fallback `importAuthToken`. [AL Login con celular, Correo no expuesto]
+- [x] 2.3 (M) RED `T/ui/auth/login/LoginViewModelTest.kt` (campos vacíos, `isLoading`, `isSignedIn`, `error`) -> GREEN `LoginViewModel.kt`. [AL Campos obligatorios, Estado de carga]
+- [x] 2.4 (M) `ui/auth/login/LoginScreen.kt`, destino Login conectado (`onSignedIn` -> `MainMenu`, enlaces a Register/RequestCode); VM en `AuthModule`.
+- [x] 2.5 (L) `supabase/functions/login-telefono/index.ts` (JSDoc): normaliza, límite 5/15 min por celular o IP (`x-forwarded-for`), service role -> `getUserById` -> `signInWithPassword`, respuesta sin `user`, 401/429 mismo cuerpo, limpieza oportunista. [AL Correo no expuesto, Límite x5, Celular desconocido]
 - [ ] 2.6 (S) Verificación manual con `curl`: 5 fallos y 6.º con clave correcta = 429; cuerpo idéntico a 401; sin `user`/correo; login por correo sigue OK; ventana vencida.
 - [ ] 2.7 (S) Coordinar con Juan: `supabase functions deploy login-telefono` con secretos (service role, anon key).
 - [ ] 2.8 (S) Push, CI verde (confirmar deserialización `UserSession` sin `user`; si falla, `importAuthToken`), PR. Manual: Gherkin HU-002.

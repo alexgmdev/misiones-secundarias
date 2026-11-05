@@ -46,6 +46,20 @@ interface AuthRepository {
     )
 
     /**
+     * Inicia sesión con celular y contraseña mediante la Edge Function `login-telefono`, que devuelve solo la sesión
+     * (nunca el correo); la sesión recibida se importa al cliente de autenticación.
+     *
+     * @param phone Celular normalizado (10 dígitos).
+     * @param password Contraseña.
+     * @throws com.groovycow.misionessecundarias.domain.model.AuthException si las credenciales son incorrectas,
+     * el celular está bloqueado por intentos fallidos (mismo error), o hay error de red o del servidor.
+     */
+    suspend fun signInWithPhone(
+        phone: String,
+        password: String,
+    )
+
+    /**
      * Cierra la sesión actual.
      *
      * @throws com.groovycow.misionessecundarias.domain.model.AuthException si falla la operación.

@@ -55,6 +55,13 @@ class AuthErrorMapperTest {
     }
 
     @Test
+    fun mapsEdgeFunctionGenericErrorsWithoutCodeToInvalidCredentialsInLogin() {
+        assertEquals(AuthError.InvalidCredentials, mapper.mapRest(null, 401, AuthOperation.LOGIN))
+        assertEquals(AuthError.InvalidCredentials, mapper.mapRest(null, 400, AuthOperation.LOGIN))
+        assertEquals(AuthError.ServerError, mapper.mapRest(null, 401, AuthOperation.OTHER))
+    }
+
+    @Test
     fun mapsRateLimitOutsideLoginToServerError() {
         assertEquals(AuthError.ServerError, mapper.mapRest("over_request_rate_limit", 429, AuthOperation.OTHER))
     }

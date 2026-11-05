@@ -5,12 +5,14 @@ import com.groovycow.misionessecundarias.data.repository.AuthRepositoryImpl
 import com.groovycow.misionessecundarias.domain.repository.AuthRepository
 import com.groovycow.misionessecundarias.domain.usecase.ObserveSessionUseCase
 import com.groovycow.misionessecundarias.domain.usecase.RegisterUseCase
+import com.groovycow.misionessecundarias.domain.usecase.SignInUseCase
 import com.groovycow.misionessecundarias.domain.validation.BirthDateValidator
 import com.groovycow.misionessecundarias.domain.validation.EmailValidator
 import com.groovycow.misionessecundarias.domain.validation.NameValidator
 import com.groovycow.misionessecundarias.domain.validation.PasswordValidator
 import com.groovycow.misionessecundarias.domain.validation.PhoneValidator
 import com.groovycow.misionessecundarias.ui.auth.SessionViewModel
+import com.groovycow.misionessecundarias.ui.auth.login.LoginViewModel
 import com.groovycow.misionessecundarias.ui.auth.register.RegisterViewModel
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
@@ -31,7 +33,9 @@ val authModule =
 
         factory { ObserveSessionUseCase(get()) }
         factory { RegisterUseCase(get()) }
+        factory { SignInUseCase(get(), get()) }
 
         viewModel { SessionViewModel(get()) }
+        viewModel { LoginViewModel(get()) }
         viewModel { RegisterViewModel(get(), get(), get(), get(), get(), get()) }
     }
