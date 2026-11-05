@@ -23,6 +23,7 @@ import com.groovycow.misionessecundarias.ui.auth.recovery.ResetPasswordScreen
 import com.groovycow.misionessecundarias.ui.auth.register.RegisterScreen
 import com.groovycow.misionessecundarias.ui.missions.MissionDetailRoute
 import com.groovycow.misionessecundarias.ui.missions.MissionListScreen
+import com.groovycow.misionessecundarias.ui.settings.SettingsScreen
 import org.koin.androidx.compose.koinViewModel
 
 /** Destinos de la navegación manual de la aplicación. */
@@ -58,6 +59,9 @@ sealed interface AppDestination {
     /** Postulaciones del usuario. */
     data object MyApplications : AppDestination
 
+    /** Ajustes de la aplicación y cierre de sesión. */
+    data object Settings : AppDestination
+
     /**
      * Pantalla de funcionalidad aún no implementada.
      *
@@ -71,16 +75,30 @@ sealed interface AppDestination {
  * (Login sin sesión, MainMenu con sesión) y luego enruta entre destinos.
  */
 @Composable
+@Suppress("CyclomaticComplexMethod")
 fun AppNavigation() {
     val sessionViewModel: SessionViewModel = koinViewModel()
     val startDestination by sessionViewModel.startDestination.collectAsState()
+    val isLoggedIn by sessionViewModel.isLoggedIn.collectAsState()
+    val isSessionResolved by sessionViewModel.isSessionResolved.collectAsState()
     var selectedMission by remember { mutableStateOf<Mission?>(null) }
     var destination by remember { mutableStateOf<AppDestination?>(null) }
     var loginNotice by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(startDestination) {
-        if (destination == null) {
-            destination = startDestination.toAppDestination()
+        destination = resolveInitialDestination(destination, startDestination)
+    }
+
+    LaunchedEffect(isSessionResolved, isLoggedIn, destination) {
+        if (shouldRedirectToLogin(isSessionResolved, isLoggedIn, destination)) {
+            selectedMission = null
+            loginNotice =
+                if (destination == AppDestination.Settings) {
+                    SIGNED_OUT_NOTICE
+                } else {
+                    SESSION_REQUIRED_NOTICE
+                }
+            destination = AppDestination.Login
         }
     }
 
@@ -102,13 +120,17 @@ fun AppNavigation() {
     when (currentDestination) {
         AppDestination.Login -> {
             LoginScreen(
-                onSignedIn = { destination = AppDestination.MainMenu },
+                onSignedIn = {
+                    sessionViewModel.updateLoginState(true)
+                    destination = AppDestination.MainMenu
+                },
                 onRegister = { destination = AppDestination.Register },
                 onForgotPassword = {
                     loginNotice = null
                     destination = AppDestination.RequestCode
                 },
                 notice = loginNotice,
+                onNoticeDismissed = { loginNotice = null },
             )
         }
 
@@ -132,7 +154,10 @@ fun AppNavigation() {
 
         AppDestination.Register -> {
             RegisterScreen(
-                onRegistered = { destination = AppDestination.InitialProfile },
+                onRegistered = {
+                    sessionViewModel.updateLoginState(true)
+                    destination = AppDestination.InitialProfile
+                },
                 onBack = { destination = AppDestination.Login },
             )
         }
@@ -181,6 +206,17 @@ fun AppNavigation() {
             )
         }
 
+        AppDestination.Settings -> {
+            SettingsScreen(
+                onBack = { destination = AppDestination.MainMenu },
+                onSignedOut = {
+                    sessionViewModel.updateLoginState(false)
+                    loginNotice = SIGNED_OUT_NOTICE
+                    destination = AppDestination.Login
+                },
+            )
+        }
+
         is AppDestination.Placeholder -> {
             FeaturePlaceholderScreen(
                 title = currentDestination.menuDestination.title,
@@ -192,6 +228,31 @@ fun AppNavigation() {
 
 /** Mensaje mostrado en el login tras restablecer la contraseña. */
 private const val PASSWORD_CHANGED_NOTICE = "Contraseña actualizada. Inicia sesión con tu nueva contraseña"
+private const val SESSION_REQUIRED_NOTICE = "Debes iniciar sesión para ingresar a la aplicación"
+private const val SIGNED_OUT_NOTICE = "Sesión cerrada correctamente"
+
+private fun resolveInitialDestination(
+    current: AppDestination?,
+    startDestination: StartDestination,
+): AppDestination? = current ?: startDestination.toAppDestination()
+
+private fun shouldRedirectToLogin(
+    isSessionResolved: Boolean,
+    isLoggedIn: Boolean,
+    destination: AppDestination?,
+): Boolean {
+    if (!isSessionResolved || isLoggedIn) return false
+    return when (destination) {
+        null,
+        AppDestination.Login,
+        AppDestination.Register,
+        AppDestination.RequestCode,
+        is AppDestination.ResetPassword,
+        -> false
+
+        else -> true
+    }
+}
 
 /** Traduce el destino inicial resuelto por [SessionViewModel] (`null` mientras carga la sesión). */
 private fun StartDestination.toAppDestination(): AppDestination? =
@@ -206,6 +267,7 @@ private fun MainMenuDestination.toAppDestination(): AppDestination =
     when (this) {
         MainMenuDestination.SEARCH_MISSIONS -> AppDestination.MissionList
         MainMenuDestination.MY_APPLICATIONS -> AppDestination.MyApplications
+        MainMenuDestination.SETTINGS -> AppDestination.Settings
         else -> AppDestination.Placeholder(this)
     }
 

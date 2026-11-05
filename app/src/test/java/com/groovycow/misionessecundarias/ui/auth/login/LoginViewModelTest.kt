@@ -76,6 +76,20 @@ class LoginViewModelTest {
     }
 
     @Test
+    fun handledSignInDoesNotRemainTrueWhenLoginScreenIsOpenedAgain() {
+        coEvery { signInUseCase(any(), any()) } returns Result.success(Unit)
+        val viewModel = newViewModel()
+        viewModel.onIdentifierChange("ana@example.com")
+        viewModel.onPasswordChange("Clave1234")
+        viewModel.signIn()
+
+        viewModel.onSignInHandled()
+
+        assertFalse(viewModel.uiState.value.isSignedIn)
+        assertEquals("", viewModel.uiState.value.password)
+    }
+
+    @Test
     fun secondTapWhileLoadingDoesNotSendASecondRequest() {
         val gate = CompletableDeferred<Result<Unit>>()
         coEvery { signInUseCase(any(), any()) } coAnswers { gate.await() }

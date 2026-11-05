@@ -82,4 +82,13 @@ class MyApplicationsViewModel(
             )
         }
     }
+
+    fun dismissNotice() {
+        _uiState.value =
+            _uiState.value.copy(
+                error = null,
+                actionMessage = null,
+                isActionError = false,
+            )
+    }
 }

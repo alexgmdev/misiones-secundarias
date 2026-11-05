@@ -125,14 +125,6 @@ fun MyApplicationsScreen(
                         message = "Estas son las misiones en las que participas o esperas respuesta.",
                     )
 
-                    uiState.actionMessage?.let { message ->
-                        Spacer(modifier = Modifier.height(10.dp))
-                        GameNotice(
-                            message = message,
-                            isError = uiState.isActionError,
-                        )
-                    }
-
                     Spacer(modifier = Modifier.height(12.dp))
                     LazyColumn(
                         modifier = Modifier.weight(1f),
@@ -182,6 +174,28 @@ fun MyApplicationsScreen(
             dismissButton = {
                 TextButton(onClick = { applicationToCancel = null }) {
                     Text("Volver", color = ForestGreen)
+                }
+            },
+        )
+    }
+
+    val noticeMessage = uiState.actionMessage ?: uiState.error
+    noticeMessage?.let { message ->
+        val isError = uiState.error != null || uiState.isActionError
+        AlertDialog(
+            onDismissRequest = viewModel::dismissNotice,
+            containerColor = CreamSurface,
+            title = {
+                Text(
+                    text = if (isError) "Aviso" else "Operación exitosa",
+                    color = if (isError) AlertCoral else ForestGreen,
+                    fontWeight = FontWeight.ExtraBold,
+                )
+            },
+            text = { Text(message, color = BarkBrown) },
+            confirmButton = {
+                TextButton(onClick = viewModel::dismissNotice) {
+                    Text("Aceptar", color = ForestGreen, fontWeight = FontWeight.Bold)
                 }
             },
         )
@@ -296,26 +310,6 @@ private fun GuideAvatar(accentColor: Color) {
             modifier = Modifier.size(42.dp),
         )
     }
-}
-
-@Composable
-private fun GameNotice(
-    message: String,
-    isError: Boolean,
-) {
-    val accent = if (isError) AlertCoral else LeafGreen
-    Text(
-        text = message,
-        color = if (isError) AlertCoral else ForestGreen,
-        fontWeight = FontWeight.Bold,
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .background(CreamSurface, RoundedCornerShape(12.dp))
-                .border(2.dp, accent, RoundedCornerShape(12.dp))
-                .padding(12.dp),
-        textAlign = TextAlign.Center,
-    )
 }
 
 @Composable
