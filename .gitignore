@@ -20,8 +20,8 @@ build/
 captures/
 .externalNativeBuild/
 .cxx/
-release/
-debug/
+/release/
+/debug/
 output.json
 *.hprof
 
@@ -107,7 +107,8 @@ offline-maps/
 *.sqlite
 *.sqlite3
 databases/
-schemas/  # Solo si no se quieren versionar los schemas de Room
+# Solo si no se quieren versionar los schemas de Room (comentario en línea rompe el patrón)
+schemas/
 # NOTA: Si se usan Room Migrations, SÍ se debe commitear app/schemas/
 
 # ============================================
@@ -169,3 +170,8 @@ yarn-error.log*
 .tmp/
 temp/
 .cache/
+
+# ============================================
+# AGENT TEAMS LITE
+# ============================================
+.atl/
