@@ -3,6 +3,7 @@ package com.groovycow.misionessecundarias.di
 import com.groovycow.misionessecundarias.BuildConfig
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.createSupabaseClient
+import io.github.jan.supabase.functions.Functions
 import io.github.jan.supabase.gotrue.Auth // <-- Import corregido
 import io.github.jan.supabase.postgrest.Postgrest
 import org.koin.dsl.module
@@ -16,6 +17,7 @@ val supabaseModule =
             ) {
                 install(Auth)
                 install(Postgrest)
+                install(Functions)
             }
         }
     }

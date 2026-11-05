@@ -84,6 +84,7 @@ dependencies {
     implementation(libs.supabase.kt)
     implementation(libs.supabase.gotrue)
     implementation(libs.supabase.postgrest)
+    implementation(libs.supabase.functions)
     implementation(libs.kotlinx.serialization.json)
     implementation("io.ktor:ktor-client-okhttp:2.3.12")
 
