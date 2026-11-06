@@ -9,6 +9,7 @@ import com.groovycow.misionessecundarias.domain.usecase.ObserveSessionUseCase
 import com.groovycow.misionessecundarias.domain.usecase.RegisterUseCase
 import com.groovycow.misionessecundarias.domain.usecase.RequestPasswordResetUseCase
 import com.groovycow.misionessecundarias.domain.usecase.SignInUseCase
+import com.groovycow.misionessecundarias.domain.usecase.SignOutUseCase
 import com.groovycow.misionessecundarias.domain.usecase.VerifyRecoveryCodeUseCase
 import com.groovycow.misionessecundarias.domain.validation.BirthDateValidator
 import com.groovycow.misionessecundarias.domain.validation.EmailValidator
@@ -21,6 +22,7 @@ import com.groovycow.misionessecundarias.ui.auth.login.LoginViewModel
 import com.groovycow.misionessecundarias.ui.auth.recovery.RequestCodeViewModel
 import com.groovycow.misionessecundarias.ui.auth.recovery.ResetPasswordViewModel
 import com.groovycow.misionessecundarias.ui.auth.register.RegisterViewModel
+import com.groovycow.misionessecundarias.ui.settings.SettingsViewModel
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 import java.time.Clock
@@ -42,6 +44,7 @@ val authModule =
         factory { ObserveSessionUseCase(get()) }
         factory { RegisterUseCase(get()) }
         factory { SignInUseCase(get(), get()) }
+        factory { SignOutUseCase(get()) }
         factory { RequestPasswordResetUseCase(get(), get()) }
         factory { VerifyRecoveryCodeUseCase(get(), get()) }
         factory { ChangePasswordUseCase(get(), get()) }
@@ -52,4 +55,5 @@ val authModule =
         viewModel { RequestCodeViewModel(get(), get()) }
         viewModel { (email: String) -> ResetPasswordViewModel(email, get(), get(), get(), get(), get(), get()) }
         viewModel { RegisterViewModel(get(), get(), get(), get(), get(), get()) }
+        viewModel { SettingsViewModel(get()) }
     }

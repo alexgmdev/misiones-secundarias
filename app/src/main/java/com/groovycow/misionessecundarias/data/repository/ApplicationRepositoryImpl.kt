@@ -19,9 +19,7 @@ class ApplicationRepositoryImpl(
 ) : ApplicationRepository {
     override suspend fun cancelApplication(applicationId: String) =
         withContext(Dispatchers.IO) {
-            val solverId =
-                supabase.auth.currentUserOrNull()?.id
-                    ?: error("Debes iniciar sesión para cancelar una postulación.")
+            val solverId = authenticatedUserId("cancelar una postulación")
 
             val application =
                 supabase.from("applications")
@@ -69,9 +67,7 @@ class ApplicationRepositoryImpl(
 
     override suspend fun getMyApplications(): List<MyApplication> =
         withContext(Dispatchers.IO) {
-            val solverId =
-                supabase.auth.currentUserOrNull()?.id
-                    ?: error("Debes iniciar sesión para consultar tus postulaciones.")
+            val solverId = authenticatedUserId("consultar tus postulaciones")
 
             supabase.from("applications")
                 .select(
@@ -88,9 +84,7 @@ class ApplicationRepositoryImpl(
 
     override suspend fun applyToMission(missionId: String): Application =
         withContext(Dispatchers.IO) {
-            val solverId =
-                supabase.auth.currentUserOrNull()?.id
-                    ?: error("Debes iniciar sesión para postularte a una misión.")
+            val solverId = authenticatedUserId("postularte a una misión")
 
             val mission =
                 supabase.from("missions")
@@ -146,6 +140,18 @@ class ApplicationRepositoryImpl(
                 }
                 .decodeSingle<Application>()
         }
+
+    private suspend fun authenticatedUserId(action: String): String {
+        val currentUser = supabase.auth.currentUserOrNull()
+        if (currentUser != null) return currentUser.id
+
+        val recoveredUser =
+            runCatching {
+                supabase.auth.retrieveUserForCurrentSession(updateSession = true)
+            }.getOrNull()
+
+        return recoveredUser?.id ?: error("Debes iniciar sesión para $action.")
+    }
 
     private fun sameInstant(
         first: String,

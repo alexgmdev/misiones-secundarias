@@ -2,19 +2,22 @@ package com.groovycow.misionessecundarias.ui.auth.login
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -32,6 +35,16 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.groovycow.misionessecundarias.domain.validation.FieldError
+import com.groovycow.misionessecundarias.ui.auth.AuthBackground
+import com.groovycow.misionessecundarias.ui.auth.AuthPanel
+import com.groovycow.misionessecundarias.ui.auth.AuthTitle
+import com.groovycow.misionessecundarias.ui.auth.ButtonTextShadow
+import com.groovycow.misionessecundarias.ui.auth.ErrorCream
+import com.groovycow.misionessecundarias.ui.auth.ForestInk
+import com.groovycow.misionessecundarias.ui.auth.GameCream
+import com.groovycow.misionessecundarias.ui.auth.GameGold
+import com.groovycow.misionessecundarias.ui.auth.SoftTextShadow
+import com.groovycow.misionessecundarias.ui.auth.authTextFieldColors
 import com.groovycow.misionessecundarias.ui.auth.toMessage
 import org.koin.androidx.compose.koinViewModel
 
@@ -42,6 +55,7 @@ import org.koin.androidx.compose.koinViewModel
  * @param onRegister Acción al elegir "Crear cuenta".
  * @param onForgotPassword Acción al elegir "¿Olvidaste tu contraseña?"; si es null el enlace no se muestra.
  * @param notice Mensaje informativo opcional sobre el formulario (por ejemplo, tras cambiar la contraseña).
+ * @param onNoticeDismissed Acción al cerrar el aviso informativo.
  * @param viewModel ViewModel del inicio de sesión, obtenido con Koin.
  */
 @Composable
@@ -50,68 +64,128 @@ fun LoginScreen(
     onRegister: () -> Unit,
     onForgotPassword: (() -> Unit)? = null,
     notice: String? = null,
+    onNoticeDismissed: () -> Unit = {},
     viewModel: LoginViewModel = koinViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
 
     LaunchedEffect(state.isSignedIn) {
-        if (state.isSignedIn) onSignedIn()
+        if (state.isSignedIn) {
+            viewModel.onSignInHandled()
+            onSignedIn()
+        }
     }
 
-    Scaffold { padding ->
+    AuthBackground {
         Column(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .padding(padding)
-                    .padding(horizontal = 16.dp)
+                    .padding(horizontal = 18.dp)
                     .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text("Iniciar Sesión", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-            notice?.let { Text(it, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodyMedium) }
-            LoginTextField(
-                label = "Correo o celular",
-                value = state.identifier,
-                onValueChange = viewModel::onIdentifierChange,
-                error = state.fieldErrors[LoginField.Identifier],
-                keyboardType = KeyboardType.Email,
-            )
-            LoginTextField(
-                label = "Contraseña",
-                value = state.password,
-                onValueChange = viewModel::onPasswordChange,
-                error = state.fieldErrors[LoginField.Password],
-                keyboardType = KeyboardType.Password,
-                isPassword = true,
-            )
-            state.error?.let { error ->
-                Text(error.toMessage(), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
-            }
-            Button(
-                onClick = viewModel::signIn,
-                enabled = !state.isLoading,
-                modifier = Modifier.fillMaxWidth().height(48.dp),
-            ) {
-                if (state.isLoading) {
-                    CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-                } else {
-                    Text("Iniciar Sesión")
-                }
-            }
-            if (onForgotPassword != null) {
-                TextButton(
-                    onClick = onForgotPassword,
-                    enabled = !state.isLoading,
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
+            Spacer(modifier = Modifier.height(42.dp))
+            AuthTitle("Iniciar Sesión")
+            Spacer(modifier = Modifier.height(14.dp))
+            AuthPanel {
+                Column(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 18.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Text("¿Olvidaste tu contraseña?")
+                    LoginTextField(
+                        label = "Correo o celular",
+                        value = state.identifier,
+                        onValueChange = viewModel::onIdentifierChange,
+                        error = state.fieldErrors[LoginField.Identifier],
+                        keyboardType = KeyboardType.Email,
+                    )
+                    LoginTextField(
+                        label = "Contraseña",
+                        value = state.password,
+                        onValueChange = viewModel::onPasswordChange,
+                        error = state.fieldErrors[LoginField.Password],
+                        keyboardType = KeyboardType.Password,
+                        isPassword = true,
+                    )
+                    state.error?.let { error ->
+                        Text(
+                            text = error.toMessage(),
+                            color = ErrorCream,
+                            style = MaterialTheme.typography.bodyMedium.copy(shadow = SoftTextShadow),
+                        )
+                    }
+                    Button(
+                        onClick = viewModel::signIn,
+                        enabled = !state.isLoading,
+                        modifier = Modifier.fillMaxWidth().height(52.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors =
+                            ButtonDefaults.buttonColors(
+                                containerColor = GameGold,
+                                contentColor = ForestInk,
+                            ),
+                    ) {
+                        if (state.isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                color = ForestInk,
+                                strokeWidth = 2.dp,
+                            )
+                        } else {
+                            Text(
+                                text = "Iniciar Sesión",
+                                style = MaterialTheme.typography.labelLarge.copy(shadow = ButtonTextShadow),
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
+                    }
+                    if (onForgotPassword != null) {
+                        LoginLink(
+                            text = "¿Olvidaste tu contraseña?",
+                            onClick = onForgotPassword,
+                            enabled = !state.isLoading,
+                        )
+                    }
+                    LoginLink(
+                        text = "¿No tienes cuenta? Crear cuenta",
+                        onClick = onRegister,
+                        enabled = !state.isLoading,
+                    )
                 }
             }
-            TextButton(onClick = onRegister, enabled = !state.isLoading, modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                Text("¿No tienes cuenta? Crear cuenta")
-            }
+            Spacer(modifier = Modifier.height(32.dp))
         }
+    }
+
+    notice?.let { message ->
+        AlertDialog(
+            onDismissRequest = onNoticeDismissed,
+            title = { Text("Aviso", fontWeight = FontWeight.Bold) },
+            text = { Text(message) },
+            confirmButton = {
+                TextButton(onClick = onNoticeDismissed) {
+                    Text("Aceptar")
+                }
+            },
+        )
+    }
+}
+
+@Composable
+private fun LoginLink(
+    text: String,
+    onClick: () -> Unit,
+    enabled: Boolean,
+) {
+    TextButton(onClick = onClick, enabled = enabled) {
+        Text(
+            text = text,
+            color = GameCream,
+            style = MaterialTheme.typography.labelLarge.copy(shadow = SoftTextShadow),
+        )
     }
 }
 
@@ -146,10 +220,20 @@ private fun LoginTextField(
         visualTransformation = if (isPassword && !visible) PasswordVisualTransformation() else VisualTransformation.None,
         trailingIcon =
             if (isPassword) {
-                { TextButton(onClick = { visible = !visible }) { Text(if (visible) "Ocultar" else "Mostrar") } }
+                {
+                    TextButton(
+                        onClick = { visible = !visible },
+                        colors = ButtonDefaults.textButtonColors(contentColor = ForestInk),
+                    ) {
+                        Text(if (visible) "Ocultar" else "Mostrar")
+                    }
+                }
             } else {
                 null
             },
+        shape = RoundedCornerShape(14.dp),
+        colors =
+            authTextFieldColors(),
         modifier = Modifier.fillMaxWidth(),
     )
 }
