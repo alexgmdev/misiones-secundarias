@@ -1,13 +1,13 @@
-# Especificación crear-borrador-mision (HU-016 + mínimo de HU-015)
+# Especificación selección de modalidad y creación de borrador (HU-015, HU-016)
 
 ## Purpose
 
-Permitir al publicador crear el borrador de una misión de campo con los datos requeridos, guardarlo en Supabase como `Borrador` y dejarlo listo para publicar.
+Permitir al publicador seleccionar modalidad antes del formulario, mostrar los campos físicos solo para misiones de campo y crear un borrador listo para publicar.
 
 ## Supuestos
 
 - El usuario autenticado tiene rol de publicador y Supabase expone `auth.uid()` (la política RLS `Publishers can insert missions` lo valida).
-- HU-015 está marcada **Post-MVP**: solo se implementa la selección de modalidad y el comportamiento condicional mínimo.
+- HU-015 fue aprobada para el MVP; su alcance es la selección previa de modalidad y la presentación condicional de los campos de ubicación definidos en SCRUM-38.
 - El formulario solo crea **borradores**; publicar es responsabilidad de `publicar-mision`.
 
 ## Requirements
@@ -26,6 +26,11 @@ Al iniciar la publicación, el sistema MUST ofrecer elegir entre "Misión de Cam
 - WHEN selecciona "Misión Remota"
 - THEN se ocultan los campos de ubicación física
 - AND la modalidad enviada a la base es `remota`
+
+#### Scenario: Cambiar la modalidad elegida
+- GIVEN el publicador está en el formulario de una misión
+- WHEN elige "Cambiar modalidad"
+- THEN vuelve al selector de modalidad antes de guardar
 
 ### Requirement: Campos obligatorios
 El sistema MUST exigir título, descripción, requisitos y punto de encuentro (solo en modalidad de campo) antes de guardar el borrador.

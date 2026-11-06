@@ -1,15 +1,15 @@
-# Proposal: Publicación de misión de campo y aviso de recompensas (HU-016, HU-017, HU-020, HU-021, HU-126)
+# Proposal: Modalidad, publicación de misión y aviso de recompensas (HU-015, HU-016, HU-017, HU-020, HU-021, HU-126)
 
 ## Intent
 
 El flujo de publicación ya existe en el menú (`MainMenuDestination.PUBLISH_MISSION`) pero hoy cae en `FeaturePlaceholderScreen`. La base de datos ya soporta `modality`, `date_time`, `location` y los estados `Borrador`/`Publicada`; el esquema declara políticas RLS para que el publicador inserte y actualice sus misiones, pero el insert autenticado aún debe verificarse. `MissionRepository` **solo leía** (`getPublishedMissions`, `getMissionById`).
 
-Este change habilita el flujo completo de publicación de una **misión de campo** —modalidad, borrador, fecha y hora, publicación— y el aviso de recompensas no monetarias, cerrando las historias del Sprint 1.
+Este change habilita la selección de modalidad de HU-015, el flujo de borrador/fecha/hora/publicación de misiones y el aviso de recompensas no monetarias.
 
 ## Scope
 
 ### In Scope
-- Selector de modalidad mínimo (campo/remota) como precondición de HU-016 (alcance mínimo de HU-015).
+- HU-015: selector previo de modalidad (campo/remota), campos físicos condicionales y posibilidad de volver a cambiar la modalidad antes de guardar.
 - Formulario de borrador de misión de campo: título, descripción, requisitos, categoría, punto de encuentro, coordenadas iniciales latitud/longitud, fecha, hora y cupos. Una selección futura en mapa poblará el mismo par de coordenadas.
 - Validaciones de dominio: campos obligatorios, ubicación en Cali, fecha no pasada, cupos válidos.
 - `CreateMissionUseCase` + `MissionRepository.createMission()` contra Supabase con `status = 'Borrador'`.
@@ -20,7 +20,7 @@ Este change habilita el flujo completo de publicación de una **misión de campo
 - Tests unitarios de validadores, casos de uso y ViewModel (TDD estricto).
 
 ### Out of Scope
-- Misiones remotas completas (HU-015 está marcada **Post-MVP** en Jira): solo se implementa la selección de modalidad y el comportamiento condicional mínimo (ocultar ubicación en remota).
+- Flujos remotos adicionales no descritos por HU-015 (por ejemplo, capacidades nuevas de colaboración digital o mapa remoto).
 - Foro de misión, mapa interactivo, geocodificación/geolocalización automática, subida de imágenes.
 - Recompensas reales, pasarela de pago o monetización (HU-126 solo informa).
 - Notificaciones, recordatorios y edición posterior de una misión publicada.
@@ -29,7 +29,8 @@ Este change habilita el flujo completo de publicación de una **misión de campo
 ## Capabilities
 
 ### New Capabilities
-- `crear-borrador-mision`: alta de un borrador de misión de campo con validaciones y persistencia en Supabase (HU-016, con el mínimo de HU-015).
+- `crear-borrador-mision`: alta de un borrador de misión de campo con validaciones y persistencia en Supabase (HU-016).
+- Selección de modalidad previa al formulario y campos condicionales (HU-015; integrada con `crear-borrador-mision`).
 - `fecha-hora-inicio`: selección y validación de fecha y hora de inicio, combinadas en un único `date_time` (HU-020, HU-021).
 - `publicar-mision`: transición de borrador a publicada con verificación de requisitos previos (HU-017).
 - `aviso-recompensas`: aviso fijo y visible de que la plataforma no procesa pagos (HU-126).
@@ -67,9 +68,10 @@ Se respeta la arquitectura por capas vigente y el patrón del equipo:
 
 ## Slicing (PRs a `develop`)
 
-1. **`hu/HU-016`** — fundación, modelo, validador, `createMission`, pantalla de borrador, navegación y **fecha/hora** (commits separados que referencian HU-016, HU-020 y HU-021). Mergea primero.
-2. **`hu/HU-017`** — `publishMission`, acción "Publicar Misión" y validación previa.
-3. **`hu/HU-126`** — tarjeta de aviso en el detalle (independiente, se puede mergear en cualquier momento).
+1. **`hu/HU-016`** — fundación, selector HU-015, modelo, validador, `createMission`, pantalla de borrador, navegación y **fecha/hora** (commits separados que referencian HU-016, HU-020 y HU-021). Mergea primero.
+2. **`hu/HU-015`** — tests instrumentados y actualización de alcance/Jira; se apila sobre HU-016 porque el selector ya está implementado en ese flujo.
+3. **`hu/HU-017`** — `publishMission`, acción "Publicar Misión" y validación previa.
+4. **`hu/HU-126`** — tarjeta de aviso en el detalle (independiente, se puede mergear en cualquier momento).
 
 ## Risks
 
@@ -91,11 +93,11 @@ Se respeta la arquitectura por capas vigente y el patrón del equipo:
 
 - Proyecto Supabase compartido (`epmjmintacuzjyfmfduu`) accesible con la `anon key`.
 - Coordinación con el Líder Técnico para cualquier cambio de esquema.
-- HU-016 depende de que exista el selector de modalidad (mínimo de HU-015).
+- HU-016 reutiliza el selector y el comportamiento de campos condicionales de HU-015.
 
 ## Success Criteria
 
-- [ ] Todos los escenarios Gherkin de HU-016, HU-017, HU-020, HU-021 y HU-126 se verifican en dispositivo.
+- [ ] Todos los escenarios Gherkin de HU-015, HU-016, HU-017, HU-020, HU-021 y HU-126 se verifican en dispositivo.
 - [ ] `./gradlew ktlintCheck detekt testDebugUnitTest assembleDebug` en verde (local o CI).
 - [ ] Un borrador se guarda con `status = 'Borrador'` y no aparece en la búsqueda pública.
 - [ ] Publicar cambia el estado a `Publicada` y la misión aparece en la lista.
