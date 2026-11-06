@@ -23,6 +23,9 @@ sealed interface MissionError {
     /** No hay conexión con el servicio. */
     data object NoConnection : MissionError
 
+    /** Se necesita iniciar sesión para guardar una misión. */
+    data object SessionRequired : MissionError
+
     /** El servicio rechazó el guardado o devolvió un error inesperado. */
     data object ServerError : MissionError
 }

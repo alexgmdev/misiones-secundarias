@@ -4,6 +4,7 @@ import com.groovycow.misionessecundarias.domain.model.Mission
 import com.groovycow.misionessecundarias.domain.model.MissionError
 import com.groovycow.misionessecundarias.domain.model.MissionField
 import com.groovycow.misionessecundarias.domain.model.MissionModality
+import com.groovycow.misionessecundarias.domain.model.MissionSessionRequiredException
 import com.groovycow.misionessecundarias.domain.usecase.CreateMissionUseCase
 import com.groovycow.misionessecundarias.domain.validation.MissionDraftValidator
 import com.groovycow.misionessecundarias.testutil.MainDispatcherRule
@@ -100,6 +101,19 @@ class CreateMissionViewModelTest {
 
         assertEquals("Siembra en Parque Dog", viewModel.uiState.value.title)
         assertEquals(MissionError.ServerError, viewModel.uiState.value.submissionError)
+    }
+
+    @Test
+    fun missingSessionShowsAuthenticationErrorWithoutClearingDraft() {
+        val viewModel = newViewModel()
+        viewModel.fillValidDraft()
+        coEvery { createMissionUseCase(any()) } returns Result.failure(MissionSessionRequiredException())
+
+        viewModel.saveDraft()
+
+        assertEquals(MissionError.SessionRequired, viewModel.uiState.value.submissionError)
+        assertEquals("Siembra en Parque Dog", viewModel.uiState.value.title)
+        assertNull(viewModel.uiState.value.savedMission)
     }
 
     private fun newViewModel() = CreateMissionViewModel(createMissionUseCase, validator)

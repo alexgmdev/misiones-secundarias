@@ -7,6 +7,7 @@ import com.groovycow.misionessecundarias.domain.model.Mission
 import com.groovycow.misionessecundarias.domain.model.MissionError
 import com.groovycow.misionessecundarias.domain.model.MissionField
 import com.groovycow.misionessecundarias.domain.model.MissionModality
+import com.groovycow.misionessecundarias.domain.model.MissionSessionRequiredException
 import com.groovycow.misionessecundarias.domain.usecase.CreateMissionUseCase
 import com.groovycow.misionessecundarias.domain.validation.MissionDraftValidator
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -161,11 +162,9 @@ class CreateMissionViewModel(
     private fun String.toCoordinateOrNull(): Double? = trim().replace(',', '.').toDoubleOrNull()
 
     private fun Throwable.toMissionError(): MissionError {
+        if (this is MissionSessionRequiredException) return MissionError.SessionRequired
         var current: Throwable? = this
-        while (current != null) {
-            if (current is IOException) return MissionError.NoConnection
-            current = current.cause
-        }
-        return MissionError.ServerError
+        while (current != null && current !is IOException) current = current.cause
+        return if (current != null) MissionError.NoConnection else MissionError.ServerError
     }
 }
