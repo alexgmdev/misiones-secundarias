@@ -17,17 +17,22 @@ import com.groovycow.misionessecundarias.domain.model.Mission
 import com.groovycow.misionessecundarias.ui.applications.MyApplicationsScreen
 import com.groovycow.misionessecundarias.ui.auth.SessionViewModel
 import com.groovycow.misionessecundarias.ui.auth.StartDestination
+import com.groovycow.misionessecundarias.ui.auth.WelcomeScreen
 import com.groovycow.misionessecundarias.ui.auth.login.LoginScreen
 import com.groovycow.misionessecundarias.ui.auth.recovery.RequestCodeScreen
 import com.groovycow.misionessecundarias.ui.auth.recovery.ResetPasswordScreen
 import com.groovycow.misionessecundarias.ui.auth.register.RegisterScreen
 import com.groovycow.misionessecundarias.ui.missions.MissionDetailRoute
 import com.groovycow.misionessecundarias.ui.missions.MissionListScreen
+import com.groovycow.misionessecundarias.ui.missions.create.CreateMissionScreen
 import com.groovycow.misionessecundarias.ui.settings.SettingsScreen
 import org.koin.androidx.compose.koinViewModel
 
 /** Destinos de la navegación manual de la aplicación. */
 sealed interface AppDestination {
+    /** Portada para elegir entre iniciar sesión y crear una cuenta. */
+    data object Welcome : AppDestination
+
     /** Inicio de sesión (HU-002). */
     data object Login : AppDestination
 
@@ -53,6 +58,9 @@ sealed interface AppDestination {
     /** Lista de misiones. */
     data object MissionList : AppDestination
 
+    /** Formulario para crear un borrador de misión (HU-016). */
+    data object PublishMission : AppDestination
+
     /** Detalle de la misión seleccionada. */
     data object MissionDetail : AppDestination
 
@@ -72,7 +80,7 @@ sealed interface AppDestination {
 
 /**
  * Raíz de la navegación: espera a conocer la sesión guardada, fija el destino inicial una sola vez
- * (Login sin sesión, MainMenu con sesión) y luego enruta entre destinos.
+ * (Welcome sin sesión, MainMenu con sesión) y luego enruta entre destinos.
  */
 @Composable
 @Suppress("CyclomaticComplexMethod")
@@ -90,7 +98,7 @@ fun AppNavigation() {
     }
 
     LaunchedEffect(isSessionResolved, isLoggedIn, destination) {
-        if (shouldRedirectToLogin(isSessionResolved, isLoggedIn, destination)) {
+        if (shouldRedirectToWelcome(isSessionResolved, isLoggedIn, destination)) {
             selectedMission = null
             loginNotice =
                 if (destination == AppDestination.Settings) {
@@ -98,7 +106,7 @@ fun AppNavigation() {
                 } else {
                     SESSION_REQUIRED_NOTICE
                 }
-            destination = AppDestination.Login
+            destination = AppDestination.Welcome
         }
     }
 
@@ -113,11 +121,26 @@ fun AppNavigation() {
     BackHandler(enabled = currentDestination == AppDestination.InitialProfile) {
         destination = AppDestination.MainMenu
     }
-    BackHandler(enabled = currentDestination == AppDestination.Register || currentDestination == AppDestination.RequestCode) {
+    BackHandler(enabled = currentDestination == AppDestination.Login || currentDestination == AppDestination.Register) {
+        destination = AppDestination.Welcome
+    }
+    BackHandler(enabled = currentDestination == AppDestination.RequestCode) {
         destination = AppDestination.Login
     }
 
     when (currentDestination) {
+        AppDestination.Welcome -> {
+            WelcomeScreen(
+                onLogin = {
+                    loginNotice = null
+                    destination = AppDestination.Login
+                },
+                onRegister = { destination = AppDestination.Register },
+                notice = loginNotice,
+                onNoticeDismissed = { loginNotice = null },
+            )
+        }
+
         AppDestination.Login -> {
             LoginScreen(
                 onSignedIn = {
@@ -158,7 +181,7 @@ fun AppNavigation() {
                     sessionViewModel.updateLoginState(true)
                     destination = AppDestination.InitialProfile
                 },
-                onBack = { destination = AppDestination.Login },
+                onBack = { destination = AppDestination.Welcome },
             )
         }
 
@@ -188,6 +211,13 @@ fun AppNavigation() {
             )
         }
 
+        AppDestination.PublishMission -> {
+            CreateMissionScreen(
+                onBack = { destination = AppDestination.MainMenu },
+                onDraftSaved = { destination = AppDestination.MainMenu },
+            )
+        }
+
         AppDestination.MissionDetail -> {
             MissionDetailDestination(
                 mission = selectedMission,
@@ -212,7 +242,7 @@ fun AppNavigation() {
                 onSignedOut = {
                     sessionViewModel.updateLoginState(false)
                     loginNotice = SIGNED_OUT_NOTICE
-                    destination = AppDestination.Login
+                    destination = AppDestination.Welcome
                 },
             )
         }
@@ -236,7 +266,7 @@ private fun resolveInitialDestination(
     startDestination: StartDestination,
 ): AppDestination? = current ?: startDestination.toAppDestination()
 
-private fun shouldRedirectToLogin(
+private fun shouldRedirectToWelcome(
     isSessionResolved: Boolean,
     isLoggedIn: Boolean,
     destination: AppDestination?,
@@ -244,6 +274,7 @@ private fun shouldRedirectToLogin(
     if (!isSessionResolved || isLoggedIn) return false
     return when (destination) {
         null,
+        AppDestination.Welcome,
         AppDestination.Login,
         AppDestination.Register,
         AppDestination.RequestCode,
@@ -258,7 +289,7 @@ private fun shouldRedirectToLogin(
 private fun StartDestination.toAppDestination(): AppDestination? =
     when (this) {
         StartDestination.LOADING -> null
-        StartDestination.LOGIN -> AppDestination.Login
+        StartDestination.LOGIN -> AppDestination.Welcome
         StartDestination.MAIN_MENU -> AppDestination.MainMenu
     }
 
@@ -266,6 +297,7 @@ private fun StartDestination.toAppDestination(): AppDestination? =
 private fun MainMenuDestination.toAppDestination(): AppDestination =
     when (this) {
         MainMenuDestination.SEARCH_MISSIONS -> AppDestination.MissionList
+        MainMenuDestination.PUBLISH_MISSION -> AppDestination.PublishMission
         MainMenuDestination.MY_APPLICATIONS -> AppDestination.MyApplications
         MainMenuDestination.SETTINGS -> AppDestination.Settings
         else -> AppDestination.Placeholder(this)

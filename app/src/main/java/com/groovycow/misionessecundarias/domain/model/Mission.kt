@@ -14,6 +14,7 @@ data class Mission(
     val modality: String,
     @SerialName("date_time") val dateTime: String,
     val location: String? = null,
+    @SerialName("meeting_point") val meetingPoint: String? = null,
     @SerialName("max_participants") val maxParticipants: Int,
     val status: String,
     @SerialName("profiles") val publisherProfile: PublisherProfile? = null,
