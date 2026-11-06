@@ -335,3 +335,13 @@ private data class MissionCapacity(
     @SerialName("max_participants")
     val maxParticipants: Int
 )
+
+@Serializable
+private data class PendingApplication(
+    val id: String,
+    @SerialName("mission_id")
+    val missionId: String,
+    val status: String
+)
+
+
