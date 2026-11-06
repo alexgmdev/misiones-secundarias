@@ -42,9 +42,9 @@ Decisiones aplicadas (2026-11-05): D1 `meeting_point TEXT NULL`; D2 fecha/hora o
 
 ## PR 3: `hu/HU-126` Aviso de recompensas (independiente)
 
-- [ ] 3.1 (S) `ui/missions/MissionDetailScreen.kt`: tarjeta informativa en la sección de recompensas con el texto exacto de la spec. [AVR Aviso fijo y visible, Texto exacto]
-- [ ] 3.2 (S) Test que verifique la presencia del texto exacto y la ausencia de acciones de pago. [AVR Sin acciones, Alcance del aviso]
-- [ ] 3.3 (S) Verificar accesibilidad con TalkBack (texto estático completo). [AVR Accesibilidad]
+- [x] 3.1 (S) `ui/missions/MissionDetailScreen.kt`: tarjeta informativa en la sección de recompensas con el texto exacto de la spec. [AVR Aviso fijo y visible, Texto exacto]
+- [x] 3.2 (S) Test de UI que verifique la presencia del texto exacto y la ausencia de acciones transaccionales. [AVR Sin acciones, Alcance del aviso]
+- [ ] 3.3 (S) Verificar accesibilidad con TalkBack (texto estático completo). [AVR Accesibilidad] Compose expone el texto completo como estático (test instrumentado); falta la comprobación manual con TalkBack.
 - [ ] 3.4 (S) Push, CI verde y PR a `develop`.
 
 ## Cierre del sprint

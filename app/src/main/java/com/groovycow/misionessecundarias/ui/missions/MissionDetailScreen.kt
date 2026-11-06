@@ -222,6 +222,9 @@ fun MissionDetailScreen(
             )
 
             Spacer(modifier = Modifier.height(14.dp))
+            MissionRewardsNotice()
+
+            Spacer(modifier = Modifier.height(14.dp))
             InfoSection(
                 title = "Participantes",
                 text = "Cupo máximo: " + maxParticipants + " participantes. Los participantes aceptados aparecerán aquí.",
