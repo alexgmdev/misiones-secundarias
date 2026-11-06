@@ -24,6 +24,7 @@ import com.groovycow.misionessecundarias.ui.auth.recovery.ResetPasswordScreen
 import com.groovycow.misionessecundarias.ui.auth.register.RegisterScreen
 import com.groovycow.misionessecundarias.ui.missions.MissionDetailRoute
 import com.groovycow.misionessecundarias.ui.missions.MissionListScreen
+import com.groovycow.misionessecundarias.ui.missions.create.CreateMissionScreen
 import com.groovycow.misionessecundarias.ui.settings.SettingsScreen
 import org.koin.androidx.compose.koinViewModel
 
@@ -56,6 +57,9 @@ sealed interface AppDestination {
 
     /** Lista de misiones. */
     data object MissionList : AppDestination
+
+    /** Formulario para crear un borrador de misión (HU-016). */
+    data object PublishMission : AppDestination
 
     /** Detalle de la misión seleccionada. */
     data object MissionDetail : AppDestination
@@ -207,6 +211,13 @@ fun AppNavigation() {
             )
         }
 
+        AppDestination.PublishMission -> {
+            CreateMissionScreen(
+                onBack = { destination = AppDestination.MainMenu },
+                onDraftSaved = { destination = AppDestination.MainMenu },
+            )
+        }
+
         AppDestination.MissionDetail -> {
             MissionDetailDestination(
                 mission = selectedMission,
@@ -286,6 +297,7 @@ private fun StartDestination.toAppDestination(): AppDestination? =
 private fun MainMenuDestination.toAppDestination(): AppDestination =
     when (this) {
         MainMenuDestination.SEARCH_MISSIONS -> AppDestination.MissionList
+        MainMenuDestination.PUBLISH_MISSION -> AppDestination.PublishMission
         MainMenuDestination.MY_APPLICATIONS -> AppDestination.MyApplications
         MainMenuDestination.SETTINGS -> AppDestination.Settings
         else -> AppDestination.Placeholder(this)

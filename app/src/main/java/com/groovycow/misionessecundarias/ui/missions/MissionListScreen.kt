@@ -55,9 +55,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.groovycow.misionessecundarias.domain.model.Mission
 import org.koin.androidx.compose.koinViewModel
-import java.time.OffsetDateTime
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -328,12 +325,7 @@ fun MissionCard(
     mission: Mission,
     onClick: () -> Unit,
 ) {
-    val formattedDate =
-        runCatching {
-            OffsetDateTime.parse(mission.dateTime).format(
-                DateTimeFormatter.ofPattern("d 'de' MMMM 'a las' HH:mm", Locale("es", "CO")),
-            )
-        }.getOrDefault(mission.dateTime)
+    val formattedDate = formatMissionDateTime(mission.dateTime)
 
     val isRemote = mission.modality.equals("remota", ignoreCase = true)
     val accentColor = if (isRemote) RiverTeal else LeafGreen
