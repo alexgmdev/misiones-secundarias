@@ -12,6 +12,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.time.OffsetDateTime
+import com.groovycow.misionessecundarias.domain.model.MissionApplicant
 
 class ApplicationRepositoryImpl(
     private val supabase: SupabaseClient,
@@ -315,4 +316,22 @@ private data class CancellableApplication(
 private data class CancellableMission(
     @SerialName("date_time") val dateTime: String,
     val status: String,
+)
+
+
+@Serializable
+private data class MissionOwner(
+    @SerialName("publisher_id")
+    val publisherId: String
+)
+
+@Serializable
+private data class ApplicationId(
+    val id: String
+)
+
+@Serializable
+private data class MissionCapacity(
+    @SerialName("max_participants")
+    val maxParticipants: Int
 )
