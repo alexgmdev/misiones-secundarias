@@ -51,6 +51,7 @@ CREATE TABLE missions (
     modality TEXT CHECK (modality IN ('campo', 'remota')) NOT NULL,
     date_time TIMESTAMP WITH TIME ZONE NOT NULL,
     location GEOGRAPHY(POINT) NULL,
+    meeting_point TEXT NULL,
     max_participants INTEGER DEFAULT 2,
     status TEXT DEFAULT 'Publicada' CHECK (status IN ('Borrador', 'Publicada', 'Asignada', 'En progreso', 'Completada', 'Cancelada', 'Reportada', 'Suspendida')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
@@ -60,6 +61,7 @@ CREATE TABLE missions (
         (modality = 'remota' AND location IS NULL)
     )
 );
+COMMENT ON COLUMN missions.meeting_point IS 'Punto de encuentro textual (solo misiones de campo)';
 
 -- Tabla de Postulaciones
 CREATE TABLE applications (

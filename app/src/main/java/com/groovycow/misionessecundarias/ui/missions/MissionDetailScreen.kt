@@ -52,9 +52,6 @@ import androidx.compose.ui.unit.dp
 import com.groovycow.misionessecundarias.ui.applications.ApplicationUiState
 import com.groovycow.misionessecundarias.ui.applications.ApplicationViewModel
 import org.koin.androidx.compose.koinViewModel
-import java.time.OffsetDateTime
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 @Composable
 fun MissionDetailRoute(
@@ -111,12 +108,7 @@ fun MissionDetailScreen(
     onDismissApplicationMessage: () -> Unit = {},
     applicationState: ApplicationUiState = ApplicationUiState(),
 ) {
-    val formattedDate =
-        runCatching {
-            OffsetDateTime.parse(missionDateTime).format(
-                DateTimeFormatter.ofPattern("EEEE d 'de' MMMM 'a las' HH:mm", Locale("es", "CO")),
-            )
-        }.getOrDefault(missionDateTime)
+    val formattedDate = formatMissionDateTime(missionDateTime)
 
     Scaffold(
         containerColor = SandBackground,
