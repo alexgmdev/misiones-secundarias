@@ -214,7 +214,7 @@ class ApplicationRepositoryImpl(
                     eq("id", applicationId)
                 }
             }
-            .decodeSingleOrNull<Application>()
+            .decodeSingleOrNull<PendingApplication>()
             ?: error("La postulación no existe.")
 
         check(application.status == "Postulado") {
