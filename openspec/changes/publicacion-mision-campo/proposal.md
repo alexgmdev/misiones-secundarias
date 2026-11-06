@@ -63,7 +63,7 @@ Se respeta la arquitectura por capas vigente y el patrón del equipo:
 | `ui/navigation/AppNavigation.kt`, `MainMenuScreen.kt` | Modify | Destino `PublishMission` |
 | `di/RepositoryModule.kt` | Modify | Casos de uso + ViewModel |
 | `app/src/test/**` | New | Validadores, casos de uso, ViewModel |
-| `supabase/schema.sql` (+ `supabase/changes/2026-11-05_missions_meeting_point.sql`) | Modify/New | `meeting_point TEXT NULL` (decisión D1) |
+| `supabase/schema.sql` + `supabase/changes/2026-11-05_missions_meeting_point.sql`, `2026-11-05_missions_publish_draft_policy.sql` | Modify/New | Columna `meeting_point` (D1) y lectura RLS limitada a borradores propios (D14) |
 
 ## Slicing (PRs a `develop`)
 
@@ -80,11 +80,12 @@ Se respeta la arquitectura por capas vigente y el patrón del equipo:
 | Sin dirección textual para "punto de encuentro" | Resuelto | D1: se agrega `meeting_point TEXT NULL` (cambio aditivo, coordinado) |
 | Sprint cierra el sáb 7-nov 22:00 (COL) | High | Priorizar HU-016 + fecha/hora; HU-126 al final |
 | La columna `meeting_point` falta en la BD compartida | High | Migración idempotente preparada; coordinar su aplicación con el Líder Técnico antes de probar escrituras |
+| RLS no permite leer los borradores propios | High | Política adicional limitada a `auth.uid() = publisher_id AND status = 'Borrador'`; coordinar y aplicar antes de la validación integrada |
 
 ## Rollback Plan
 
 - App: revertir los PRs en `develop` en orden inverso (HU-126, HU-017, fecha/hora, HU-016).
-- BD: solo si se aplicó `meeting_point`; crear `supabase/changes/<fecha>_drop_meeting_point.sql` y ejecutarlo coordinadamente. Los datos existentes no se tocan.
+- BD: si se aplicaron cambios, revertir coordinadamente: eliminar `meeting_point` solo tras comprobar que no hay consumidores y quitar la política `Publishers can view own drafts`. Los datos existentes no se tocan.
 - No hay cambios destructivos sobre tablas ni políticas RLS.
 
 ## Dependencies

@@ -92,6 +92,7 @@ CREATE POLICY "Owner can read own private data" ON profile_private FOR SELECT TO
 
 -- Misiones
 CREATE POLICY "Published missions viewable" ON missions FOR SELECT USING (status != 'Borrador');
+CREATE POLICY "Publishers can view own drafts" ON missions FOR SELECT TO authenticated USING (auth.uid() = publisher_id AND status = 'Borrador');
 CREATE POLICY "Publishers can insert missions" ON missions FOR INSERT WITH CHECK (auth.uid() = publisher_id);
 CREATE POLICY "Publishers can update missions" ON missions FOR UPDATE USING (auth.uid() = publisher_id);
 

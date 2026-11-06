@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import com.groovycow.misionessecundarias.domain.model.MissionError
 import com.groovycow.misionessecundarias.domain.model.MissionField
 import com.groovycow.misionessecundarias.domain.model.MissionModality
+import com.groovycow.misionessecundarias.ui.missions.publish.PublishMissionViewModel
 import com.groovycow.misionessecundarias.ui.missions.toMessage
 import org.koin.androidx.compose.koinViewModel
 import java.time.Instant
@@ -67,17 +68,23 @@ import java.util.Locale
  * @param viewModel ViewModel del formulario, obtenido con Koin.
  */
 @OptIn(ExperimentalMaterial3Api::class)
+@Suppress("CyclomaticComplexMethod")
 @Composable
 fun CreateMissionScreen(
     onBack: () -> Unit,
     onDraftSaved: () -> Unit,
     viewModel: CreateMissionViewModel = koinViewModel(),
+    publishViewModel: PublishMissionViewModel = koinViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
+    val publishState by publishViewModel.uiState.collectAsState()
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) { viewModel.reset() }
+    LaunchedEffect(Unit) {
+        viewModel.reset()
+        publishViewModel.reset()
+    }
     BackHandler(enabled = state.modality != null && state.savedMission == null) {
         viewModel.onChangeModality()
     }
@@ -159,20 +166,52 @@ fun CreateMissionScreen(
         )
     }
 
-    if (state.savedMission != null) {
+    val savedMission = state.savedMission
+    if (savedMission != null) {
+        val isPublished = publishState.publishedMission != null
         AlertDialog(
             onDismissRequest = onDraftSaved,
-            title = { Text("Borrador guardado") },
-            text = { Text("La misión quedó guardada como borrador y aún no es visible en la búsqueda pública.") },
+            title = { Text(if (isPublished) "Misión publicada" else "Borrador guardado") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        if (isPublished) {
+                            "Misión publicada correctamente"
+                        } else {
+                            "La misión quedó guardada como borrador y aún no es visible en la búsqueda pública."
+                        },
+                    )
+                    publishState.error?.let { error ->
+                        Text(error.toMessage(), color = MaterialTheme.colorScheme.error)
+                    }
+                }
+            },
             confirmButton = {
-                TextButton(onClick = onDraftSaved) { Text("Volver al menú") }
+                if (isPublished) {
+                    TextButton(onClick = onDraftSaved) { Text("Volver al menú") }
+                } else {
+                    TextButton(
+                        onClick = { publishViewModel.publish(savedMission) },
+                        enabled = !publishState.isPublishing,
+                    ) {
+                        if (publishState.isPublishing) {
+                            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                        } else {
+                            Text("Publicar Misión")
+                        }
+                    }
+                }
             },
             dismissButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.reset()
-                    },
-                ) { Text("Crear otro") }
+                if (!isPublished) {
+                    TextButton(
+                        onClick = {
+                            viewModel.reset()
+                            publishViewModel.reset()
+                        },
+                        enabled = !publishState.isPublishing,
+                    ) { Text("Crear otro") }
+                }
             },
         )
     }

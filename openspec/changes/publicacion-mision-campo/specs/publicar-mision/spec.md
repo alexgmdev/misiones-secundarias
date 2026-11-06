@@ -13,12 +13,17 @@ Permitir al publicador publicar un borrador de misión de campo ya completo, de 
 ## Requirements
 
 ### Requirement: Acción de publicar
-El sistema MUST ofrecer la acción "Publicar Misión" sobre un borrador del publicador.
+El sistema MUST ofrecer la acción "Publicar Misión" sobre un borrador del publicador. Al guardar un borrador, la confirmación MUST ofrecer publicarlo.
 
 #### Scenario: Borrador propio
 - GIVEN un borrador del usuario autenticado con todos los datos obligatorios
 - WHEN abre el borrador
 - THEN ve la acción "Publicar Misión" habilitada
+
+#### Scenario: Publicar desde la confirmación del borrador
+- GIVEN el publicador acaba de guardar un borrador completo
+- WHEN ve la confirmación de guardado
+- THEN puede elegir "Publicar Misión" sin volver a ingresar los datos
 
 ### Requirement: Verificación de requisitos previos
 Antes de cambiar el estado, el sistema MUST verificar que el borrador tenga título, descripción, requisitos, fecha y hora válidas y punto de encuentro definido.

@@ -29,6 +29,7 @@ Se extiende el patrón existente sin introducir dependencias nuevas:
 | D11 | Sin `navigation-compose`; se mantiene el `when` manual | Migrar a NavHost | No reescribir la navegación del equipo |
 | D12 | Fecha y hora se combinan en un `LocalDateTime` con zona `America/Bogota` y se serializan ISO-8601 | Guardar fecha y hora en columnas separadas | El esquema tiene un único `date_time` |
 | D13 | Para HU-016, capturar latitud/longitud explícitamente; una futura selección en mapa poblará el mismo par de valores | Inventar coordenadas a partir del texto del punto de encuentro | La tabla requiere `location GEOGRAPHY(POINT)` para misiones de campo; la captura manual evita servicios externos y permite integrar el mapa después |
+| D14 | Agregar política RLS SELECT para que cada publicador lea sus propios borradores | Hacer públicos los borradores o no pedir la fila tras insert/update | Supabase necesita devolver la misión insertada y HU-017 debe operar sobre el borrador sin exponerlo a otros usuarios |
 
 ## Decisiones tomadas (2026-11-05)
 
@@ -40,6 +41,7 @@ Se extiende el patrón existente sin introducir dependencias nuevas:
 | PRs | **3 PRs**: `hu/HU-016` (incluye fecha/hora con commits separados), `hu/HU-017`, `hu/HU-126` | El formulario, la fecha y la hora son inseparables en la práctica; separarlos en 3 PRs multiplicaría el costo de revisión con el sprint cerrándose. Cada commit referencia su HU para conservar trazabilidad |
 | Entorno | Verificación local con JDK 17 y Android SDK, más CI al abrir PR | El entorno quedó instalado y `assembleDebug`, ktlint, detekt y tests se ejecutan localmente |
 | D13 | Capturar latitud y longitud junto al punto de encuentro; el futuro mapa poblará el mismo par de coordenadas | Usar siempre el centro de Cali como ubicación | `missions.location` es obligatorio para modalidad `campo`; no se debe persistir una ubicación inventada |
+| D14 | Crear política `Publishers can view own drafts`: `authenticated`, `auth.uid() = publisher_id AND status = 'Borrador'` | Exponer borradores con la política pública o depender de una fila en memoria | Permite leer solo los propios borradores y es necesaria para el `insert(...).select()` de Supabase; debe coordinarse con el Líder Técnico antes de aplicarla |
 
 ### SQL propuesto para D1
 
@@ -50,6 +52,8 @@ COMMENT ON COLUMN public.missions.meeting_point IS 'Punto de encuentro textual (
 ```
 
 Se aplica manualmente en la BD compartida, coordinado con el Líder Técnico, y se refleja también en `supabase/schema.sql`. Reversa: `ALTER TABLE public.missions DROP COLUMN IF EXISTS meeting_point;`.
+
+La política D14 se prepara en `supabase/changes/2026-11-05_missions_publish_draft_policy.sql`; tampoco se aplica sin coordinación. Reversa, si se aprueba y aplica: `DROP POLICY IF EXISTS "Publishers can view own drafts" ON public.missions;`.
 
 ### Consecuencia de D4 en Jira
 
@@ -111,6 +115,7 @@ class MissionDraftValidator(private val clock: Clock) {
 - La lista de misiones de la app decodificó esa fila usando `Mission.location: String?` y mostró la fecha en formato legible; no hace falta cambiar el tipo para el lector actual.
 - **No se ejecutó un insert autenticado**, así que la política RLS de inserción y la aceptación de EWKT de entrada aún no están verificadas.
 - La Data API confirmó que la columna `meeting_point` **no existe** en el proyecto compartido (`42703`, `column missions.meeting_point does not exist`). La migración local se prepara, pero su aplicación se debe coordinar con el Líder Técnico antes de probar escrituras.
+- El `schema.sql` del repo no tenía política SELECT para los borradores propios. Se añadió D14 de forma aditiva para permitir la lectura al publicador autenticado sin hacerlos públicos; en la BD compartida su existencia aún no está verificada.
 - El flujo de captura de coordenadas será explícito en HU-016. El punto futuro del mapa podrá escribir las mismas propiedades `latitude`/`longitude`; no se derivarán coordenadas del texto ni se usará el centro de Cali como sustituto. La validación inicial exige que el texto del punto incluya "Cali" y usa un rectángulo geográfico aproximado (`3.30..3.60`, `-76.65..-76.35`), no un perímetro catastral; la selección en mapa podrá sustituir ese aproximado después.
 
 ## Flow

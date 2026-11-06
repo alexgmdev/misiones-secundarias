@@ -9,11 +9,13 @@ import com.groovycow.misionessecundarias.domain.usecase.CancelApplicationUseCase
 import com.groovycow.misionessecundarias.domain.usecase.CreateMissionUseCase
 import com.groovycow.misionessecundarias.domain.usecase.GetMissionsUseCase
 import com.groovycow.misionessecundarias.domain.usecase.GetMyApplicationsUseCase
+import com.groovycow.misionessecundarias.domain.usecase.PublishMissionUseCase
 import com.groovycow.misionessecundarias.domain.validation.MissionDraftValidator
 import com.groovycow.misionessecundarias.ui.applications.ApplicationViewModel
 import com.groovycow.misionessecundarias.ui.applications.MyApplicationsViewModel
 import com.groovycow.misionessecundarias.ui.missions.MissionViewModel // <-- Asegúrate de tener este import
 import com.groovycow.misionessecundarias.ui.missions.create.CreateMissionViewModel
+import com.groovycow.misionessecundarias.ui.missions.publish.PublishMissionViewModel
 import org.koin.androidx.viewmodel.dsl.viewModel // <-- Y este import
 import org.koin.dsl.module
 import java.time.Clock
@@ -28,6 +30,7 @@ val repositoryModule =
         // Casos de Uso
         factory { GetMissionsUseCase(get()) }
         factory { CreateMissionUseCase(get()) }
+        factory { PublishMissionUseCase(get(), Clock.system(ZoneId.of("America/Bogota"))) }
         factory { ApplyToMissionUseCase(get()) }
         factory { CancelApplicationUseCase(get()) }
         factory { GetMyApplicationsUseCase(get()) }
@@ -36,6 +39,7 @@ val repositoryModule =
         // ViewModel (ESTA ES LA LÍNEA QUE FALTA)
         viewModel { MissionViewModel(get()) }
         viewModel { CreateMissionViewModel(get(), get()) }
+        viewModel { PublishMissionViewModel(get()) }
         viewModel { ApplicationViewModel(get()) }
         viewModel { MyApplicationsViewModel(get(), get()) }
     }

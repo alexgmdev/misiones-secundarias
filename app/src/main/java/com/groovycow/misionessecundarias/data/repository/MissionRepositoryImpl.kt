@@ -17,7 +17,7 @@ import kotlinx.serialization.Serializable
 class MissionRepositoryImpl(private val supabase: SupabaseClient) : MissionRepository {
     override suspend fun createMission(draft: CreateMissionDraft): Mission =
         withContext(Dispatchers.IO) {
-            val publisherId = authenticatedUserId()
+            val publisherId = authenticatedUserId("guardar una misión")
             val location =
                 if (draft.modality == MissionModality.CAMPO) {
                     val latitude = requireNotNull(draft.latitude) { "La latitud es obligatoria para una misión de campo." }
@@ -63,6 +63,25 @@ class MissionRepositoryImpl(private val supabase: SupabaseClient) : MissionRepos
                 }.decodeList<Mission>()
         }
 
+    override suspend fun publishMission(id: String): Mission =
+        withContext(Dispatchers.IO) {
+            val publisherId = authenticatedUserId("publicar una misión")
+            val updatedMission =
+                supabase.from("missions")
+                    .update({ set("status", "Publicada") }) {
+                        filter {
+                            eq("id", id)
+                            eq("publisher_id", publisherId)
+                            eq("status", "Borrador")
+                        }
+                        select()
+                    }
+                    .decodeSingleOrNull<Mission>()
+
+            updatedMission ?: findOwnMission(id, publisherId)?.takeIf { it.status == "Publicada" }
+                ?: error("La misión no existe, no te pertenece o no está en borrador.")
+        }
+
     override suspend fun getMissionById(id: String): Mission? =
         withContext(Dispatchers.IO) {
             supabase.from("missions")
@@ -73,7 +92,7 @@ class MissionRepositoryImpl(private val supabase: SupabaseClient) : MissionRepos
                 }.decodeSingleOrNull<Mission>()
         }
 
-    private suspend fun authenticatedUserId(): String {
+    private suspend fun authenticatedUserId(action: String): String {
         val currentUser = supabase.auth.currentUserOrNull()
         if (currentUser != null) return currentUser.id
 
@@ -82,8 +101,21 @@ class MissionRepositoryImpl(private val supabase: SupabaseClient) : MissionRepos
                 supabase.auth.retrieveUserForCurrentSession(updateSession = true)
             }.getOrNull()
 
-        return recoveredUser?.id ?: error("Debes iniciar sesión para guardar una misión.")
+        return recoveredUser?.id ?: error("Debes iniciar sesión para $action.")
     }
+
+    private suspend fun findOwnMission(
+        id: String,
+        publisherId: String,
+    ): Mission? =
+        supabase.from("missions")
+            .select {
+                filter {
+                    eq("id", id)
+                    eq("publisher_id", publisherId)
+                }
+            }
+            .decodeSingleOrNull<Mission>()
 }
 
 @Serializable

@@ -25,6 +25,18 @@ sealed interface MissionError {
 
     /** El servicio rechazó el guardado o devolvió un error inesperado. */
     data object ServerError : MissionError
+
+    /** El borrador no tiene todos los datos obligatorios para publicarse. */
+    data object DraftIncomplete : MissionError
+
+    /** El punto de encuentro debe definirse antes de publicar. */
+    data object MeetingPointRequired : MissionError
+
+    /** La fecha y hora del borrador no se pueden interpretar. */
+    data object InvalidDateTime : MissionError
+
+    /** La misión no está en estado de borrador. */
+    data object NotDraft : MissionError
 }
 
 /** Campo del formulario asociado a un error de validación. */
