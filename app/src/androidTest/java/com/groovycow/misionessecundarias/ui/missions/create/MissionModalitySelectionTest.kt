@@ -76,6 +76,8 @@ class MissionModalitySelectionTest {
 private class UnusedMissionRepository : MissionRepository {
     override suspend fun createMission(draft: CreateMissionDraft): Mission = error("No se espera guardar misiones en esta prueba")
 
+    override suspend fun publishMission(id: String): Mission = error("No se espera publicar misiones en esta prueba")
+
     override suspend fun getPublishedMissions(): List<Mission> = emptyList()
 
     override suspend fun getMissionById(id: String): Mission? = null
