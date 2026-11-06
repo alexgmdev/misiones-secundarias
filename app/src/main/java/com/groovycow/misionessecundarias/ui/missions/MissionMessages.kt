@@ -16,6 +16,7 @@ fun MissionError.toMessage(): String =
         MissionError.DateRequired -> "Selecciona la fecha de inicio"
         MissionError.TimeRequired -> "Selecciona la hora de inicio"
         MissionError.NoConnection -> "Sin conexión. Intenta de nuevo"
+        MissionError.SessionRequired -> "Debes iniciar sesión para guardar una misión"
         MissionError.ServerError -> "Ocurrió un error. Intenta de nuevo"
         MissionError.DraftIncomplete -> "Completa los datos obligatorios antes de publicar"
         MissionError.MeetingPointRequired -> "Define el punto de encuentro antes de publicar"

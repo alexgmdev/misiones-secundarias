@@ -1,12 +1,12 @@
-# Tasks: Publicación de misión de campo y aviso de recompensas
+# Tasks: Modalidad, publicación de misión y aviso de recompensas
 
 Tamaños: **S** (<1 h), **M** (1-3 h), **L** (>3 h). Base de código: `app/src/main/java/com/groovycow/misionessecundarias/` (abreviado `…/`); tests en `app/src/test/java/com/groovycow/misionessecundarias/` (`T/`).
 
-Reglas globales: TDD estricto (RED -> GREEN -> REFACTOR) con `./gradlew :app:testDebugUnitTest`; KDoc en español en toda API pública; ktlint y detekt en verde; verificar localmente con JDK 17 y Android SDK instalados (2026-11-05), además de CI al abrir PR.
+Reglas globales: TDD estricto (RED -> GREEN -> REFACTOR) con `./gradlew :app:testDebugUnitTest`; KDoc en español en toda API pública; ktlint y detekt en verde; verificar localmente con JDK 17 y Android SDK instalados (2026-11-05), además de CI al abrir PR. HU-015 fue aprobada para MVP y SCRUM-38 ya está en Sprint 1 / En curso.
 
 Trazabilidad: **CBM** = `crear-borrador-mision`, **FHI** = `fecha-hora-inicio`, **PM** = `publicar-mision`, **AVR** = `aviso-recompensas`.
 
-Decisiones aplicadas (2026-11-05): D1 `meeting_point TEXT NULL`; D2 fecha/hora obligatorias; D4 selector de modalidad mínimo en HU-016 y HU-015 descopeada; D13 coordenadas manuales compatibles con futura selección en mapa; 3 PRs; verificación local habilitada.
+Decisiones aplicadas (2026-11-05): D1 `meeting_point TEXT NULL`; D2 fecha/hora obligatorias; D4 selector y campos condicionales implementan HU-015 y sirven a HU-016; D13 coordenadas manuales compatibles con futura selección en mapa; D15 HU-015 aprobada para MVP; verificación local habilitada.
 
 ## PR 0: Fundación (rama `dev/juan-pablo` -> develop)
 
@@ -25,11 +25,12 @@ Decisiones aplicadas (2026-11-05): D1 `meeting_point TEXT NULL`; D2 fecha/hora o
 - [x] 1.3 (M) RED `T/domain/usecase/CreateMissionUseCaseTest.kt`: éxito, excepción del repositorio, `CancellationException` relanzada. GREEN `domain/usecase/CreateMissionUseCase.kt`. [CBM Persistencia, Errores]
 - [x] 1.4 (M) `data/repository/MissionRepositoryImpl.createMission()`: `insert` con `status='Borrador'`, mapeo de `date_time`, `meeting_point` y ubicación; DTOs privados `@Serializable` en el mismo archivo (estilo del equipo). [CBM Persistencia como borrador, Categoría opcional]
 - [x] 1.5 (L) RED `T/ui/missions/create/CreateMissionViewModelTest.kt`: errores por campo, no invoca el caso de uso con errores, `isLoading` evita doble envío, éxito navega, error de red conserva datos. GREEN `ui/missions/create/CreateMissionViewModel.kt` + `CreateMissionUiState`. [CBM Estado de carga, Errores, Campos obligatorios]
-- [x] 1.6 (L) `ui/missions/create/CreateMissionScreen.kt` + `ui/missions/MissionMessages.kt`: selector de modalidad, campos del formulario, `DatePickerDialog` y selector de hora Material 3, validación visual; registrar en `di/RepositoryModule.kt`. [CBM Selección de modalidad, Campos obligatorios; FHI Selección de hora válida]
+- [x] 1.6 (L) `ui/missions/create/CreateMissionScreen.kt` + `ui/missions/MissionMessages.kt`: selector HU-015 previo al formulario, campos condicionales, posibilidad de cambiar modalidad, `DatePickerDialog` y selector de hora Material 3, validación visual; registrar en `di/RepositoryModule.kt`. [HU-015 Modalidad; CBM Campos obligatorios; FHI Selección de hora válida]
 - [x] 1.7 (M) `ui/navigation/AppNavigation.kt` y `MainMenuScreen.kt`: `AppDestination.PublishMission` + `MainMenuDestination.PUBLISH_MISSION.toAppDestination()`. Verificar que el resto de destinos no cambie. [CBM Selección de modalidad]
 - [x] 1.8 (S) Formato legible de `date_time` en español para el detalle de la misión y la lista, convertido a `America/Bogota`. [FHI Persistencia y visualización]
 - [ ] 1.9 (S) Manual: recorrer el Gherkin de HU-016, HU-020 y HU-021 en dispositivo/emulador con el proyecto Supabase compartido. Pendiente: la columna `meeting_point` no existe aún en la BD compartida y no se ha coordinado la migración.
 - [ ] 1.10 (S) Push a `hu/HU-016`, CI verde y PR a `develop` (commits separados: `HU-016`, `HU-020`, `HU-021`).
+- [x] 1.11 (S) Tests instrumentados HU-015: selector inicial antes del formulario; campo muestra punto de encuentro y coordenadas; remota oculta ubicación física.
 
 ## PR 2: `hu/HU-017` Publicar misión (depende de PR 1)
 
@@ -50,6 +51,6 @@ Decisiones aplicadas (2026-11-05): D1 `meeting_point TEXT NULL`; D2 fecha/hora o
 ## Cierre del sprint
 
 - [ ] 4.1 Mover en Jira a "En curso" cada historia al iniciar y comentar el PR correspondiente.
-- [ ] 4.2 Proponer al equipo sacar **SCRUM-38 (HU-015)** del sprint por estar marcada Post-MVP (decisión D4). No modificar Jira sin confirmación.
+- [x] 4.2 Reincorporar **SCRUM-38 (HU-015)** al MVP con autorización del usuario; Jira ya la ubica en Sprint 1 / En curso y se actualizan su descripción y etiqueta.
 - [x] 4.3 Verificar los 5 pasos (`ktlintCheck`, `detekt`, `testDebugUnitTest`, `jacocoTestReport`, `assembleDebug`) localmente; todos pasan con el entorno instalado.
-- [ ] 4.4 Cerrar HU-016, HU-017, HU-020, HU-021 y HU-126 al mergear a `develop`.
+- [ ] 4.4 Cerrar HU-015, HU-016, HU-017, HU-020, HU-021 y HU-126 al mergear a `develop`.
