@@ -146,6 +146,130 @@ class ApplicationRepositoryImpl(
                 .decodeSingle<Application>()
         }
 
+    // HU-041: Consultar postulantes de una misión propia
+    override suspend fun getMissionApplicants(
+        missionId: String
+    ): List<MissionApplicant> = withContext(Dispatchers.IO) {
+
+        val publisherId =
+            supabase.auth.currentUserOrNull()?.id
+                ?: error("Debes iniciar sesión.")
+
+        // Comprobar que la misión pertenece al publicador
+        val mission = supabase.from("missions")
+            .select(columns = Columns.raw("publisher_id")) {
+                filter {
+                    eq("id", missionId)
+                    eq("publisher_id", publisherId)
+                }
+            }
+            .decodeSingleOrNull<MissionOwner>()
+            ?: error("La misión no existe o no te pertenece.")
+
+        // Consultar postulaciones y perfiles
+        supabase.from("applications")
+            .select(
+                columns = Columns.raw(
+                    "id,mission_id,solver_id,status,applied_at," +
+                    "profiles!applications_solver_id_fkey(full_name,avatar_url)"
+                )
+            ) {
+                filter {
+                    eq("mission_id", missionId)
+                    eq("status", "Postulado")
+                }
+            }
+            .decodeList<MissionApplicant>()
+            .sortedBy { it.appliedAt }
+    }
+
+    // HU-044: Aceptar postulante
+    override suspend fun acceptApplication(
+        applicationId: String
+    ) = updateApplicationStatus(applicationId, "Aceptado")
+
+    // HU-045: Rechazar postulante
+    override suspend fun rejectApplication(
+        applicationId: String
+    ) = updateApplicationStatus(applicationId, "Rechazado")
+
+    // Actualización común y validada del estado
+    private suspend fun updateApplicationStatus(
+        applicationId: String,
+        newStatus: String
+    ) = withContext(Dispatchers.IO) {
+
+        val publisherId =
+            supabase.auth.currentUserOrNull()?.id
+                ?: error("Debes iniciar sesión.")
+
+        val application = supabase.from("applications")
+            .select(
+                columns = Columns.raw(
+                    "id,status,mission_id"
+                )
+            ) {
+                filter {
+                    eq("id", applicationId)
+                }
+            }
+            .decodeSingleOrNull<Application>()
+            ?: error("La postulación no existe.")
+
+        check(application.status == "Postulado") {
+            "Esta postulación ya fue procesada."
+        }
+
+        val mission = supabase.from("missions")
+            .select(columns = Columns.raw("publisher_id")) {
+                filter {
+                    eq("id", application.missionId)
+                    eq("publisher_id", publisherId)
+                }
+            }
+            .decodeSingleOrNull<MissionOwner>()
+            ?: error("No eres el publicador de esta misión.")
+
+        // Comprobar cupos antes de aceptar
+        if (newStatus == "Aceptado") {
+
+            val accepted = supabase.from("applications")
+                .select(columns = Columns.raw("id")) {
+                    filter {
+                        eq("mission_id", application.missionId)
+                        eq("status", "Aceptado")
+                    }
+                }
+                .decodeList<ApplicationId>()
+
+            val missionCapacity = supabase.from("missions")
+                .select(columns = Columns.raw("max_participants")) {
+                    filter {
+                        eq("id", application.missionId)
+                    }
+                }
+                .decodeSingle<MissionCapacity>()
+
+            check(accepted.size < missionCapacity.maxParticipants) {
+                "La misión ya alcanzó su cupo máximo."
+            }
+        }
+
+        // Solo se actualizan postulaciones pendientes
+        supabase.from("applications").update(
+            {
+                set("status", newStatus)
+            }
+        ) {
+            filter {
+                eq("id", applicationId)
+                eq("status", "Postulado")
+            }
+        }
+
+        Unit
+    }
+
     private fun sameInstant(
         first: String,
         second: String,
