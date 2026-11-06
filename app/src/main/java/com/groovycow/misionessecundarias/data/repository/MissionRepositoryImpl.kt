@@ -10,12 +10,12 @@ import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
-import java.util.logging.Level
-import java.util.logging.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import java.util.logging.Level
+import java.util.logging.Logger
 
 class MissionRepositoryImpl(private val supabase: SupabaseClient) : MissionRepository {
     override suspend fun createMission(draft: CreateMissionDraft): Mission =
@@ -141,6 +141,7 @@ class MissionRepositoryImpl(private val supabase: SupabaseClient) : MissionRepos
             }
             .decodeSingleOrNull<Mission>()
 
+    @Suppress("UnusedParameter")
     private suspend fun authenticatedUserId(action: String): String {
         val currentUser = supabase.auth.currentUserOrNull()
         if (currentUser != null) return currentUser.id
