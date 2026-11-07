@@ -24,6 +24,7 @@ import com.groovycow.misionessecundarias.ui.auth.recovery.ResetPasswordScreen
 import com.groovycow.misionessecundarias.ui.auth.register.RegisterScreen
 import com.groovycow.misionessecundarias.ui.missions.MissionDetailRoute
 import com.groovycow.misionessecundarias.ui.missions.MissionListScreen
+import com.groovycow.misionessecundarias.ui.missions.PostulantesScreen
 import com.groovycow.misionessecundarias.ui.missions.create.CreateMissionScreen
 import com.groovycow.misionessecundarias.ui.settings.SettingsScreen
 import org.koin.androidx.compose.koinViewModel
@@ -63,6 +64,9 @@ sealed interface AppDestination {
 
     /** Detalle de la misión seleccionada. */
     data object MissionDetail : AppDestination
+
+    /** Gestión de postulantes de la misión seleccionada (HU-041, HU-044 y HU-045). */
+    data object MissionApplicants : AppDestination
 
     /** Postulaciones del usuario. */
     data object MyApplications : AppDestination
@@ -226,7 +230,21 @@ fun AppNavigation() {
                     selectedMission = null
                     destination = AppDestination.MissionList
                 },
+                onManageApplicants = { destination = AppDestination.MissionApplicants },
             )
+        }
+
+        AppDestination.MissionApplicants -> {
+            val mission = selectedMission
+            if (mission == null) {
+                destination = AppDestination.MissionList
+            } else {
+                PostulantesScreen(
+                    missionId = mission.id,
+                    missionTitle = mission.title,
+                    onBack = { destination = AppDestination.MissionDetail },
+                )
+            }
         }
 
         AppDestination.MyApplications -> {
@@ -315,6 +333,7 @@ private fun MissionDetailDestination(
     mission: Mission?,
     onMissingMission: () -> Unit,
     onBack: () -> Unit,
+    onManageApplicants: () -> Unit,
 ) {
     if (mission == null) {
         onMissingMission()
@@ -322,6 +341,7 @@ private fun MissionDetailDestination(
     }
     MissionDetailRoute(
         missionId = mission.id,
+        publisherId = mission.publisherId,
         missionTitle = mission.title,
         missionDescription = mission.description,
         missionDateTime = mission.dateTime,
@@ -332,5 +352,6 @@ private fun MissionDetailDestination(
         publisherName = mission.publisherProfile?.fullName ?: "Usuario Desconocido",
         approximateZone = "Barrio San Fernando, Cali",
         onBack = onBack,
+        onManageApplicants = onManageApplicants,
     )
 }
