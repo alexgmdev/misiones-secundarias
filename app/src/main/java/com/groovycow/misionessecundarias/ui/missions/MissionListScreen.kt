@@ -55,6 +55,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.groovycow.misionessecundarias.domain.model.Mission
 import org.koin.androidx.compose.koinViewModel
+import androidx.compose.runtime.LaunchedEffect
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,6 +66,10 @@ fun MissionListScreen(
     viewModel: MissionViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    LaunchedEffect(Unit) {
+        viewModel.loadMissions()
+    }
+
     var searchQuery by remember { mutableStateOf("") }
     var selectedModality by remember { mutableStateOf<String?>(null) }
     var filterMenuExpanded by remember { mutableStateOf(false) }
