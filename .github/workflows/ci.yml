@@ -44,9 +44,21 @@ jobs:
       - name: Compilar APK de Debug
         run: ./gradlew assembleDebug
 
-      - name: Subir reporte de cobertura
-        if: always()
+      # ==========================================
+      # ARTIFACTS (ENTREGABLES DEL PIPELINE)
+      # ==========================================
+
+      - name: Subir reporte de cobertura (Jacoco)
+        if: always() # Se sube incluso si los tests fallan, para poder auditar
         uses: actions/upload-artifact@v4
         with:
           name: jacoco-report
           path: app/build/reports/jacoco/jacocoTestReport/
+
+      - name: Subir APK de Debug
+        # Solo se sube si el build fue exitoso (si falla, no hay APK que subir)
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk

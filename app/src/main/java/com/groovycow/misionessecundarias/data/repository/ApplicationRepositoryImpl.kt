@@ -1,6 +1,8 @@
 package com.groovycow.misionessecundarias.data.repository
 
 import com.groovycow.misionessecundarias.domain.model.Application
+import com.groovycow.misionessecundarias.domain.model.ApplicationDecision
+import com.groovycow.misionessecundarias.domain.model.MissionApplicant
 import com.groovycow.misionessecundarias.domain.model.MyApplication
 import com.groovycow.misionessecundarias.domain.repository.ApplicationRepository
 import io.github.jan.supabase.SupabaseClient
@@ -17,6 +19,110 @@ import java.time.OffsetDateTime
 class ApplicationRepositoryImpl(
     private val supabase: SupabaseClient,
 ) : ApplicationRepository {
+    override suspend fun isCurrentUser(userId: String): Boolean =
+        withContext(Dispatchers.IO) {
+            authenticatedUserId("consultar la misión") == userId
+        }
+
+    override suspend fun getMissionApplicants(missionId: String): List<MissionApplicant> =
+        withContext(Dispatchers.IO) {
+            val publisherId = authenticatedUserId("consultar los postulantes")
+            requireMissionOwner(missionId, publisherId)
+
+            supabase.from("applications")
+                .select(
+                    columns =
+                        Columns.raw(
+                            "id,mission_id,solver_id,status,applied_at," +
+                                "applicant:profiles!applications_solver_id_fkey(full_name)",
+                        ),
+                ) {
+                    filter { eq("mission_id", missionId) }
+                }
+                .decodeList<MissionApplicant>()
+                .sortedByDescending { it.appliedAt }
+        }
+
+    override suspend fun updateApplicationStatus(
+        applicationId: String,
+        decision: ApplicationDecision,
+    ) = withContext(Dispatchers.IO) {
+        val publisherId = authenticatedUserId("gestionar una postulación")
+        val target =
+            supabase.from("applications")
+                .select(
+                    columns =
+                        Columns.raw(
+                            "id,mission_id,status," +
+                                "missions(publisher_id,max_participants,status)",
+                        ),
+                ) {
+                    filter { eq("id", applicationId) }
+                }
+                .decodeSingleOrNull<ApplicationDecisionTarget>()
+                ?: error("La postulación ya no existe.")
+
+        check(target.mission.publisherId == publisherId) {
+            "Solo el publicador de la misión puede gestionar sus postulantes."
+        }
+        check(target.status == "Postulado") {
+            "Esta postulación ya fue gestionada."
+        }
+        val missionAllowsDecision =
+            target.mission.status == "Publicada" ||
+                (decision == ApplicationDecision.REJECT && target.mission.status == "Asignada")
+        check(missionAllowsDecision) {
+            "La misión ya no admite esta decisión sobre postulantes."
+        }
+
+        val acceptedCount =
+            if (decision == ApplicationDecision.ACCEPT) {
+                supabase.from("applications")
+                    .select(columns = Columns.raw("id")) {
+                        filter {
+                            eq("mission_id", target.missionId)
+                            eq("status", "Aceptado")
+                        }
+                    }
+                    .decodeList<ApplicationId>()
+                    .size
+            } else {
+                0
+            }
+
+        if (decision == ApplicationDecision.ACCEPT) {
+            check(acceptedCount < target.mission.maxParticipants) {
+                "La misión ya alcanzó el máximo de participantes."
+            }
+        }
+
+        val updated =
+            supabase.from("applications")
+                .update({ set("status", decision.databaseValue) }) {
+                    filter {
+                        eq("id", applicationId)
+                        eq("status", "Postulado")
+                    }
+                    select(columns = Columns.raw("id"))
+                }
+                .decodeSingleOrNull<ApplicationId>()
+
+        check(updated != null) { "La postulación cambió antes de guardar la decisión." }
+
+        if (
+            decision == ApplicationDecision.ACCEPT &&
+            acceptedCount + 1 >= target.mission.maxParticipants
+        ) {
+            supabase.from("missions").update({ set("status", "Asignada") }) {
+                filter {
+                    eq("id", target.missionId)
+                    eq("publisher_id", publisherId)
+                    eq("status", "Publicada")
+                }
+            }
+        }
+    }
+
     override suspend fun cancelApplication(applicationId: String) =
         withContext(Dispatchers.IO) {
             val solverId = authenticatedUserId("cancelar una postulación")
@@ -153,6 +259,22 @@ class ApplicationRepositoryImpl(
         return recoveredUser?.id ?: error("Debes iniciar sesión para $action.")
     }
 
+    private suspend fun requireMissionOwner(
+        missionId: String,
+        publisherId: String,
+    ) {
+        val mission =
+            supabase.from("missions")
+                .select(columns = Columns.raw("id")) {
+                    filter {
+                        eq("id", missionId)
+                        eq("publisher_id", publisherId)
+                    }
+                }
+                .decodeSingleOrNull<ApplicationId>()
+        check(mission != null) { "Solo el publicador puede consultar los postulantes de esta misión." }
+    }
+
     private fun sameInstant(
         first: String,
         second: String,
@@ -197,5 +319,23 @@ private data class CancellableApplication(
 @Serializable
 private data class CancellableMission(
     @SerialName("date_time") val dateTime: String,
+    val status: String,
+)
+
+@Serializable
+private data class ApplicationId(val id: String)
+
+@Serializable
+private data class ApplicationDecisionTarget(
+    val id: String,
+    @SerialName("mission_id") val missionId: String,
+    val status: String,
+    @SerialName("missions") val mission: ApplicationDecisionMission,
+)
+
+@Serializable
+private data class ApplicationDecisionMission(
+    @SerialName("publisher_id") val publisherId: String,
+    @SerialName("max_participants") val maxParticipants: Int,
     val status: String,
 )

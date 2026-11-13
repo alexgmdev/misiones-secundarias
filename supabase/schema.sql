@@ -110,6 +110,7 @@ GRANT SELECT ON public.profiles TO anon, authenticated;
 GRANT SELECT ON public.applications TO anon, authenticated;
 GRANT INSERT ON public.applications TO authenticated;
 GRANT DELETE ON public.applications TO authenticated;
+GRANT UPDATE (status) ON public.applications TO authenticated;
 
 -- Datos privados y intentos de login
 REVOKE ALL ON public.profile_private FROM anon, authenticated;
