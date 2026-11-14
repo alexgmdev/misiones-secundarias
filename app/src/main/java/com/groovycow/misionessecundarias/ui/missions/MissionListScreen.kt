@@ -1,7 +1,6 @@
 package com.groovycow.misionessecundarias.ui.missions
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.location.Location
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -16,7 +15,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
@@ -57,28 +55,33 @@ fun MissionListScreen(
     var filterMenuExpanded by remember { mutableStateOf(false) }
 
     // 1. Extraer categorías dinámicamente de las misiones cargadas
-    val availableCategories = remember(uiState.missions) {
-        uiState.missions.mapNotNull { it.category?.trim()?.takeIf { cat -> cat.isNotBlank() } }.distinct()
-    }
+    val availableCategories =
+        remember(uiState.missions) {
+            uiState.missions.mapNotNull { it.category?.trim()?.takeIf { cat -> cat.isNotBlank() } }.distinct()
+        }
 
     // 2. Manejo de Permisos y GPS
     val locationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
 
-    val locationPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            // Si acepta, obtener ubicación
-            if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                locationClient.lastLocation.addOnSuccessListener { location ->
-                    userLocation = location
+    val locationPermissionLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission(),
+        ) { isGranted ->
+            if (isGranted) {
+                // Si acepta, obtener ubicación
+                if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                    locationClient.lastLocation.addOnSuccessListener { location ->
+                        userLocation = location
+                    }
                 }
             }
         }
-    }
 
     // Función para calcular distancia en km
-    fun getDistanceInKm(missionLat: Double, missionLon: Double): Double {
+    fun getDistanceInKm(
+        missionLat: Double,
+        missionLon: Double,
+    ): Double {
         val userLat = userLocation?.latitude ?: return Double.MAX_VALUE
         val userLon = userLocation?.longitude ?: return Double.MAX_VALUE
 
@@ -88,38 +91,42 @@ fun MissionListScreen(
     }
 
     // 3. Lógica de Filtrado (HU-029 + HU-030)
-    val visibleMissions = remember(uiState.missions, searchQuery, selectedModality, selectedCategory, selectedDistance, userLocation) {
-        uiState.missions.filter { mission ->
-            // Búsqueda (Título y Descripción)
-            val matchesSearch = searchQuery.isBlank() ||
-                    mission.title.contains(searchQuery, ignoreCase = true) ||
-                    mission.description.contains(searchQuery, ignoreCase = true)
+    val visibleMissions =
+        remember(uiState.missions, searchQuery, selectedModality, selectedCategory, selectedDistance, userLocation) {
+            uiState.missions.filter { mission ->
+                // Búsqueda (Título y Descripción)
+                val matchesSearch =
+                    searchQuery.isBlank() ||
+                        mission.title.contains(searchQuery, ignoreCase = true) ||
+                        mission.description.contains(searchQuery, ignoreCase = true)
 
-            // Modalidad
-            val matchesModality = selectedModality == null ||
-                    mission.modality.equals(selectedModality, ignoreCase = true)
+                // Modalidad
+                val matchesModality =
+                    selectedModality == null ||
+                        mission.modality.equals(selectedModality, ignoreCase = true)
 
-            // Categoría
-            val matchesCategory = selectedCategory == null ||
-                    mission.category?.trim().equals(selectedCategory, ignoreCase = true)
+                // Categoría
+                val matchesCategory =
+                    selectedCategory == null ||
+                        mission.category?.trim().equals(selectedCategory, ignoreCase = true)
 
-            // Distancia
-            var matchesDistance = true
-            if (selectedDistance != null && userLocation != null) {
-                val point = parseWktPoint(mission.location)
-                if (point != null) {
-                    val distance = getDistanceInKm(point.latitude, point.longitude)
-                    matchesDistance = distance <= selectedDistance!!
-                } else {
-                    matchesDistance = false // Misiones remotas sin coordenadas se ocultan si hay filtro de distancia
+                // Distancia
+                var matchesDistance = true
+                if (selectedDistance != null && userLocation != null) {
+                    val point = parseWktPoint(mission.location)
+                    if (point != null) {
+                        val distance = getDistanceInKm(point.latitude, point.longitude)
+                        matchesDistance = distance <= selectedDistance!!
+                    } else {
+                        matchesDistance = false // Misiones remotas sin coordenadas se ocultan si hay filtro de distancia
+                    }
+                } else if (selectedDistance != null && userLocation == null) {
+                    matchesDistance = true // Si no hay GPS pero el filtro está activo, dejamos pasar hasta que cargue
                 }
-            } else if (selectedDistance != null && userLocation == null) {
-                matchesDistance = true // Si no hay GPS pero el filtro está activo, dejamos pasar hasta que cargue
-            }
 
-            matchesSearch && matchesModality && matchesCategory && matchesDistance
+                matchesSearch && matchesModality && matchesCategory && matchesDistance
+            }
         }
-    }
 
     Scaffold(
         containerColor = SandBackground,
@@ -155,20 +162,22 @@ fun MissionListScreen(
                     leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                     singleLine = true,
                     shape = RoundedCornerShape(14.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = RiverTeal,
-                        unfocusedBorderColor = LeafGreen,
-                        focusedContainerColor = CreamSurface,
-                        unfocusedContainerColor = CreamSurface,
-                    ),
+                    colors =
+                        OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = RiverTeal,
+                            unfocusedBorderColor = LeafGreen,
+                            focusedContainerColor = CreamSurface,
+                            unfocusedContainerColor = CreamSurface,
+                        ),
                 )
                 Spacer(modifier = Modifier.width(10.dp))
                 Box {
                     IconButton(
                         onClick = { filterMenuExpanded = true },
-                        modifier = Modifier.size(56.dp)
-                            .background(LightLeaf, RoundedCornerShape(14.dp))
-                            .border(2.dp, LeafGreen, RoundedCornerShape(14.dp)),
+                        modifier =
+                            Modifier.size(56.dp)
+                                .background(LightLeaf, RoundedCornerShape(14.dp))
+                                .border(2.dp, LeafGreen, RoundedCornerShape(14.dp)),
                     ) {
                         Icon(Icons.Default.Settings, contentDescription = "Filtrar misiones", tint = ForestGreen)
                     }
@@ -178,7 +187,12 @@ fun MissionListScreen(
                         onDismissRequest = { filterMenuExpanded = false },
                     ) {
                         // 1. Modalidad
-                        Text("Modalidad", modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp), fontWeight = FontWeight.Bold, color = ForestGreen)
+                        Text(
+                            "Modalidad",
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                            fontWeight = FontWeight.Bold,
+                            color = ForestGreen,
+                        )
                         DropdownMenuItem(text = { Text("Todas") }, onClick = { selectedModality = null })
                         DropdownMenuItem(text = { Text("Campo") }, onClick = { selectedModality = "campo" })
                         DropdownMenuItem(text = { Text("Remota") }, onClick = { selectedModality = "remota" })
@@ -186,10 +200,18 @@ fun MissionListScreen(
                         HorizontalDivider()
 
                         // 2. Distancia (HU-029) - Requiere GPS
-                        Text("Distancia máxima", modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp), fontWeight = FontWeight.Bold, color = ForestGreen)
+                        Text(
+                            "Distancia máxima",
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                            fontWeight = FontWeight.Bold,
+                            color = ForestGreen,
+                        )
                         DropdownMenuItem(
                             text = { Text("Sin límite") },
-                            onClick = { selectedDistance = null; filterMenuExpanded = false }
+                            onClick = {
+                                selectedDistance = null
+                                filterMenuExpanded = false
+                            },
                         )
                         DropdownMenuItem(
                             text = { Text("Hasta 1 km") },
@@ -202,7 +224,7 @@ fun MissionListScreen(
                                 } else {
                                     locationClient.lastLocation.addOnSuccessListener { userLocation = it }
                                 }
-                            }
+                            },
                         )
                         DropdownMenuItem(
                             text = { Text("Hasta 5 km") },
@@ -214,7 +236,7 @@ fun MissionListScreen(
                                 } else {
                                     locationClient.lastLocation.addOnSuccessListener { userLocation = it }
                                 }
-                            }
+                            },
                         )
                         DropdownMenuItem(
                             text = { Text("Hasta 10 km") },
@@ -226,18 +248,26 @@ fun MissionListScreen(
                                 } else {
                                     locationClient.lastLocation.addOnSuccessListener { userLocation = it }
                                 }
-                            }
+                            },
                         )
 
                         if (availableCategories.isNotEmpty()) {
                             HorizontalDivider()
                             // 3. Categoría (Dinámica)
-                            Text("Categoría", modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp), fontWeight = FontWeight.Bold, color = ForestGreen)
+                            Text(
+                                "Categoría",
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                fontWeight = FontWeight.Bold,
+                                color = ForestGreen,
+                            )
                             DropdownMenuItem(text = { Text("Todas") }, onClick = { selectedCategory = null })
                             availableCategories.forEach { category ->
                                 DropdownMenuItem(
                                     text = { Text(category) },
-                                    onClick = { selectedCategory = category; filterMenuExpanded = false }
+                                    onClick = {
+                                        selectedCategory = category
+                                        filterMenuExpanded = false
+                                    },
                                 )
                             }
                         }
@@ -250,7 +280,7 @@ fun MissionListScreen(
             MissionMapScreen(
                 missions = visibleMissions,
                 onMissionClick = onMissionClick,
-                modifier = Modifier.fillMaxWidth().height(250.dp)
+                modifier = Modifier.fillMaxWidth().height(250.dp),
             )
 
             Spacer(modifier = Modifier.height(14.dp))
@@ -266,10 +296,11 @@ fun MissionListScreen(
             when {
                 uiState.isLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally), color = RiverTeal)
                 uiState.error != null -> MissionListMessage(message = uiState.error!!, borderColor = AlertCoral)
-                visibleMissions.isEmpty() -> MissionListMessage(
-                    message = "No encontramos misiones con esos criterios.",
-                    borderColor = EarthOrange,
-                )
+                visibleMissions.isEmpty() ->
+                    MissionListMessage(
+                        message = "No encontramos misiones con esos criterios.",
+                        borderColor = EarthOrange,
+                    )
                 else -> {
                     LazyColumn(
                         modifier = Modifier.weight(1f),
@@ -279,9 +310,12 @@ fun MissionListScreen(
                             MissionCard(
                                 mission = mission,
                                 onClick = { onMissionClick(mission) },
-                                distance = if (userLocation != null && mission.location != null) {
-                                    parseWktPoint(mission.location)?.let { point -> getDistanceInKm(point.latitude, point.longitude) }
-                                } else null
+                                distance =
+                                    if (userLocation != null && mission.location != null) {
+                                        parseWktPoint(mission.location)?.let { point -> getDistanceInKm(point.latitude, point.longitude) }
+                                    } else {
+                                        null
+                                    },
                             )
                         }
                         item { Spacer(modifier = Modifier.height(12.dp)) }
@@ -296,7 +330,7 @@ fun MissionListScreen(
 fun MissionCard(
     mission: Mission,
     onClick: () -> Unit,
-    distance: Double? = null // NUEVO
+    distance: Double? = null, // NUEVO
 ) {
     val formattedDate = formatMissionDateTime(mission.dateTime)
     val isRemote = mission.modality.equals("remota", ignoreCase = true)
@@ -344,7 +378,7 @@ fun MissionCard(
                     text = "A ${String.format("%.1f", distance)} km de ti",
                     color = RiverTeal,
                     style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
             }
 
@@ -357,7 +391,10 @@ fun MissionCard(
 }
 
 @Composable
-private fun MissionListMessage(message: String, borderColor: Color) {
+private fun MissionListMessage(
+    message: String,
+    borderColor: Color,
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = CreamSurface),

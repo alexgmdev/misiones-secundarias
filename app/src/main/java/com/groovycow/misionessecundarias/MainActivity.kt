@@ -6,8 +6,6 @@ import androidx.activity.compose.setContent
 import com.groovycow.misionessecundarias.ui.navigation.AppNavigation
 import com.groovycow.misionessecundarias.ui.theme.MisionesSecundariasTheme
 
-import org.maplibre.android.MapLibre
-
 /** Actividad única de la aplicación; delega toda la navegación en [AppNavigation]. */
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -16,7 +14,6 @@ class MainActivity : ComponentActivity() {
         setContent {
             MisionesSecundariasTheme {
                 AppNavigation()
-
             }
         }
     }

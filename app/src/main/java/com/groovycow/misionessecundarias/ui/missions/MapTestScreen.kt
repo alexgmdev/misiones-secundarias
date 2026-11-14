@@ -1,7 +1,9 @@
 package com.groovycow.misionessecundarias.ui.missions
 
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
@@ -11,8 +13,6 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapView
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.foundation.layout.fillMaxSize
 
 @Composable
 fun MapTestScreen() {
@@ -25,16 +25,17 @@ fun MapTestScreen() {
 
     // 2. Observamos el ciclo de vida de la pantalla para pausar/reanudar el mapa
     DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_START -> mapView.value?.onStart()
-                Lifecycle.Event.ON_RESUME -> mapView.value?.onResume()
-                Lifecycle.Event.ON_PAUSE -> mapView.value?.onPause()
-                Lifecycle.Event.ON_STOP -> mapView.value?.onStop()
-                Lifecycle.Event.ON_DESTROY -> mapView.value?.onDestroy()
-                else -> {}
+        val observer =
+            LifecycleEventObserver { _, event ->
+                when (event) {
+                    Lifecycle.Event.ON_START -> mapView.value?.onStart()
+                    Lifecycle.Event.ON_RESUME -> mapView.value?.onResume()
+                    Lifecycle.Event.ON_PAUSE -> mapView.value?.onPause()
+                    Lifecycle.Event.ON_STOP -> mapView.value?.onStop()
+                    Lifecycle.Event.ON_DESTROY -> mapView.value?.onDestroy()
+                    else -> {}
+                }
             }
-        }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
@@ -50,14 +51,15 @@ fun MapTestScreen() {
                 getMapAsync { map ->
                     // Usamos un estilo público de prueba de MapLibre
                     map.setStyle("https://tiles.openfreemap.org/styles/liberty") {
-                        map.cameraPosition = CameraPosition.Builder()
-                            .target(LatLng(caliLat, caliLon))
-                            .zoom(12.0)
-                            .build()
+                        map.cameraPosition =
+                            CameraPosition.Builder()
+                                .target(LatLng(caliLat, caliLon))
+                                .zoom(12.0)
+                                .build()
                     }
                 }
             }
         },
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
     )
 }

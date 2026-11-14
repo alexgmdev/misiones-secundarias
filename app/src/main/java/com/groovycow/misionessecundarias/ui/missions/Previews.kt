@@ -14,7 +14,9 @@ import com.groovycow.misionessecundarias.ui.theme.MisionesSecundariasTheme
 fun MissionDetailScreenPreview() {
     MisionesSecundariasTheme {
         MissionDetailScreen(
+            missionId = "123",
             missionTitle = "Limpieza del Río Cali",
+            missionLocationWkt = "asdasd",
             missionDescription = "Necesitamos ayuda para recoger basura en la orilla del río este sábado.",
             missionDateTime = "2026-11-04T20:04:37.93485+00:00",
             maxParticipants = 5,

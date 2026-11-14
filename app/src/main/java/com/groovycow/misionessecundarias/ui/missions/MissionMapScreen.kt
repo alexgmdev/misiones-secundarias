@@ -24,7 +24,7 @@ import org.maplibre.android.maps.MapView
 fun MissionMapScreen(
     missions: List<Mission>,
     onMissionClick: (Mission) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val caliLat = 3.4516
     val caliLon = -76.5320
@@ -36,20 +36,21 @@ fun MissionMapScreen(
 
     // 2. Ciclo de vida COMPLETO, incluyendo onDestroy
     DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_START -> mapView.value?.onStart()
-                Lifecycle.Event.ON_RESUME -> mapView.value?.onResume()
-                Lifecycle.Event.ON_PAUSE -> mapView.value?.onPause()
-                Lifecycle.Event.ON_STOP -> mapView.value?.onStop()
-                Lifecycle.Event.ON_DESTROY -> {
-                    mapView.value?.onDestroy() // 🔥 CRÍTICO: libera el GLThread
-                    mapView.value = null
-                    mapLibreMap.value = null
+        val observer =
+            LifecycleEventObserver { _, event ->
+                when (event) {
+                    Lifecycle.Event.ON_START -> mapView.value?.onStart()
+                    Lifecycle.Event.ON_RESUME -> mapView.value?.onResume()
+                    Lifecycle.Event.ON_PAUSE -> mapView.value?.onPause()
+                    Lifecycle.Event.ON_STOP -> mapView.value?.onStop()
+                    Lifecycle.Event.ON_DESTROY -> {
+                        mapView.value?.onDestroy() // 🔥 CRÍTICO: libera el GLThread
+                        mapView.value = null
+                        mapLibreMap.value = null
+                    }
+                    else -> {}
                 }
-                else -> {}
             }
-        }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
@@ -69,11 +70,12 @@ fun MissionMapScreen(
         missions.forEach { mission ->
             val point = parseWktPoint(mission.location)
             if (point != null) {
-                val marker = map.addMarker(
-                    MarkerOptions()
-                        .position(LatLng(point.latitude, point.longitude))
-                        .title(mission.title)
-                )
+                val marker =
+                    map.addMarker(
+                        MarkerOptions()
+                            .position(LatLng(point.latitude, point.longitude))
+                            .title(mission.title),
+                    )
                 markerMissionMap[marker] = mission
             }
         }
@@ -94,10 +96,11 @@ fun MissionMapScreen(
                 onCreate(null) // Inicializa el renderizador nativo
                 getMapAsync { map ->
                     map.setStyle("https://tiles.openfreemap.org/styles/liberty") {
-                        map.cameraPosition = CameraPosition.Builder()
-                            .target(LatLng(caliLat, caliLon))
-                            .zoom(12.0)
-                            .build()
+                        map.cameraPosition =
+                            CameraPosition.Builder()
+                                .target(LatLng(caliLat, caliLon))
+                                .zoom(12.0)
+                                .build()
                         mapLibreMap.value = map
                     }
                 }
@@ -109,6 +112,6 @@ fun MissionMapScreen(
             view.onDestroy()
             mapView.value = null
             mapLibreMap.value = null
-        }
+        },
     )
 }
