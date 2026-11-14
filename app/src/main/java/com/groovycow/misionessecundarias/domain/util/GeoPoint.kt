@@ -3,6 +3,7 @@ package com.groovycow.misionessecundarias.domain.util
 // Esta es una clase simple para no depender de MapLibre en el dominio
 data class GeoPoint(val latitude: Double, val longitude: Double)
 
+@Suppress("SwallowedException")
 fun parseWktPoint(wkt: String?): GeoPoint? {
     if (wkt == null || !wkt.contains("POINT")) return null
     return try {

@@ -1,10 +1,10 @@
 package com.groovycow.misionessecundarias.ui.missions
 
 import android.Manifest
+import android.annotation.SuppressLint
+import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -60,6 +60,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.groovycow.misionessecundarias.domain.util.parseWktPoint
@@ -92,7 +93,6 @@ fun MissionDetailRoute(
     }
 
     MissionDetailScreen(
-        missionId = missionId,
         missionLocationWkt = missionLocationWkt,
         missionTitle = missionTitle,
         missionDescription = missionDescription,
@@ -116,7 +116,6 @@ fun MissionDetailRoute(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MissionDetailScreen(
-    missionId: String,
     missionLocationWkt: String?,
     missionTitle: String,
     missionDescription: String,
@@ -136,35 +135,19 @@ fun MissionDetailScreen(
     applicationState: ApplicationUiState = ApplicationUiState(),
 ) {
     val formattedDate = formatMissionDateTime(missionDateTime)
-
     val context = LocalContext.current
     val locationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
     var distanceError by remember { mutableStateOf<String?>(null) }
 
-    val locationPermissionLauncher =
-        rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.RequestPermission(),
-        ) { isGranted ->
-            if (isGranted) {
-                if (ContextCompat.checkSelfPermission
-                        (context, Manifest.permission.ACCESS_FINE_LOCATION)
-                    == PackageManager.PERMISSION_GRANTED
-                ) {
-                    locationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
-                        .addOnSuccessListener { location ->
-                            if (location != null) {
-                                validateArrival(location, missionLocationWkt) { success, msg ->
-                                    if (success) {
-                                        onArrived(location.latitude, location.longitude)
-                                    } else {
-                                        distanceError = msg
-                                    }
-                                }
-                            }
-                        }
-                }
+    val onValidateArrivalClick = {
+        fetchLocationAndValidate(context, missionLocationWkt, locationClient) { success, msg, lat, lon ->
+            if (success && lat != null && lon != null) {
+                onArrived(lat, lon)
+            } else {
+                distanceError = msg
             }
         }
+    }
 
     Scaffold(
         containerColor = SandBackground,
@@ -183,7 +166,12 @@ fun MissionDetailScreen(
         },
     ) { paddingValues ->
         Column(
-            modifier = Modifier.fillMaxSize().padding(paddingValues).padding(horizontal = 16.dp).verticalScroll(rememberScrollState()),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(horizontal = 16.dp)
+                    .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
@@ -200,7 +188,10 @@ fun MissionDetailScreen(
                     text = it,
                     color = CreamSurface,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.background(RiverTeal, RoundedCornerShape(20.dp)).padding(horizontal = 14.dp, vertical = 6.dp),
+                    modifier =
+                        Modifier
+                            .background(RiverTeal, RoundedCornerShape(20.dp))
+                            .padding(horizontal = 14.dp, vertical = 6.dp),
                 )
             }
 
@@ -209,7 +200,7 @@ fun MissionDetailScreen(
             Spacer(modifier = Modifier.height(14.dp))
 
             Text(
-                text = "Empieza el " + formattedDate,
+                text = "Empieza el $formattedDate",
                 modifier = Modifier.fillMaxWidth(),
                 color = BarkBrown,
                 style = MaterialTheme.typography.titleMedium,
@@ -260,117 +251,21 @@ fun MissionDetailScreen(
             Spacer(modifier = Modifier.height(14.dp))
             InfoSection(
                 title = "Participantes",
-                text = "Cupo máximo: " + maxParticipants + " participantes. Los participantes aceptados aparecerán aquí.",
+                text = "Cupo máximo: $maxParticipants participantes. Los participantes aceptados aparecerán aquí.",
                 accentColor = RiverTeal,
                 backgroundColor = LightRiver,
             )
 
             Spacer(modifier = Modifier.height(18.dp))
 
-            if (applicationState.isAccepted) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = LightEarth),
-                    border = BorderStroke(2.dp, EarthOrange),
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Panel de Asistencia", fontWeight = FontWeight.Bold, color = ForestGreen)
-                        Spacer(modifier = Modifier.height(8.dp))
+            MissionActionSection(
+                applicationState = applicationState,
+                onMarkOnWay = onMarkOnWay,
+                onApply = onApply,
+                onManageApplicants = onManageApplicants,
+                onValidateArrival = onValidateArrivalClick,
+            )
 
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Checkbox(
-                                checked = applicationState.isOnWay,
-                                onCheckedChange = { isChecked ->
-                                    if (isChecked && !applicationState.isOnWay) onMarkOnWay()
-                                },
-                                enabled = !applicationState.isOnWay && !applicationState.isUpdatingStatus,
-                            )
-                            Text("Voy en camino", fontWeight = FontWeight.SemiBold)
-                        }
-
-                        Button(
-                            onClick = {
-                                if (ContextCompat.checkSelfPermission
-                                        (context, Manifest.permission.ACCESS_FINE_LOCATION)
-                                    != PackageManager.PERMISSION_GRANTED
-                                ) {
-                                    locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-                                } else {
-                                    locationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
-                                        .addOnSuccessListener { location ->
-                                            if (location != null) {
-                                                validateArrival(location, missionLocationWkt) { success, msg ->
-                                                    if (success) {
-                                                        onArrived(location.latitude, location.longitude)
-                                                    } else {
-                                                        distanceError = msg
-                                                    }
-                                                }
-                                            }
-                                        }
-                                }
-                            },
-                            enabled =
-                                applicationState.isOnWay && !applicationState.hasArrived &&
-                                    !applicationState.isUpdatingStatus,
-                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                            colors =
-                                ButtonDefaults.buttonColors(
-                                    containerColor =
-                                        if (applicationState.hasArrived) {
-                                            LeafGreen
-                                        } else {
-                                            EarthOrange
-                                        },
-                                ),
-                        ) {
-                            if (applicationState.isUpdatingStatus) {
-                                CircularProgressIndicator(
-                                    modifier =
-                                        Modifier.size(20.dp),
-                                    color = CreamSurface,
-                                )
-                            } else {
-                                Text(
-                                    if (applicationState.hasArrived) {
-                                        "¡Llegada Registrada!"
-                                    } else {
-                                        "Marcar Llegué (GPS < 50m)"
-                                    },
-                                )
-                            }
-                        }
-                    }
-                }
-            } else {
-                Button(
-                    onClick = if (applicationState.isPublisher) onManageApplicants else onApply,
-                    enabled = applicationState.canPerformPrimaryAction(),
-                    modifier = Modifier.fillMaxWidth().height(58.dp),
-                    colors =
-                        ButtonDefaults.buttonColors(
-                            containerColor = LeafGreen,
-                            contentColor = CreamSurface,
-                            disabledContainerColor = LightLeaf,
-                            disabledContentColor = ForestGreen,
-                        ),
-                    shape = RoundedCornerShape(14.dp),
-                ) {
-                    if (applicationState.isCheckingOwnership || applicationState.isSubmitting) {
-                        CircularProgressIndicator(modifier = Modifier.size(24.dp), color = CreamSurface, strokeWidth = 2.dp)
-                    } else {
-                        Text(
-                            text =
-                                when {
-                                    applicationState.isPublisher -> "Gestionar postulantes"
-                                    applicationState.wasSubmitted -> "Postulación enviada"
-                                    else -> "Postularse a la misión"
-                                },
-                            fontWeight = FontWeight.ExtraBold,
-                        )
-                    }
-                }
-            }
             Spacer(modifier = Modifier.height(20.dp))
         }
     }
@@ -382,9 +277,9 @@ fun MissionDetailScreen(
             title = { Text("Muy lejos", color = AlertCoral, fontWeight = FontWeight.ExtraBold) },
             text = { Text(error, color = BarkBrown) },
             confirmButton = {
-                TextButton(
-                    onClick = { distanceError = null },
-                ) { Text("Entendido", color = ForestGreen, fontWeight = FontWeight.Bold) }
+                TextButton(onClick = { distanceError = null }) {
+                    Text("Entendido", color = ForestGreen, fontWeight = FontWeight.Bold)
+                }
             },
         )
     }
@@ -402,55 +297,151 @@ fun MissionDetailScreen(
             },
             text = { Text(text = message, color = BarkBrown) },
             confirmButton = {
-                TextButton(onClick = onDismissApplicationMessage) { Text("Aceptar", color = ForestGreen, fontWeight = FontWeight.Bold) }
+                TextButton(onClick = onDismissApplicationMessage) {
+                    Text("Aceptar", color = ForestGreen, fontWeight = FontWeight.Bold)
+                }
             },
         )
     }
 }
 
-private fun ApplicationUiState.canPerformPrimaryAction(): Boolean =
-    !isCheckingOwnership && (isPublisher || (!isSubmitting && !wasSubmitted))
-
-private fun validateArrival(
-    currentLocation: Location,
-    missionWkt: String?,
-    onResult: (Boolean, String?) -> Unit,
+@Composable
+private fun MissionActionSection(
+    applicationState: ApplicationUiState,
+    onMarkOnWay: () -> Unit,
+    onApply: () -> Unit,
+    onManageApplicants: () -> Unit,
+    onValidateArrival: () -> Unit,
 ) {
-    if (missionWkt == null) {
-        onResult(true, null)
-        return
-    }
-    val missionPoint = parseWktPoint(missionWkt)
-    if (missionPoint != null) {
-        val results = FloatArray(1)
-        Location.distanceBetween(
-            currentLocation.latitude,
-            currentLocation.longitude,
-            missionPoint.latitude,
-            missionPoint.longitude,
-            results,
-        )
-        if (results[0] <= 50.0) {
-            onResult(true, null)
-        } else {
-            onResult(false, "Estás a ${results[0].toInt()} metros. Debes estar a menos de 50 metros para marcar llegada.")
+    if (applicationState.isAccepted) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = LightEarth),
+            border = BorderStroke(2.dp, EarthOrange),
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("Panel de Asistencia", fontWeight = FontWeight.Bold, color = ForestGreen)
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(
+                        checked = applicationState.isOnWay,
+                        onCheckedChange = { isChecked ->
+                            if (isChecked && !applicationState.isOnWay) onMarkOnWay()
+                        },
+                        enabled = !applicationState.isOnWay && !applicationState.isUpdatingStatus,
+                    )
+                    Text("Voy en camino", fontWeight = FontWeight.SemiBold)
+                }
+
+                Button(
+                    onClick = onValidateArrival,
+                    enabled = applicationState.isOnWay && !applicationState.hasArrived && !applicationState.isUpdatingStatus,
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    colors =
+                        ButtonDefaults.buttonColors(
+                            containerColor = if (applicationState.hasArrived) LeafGreen else EarthOrange,
+                        ),
+                ) {
+                    if (applicationState.isUpdatingStatus) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = CreamSurface,
+                        )
+                    } else {
+                        Text(
+                            if (applicationState.hasArrived) {
+                                "¡Llegada Registrada!"
+                            } else {
+                                "Marcar Llegué (GPS < 50m)"
+                            },
+                        )
+                    }
+                }
+            }
         }
     } else {
-        onResult(true, null)
+        Button(
+            onClick = if (applicationState.isPublisher) onManageApplicants else onApply,
+            enabled = applicationState.canPerformPrimaryAction(),
+            modifier = Modifier.fillMaxWidth().height(58.dp),
+            colors =
+                ButtonDefaults.buttonColors(
+                    containerColor = LeafGreen,
+                    contentColor = CreamSurface,
+                    disabledContainerColor = LightLeaf,
+                    disabledContentColor = ForestGreen,
+                ),
+            shape = RoundedCornerShape(14.dp),
+        ) {
+            if (applicationState.isCheckingOwnership || applicationState.isSubmitting) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = CreamSurface,
+                    strokeWidth = 2.dp,
+                )
+            } else {
+                PrimaryActionText(applicationState)
+            }
+        }
     }
 }
 
-// ... Aquí van tus composables PublisherCard, MissionLocationPanel, InfoLabel, InfoSection ...
-// Si los borraste, te los vuelvo a poner aquí debajo. Asegúrate de tenerlos.
+@Composable
+private fun PrimaryActionText(state: ApplicationUiState) {
+    val text =
+        when {
+            state.isPublisher -> "Gestionar postulantes"
+            state.wasSubmitted -> "Postulación enviada"
+            else -> "Postularse a la misión"
+        }
+    Text(text = text, fontWeight = FontWeight.ExtraBold)
+}
+
+private fun ApplicationUiState.canPerformPrimaryAction(): Boolean =
+    !isCheckingOwnership && (isPublisher || (!isSubmitting && !wasSubmitted))
+
+@SuppressLint("MissingPermission")
+private fun fetchLocationAndValidate(
+    context: Context,
+    missionWkt: String?,
+    locationClient: FusedLocationProviderClient,
+    onResult: (Boolean, String?, Double?, Double?) -> Unit,
+) {
+    if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        onResult(false, "Permiso de ubicación denegado.", null, null)
+        return
+    }
+    locationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
+        .addOnSuccessListener { location ->
+            if (location == null) {
+                onResult(false, "No se pudo obtener la ubicación actual.", null, null)
+                return@addOnSuccessListener
+            }
+            val missionPoint = parseWktPoint(missionWkt)
+            if (missionPoint != null) {
+                val results = FloatArray(1)
+                Location.distanceBetween(location.latitude, location.longitude, missionPoint.latitude, missionPoint.longitude, results)
+                if (results[0] <= 50.0) {
+                    onResult(true, null, location.latitude, location.longitude)
+                } else {
+                    onResult(false, "Estás a ${results[0].toInt()} metros. Debes estar a menos de 50 metros.", null, null)
+                }
+            } else {
+                onResult(true, null, location.latitude, location.longitude)
+            }
+        }
+}
 
 @Composable
 private fun PublisherCard(publisherName: String?) {
     Row(
         modifier =
-            Modifier.fillMaxWidth().background(
-                CreamSurface,
-                RoundedCornerShape(14.dp),
-            ).border(2.dp, EarthOrange, RoundedCornerShape(14.dp)).padding(14.dp),
+            Modifier
+                .fillMaxWidth()
+                .background(CreamSurface, RoundedCornerShape(14.dp))
+                .border(2.dp, EarthOrange, RoundedCornerShape(14.dp))
+                .padding(14.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -521,14 +512,11 @@ private fun MissionLocationPanel(modality: String) {
                     color = ForestGreen,
                     fontWeight = FontWeight.ExtraBold,
                     modifier =
-                        Modifier.align(
-                            Alignment.TopStart,
-                        ).padding(
-                            12.dp,
-                        ).background(
-                            CreamSurface.copy(alpha = 0.9f),
-                            RoundedCornerShape(8.dp),
-                        ).padding(horizontal = 10.dp, vertical = 5.dp),
+                        Modifier
+                            .align(Alignment.TopStart)
+                            .padding(12.dp)
+                            .background(CreamSurface.copy(alpha = 0.9f), RoundedCornerShape(8.dp))
+                            .padding(horizontal = 10.dp, vertical = 5.dp),
                 )
                 Icon(
                     Icons.Default.LocationOn,
@@ -550,10 +538,11 @@ private fun InfoLabel(
 ) {
     Row(
         modifier =
-            Modifier.fillMaxWidth().background(
-                backgroundColor,
-                RoundedCornerShape(14.dp),
-            ).border(2.dp, accentColor, RoundedCornerShape(14.dp)).padding(14.dp),
+            Modifier
+                .fillMaxWidth()
+                .background(backgroundColor, RoundedCornerShape(14.dp))
+                .border(2.dp, accentColor, RoundedCornerShape(14.dp))
+                .padding(14.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
