@@ -12,7 +12,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.groovycow.misionessecundarias.domain.model.Mission
-import com.groovycow.misionessecundarias.domain.util.parseWktPoint
 import org.maplibre.android.annotations.Marker
 import org.maplibre.android.annotations.MarkerOptions
 import org.maplibre.android.camera.CameraPosition
@@ -114,4 +113,31 @@ fun MissionMapScreen(
             mapLibreMap.value = null
         },
     )
+}
+
+private fun parseWktPoint(wkt: String?): LatLng? {
+    val regex =
+        Regex(
+            """POINT\s*(?:ZM|Z|M)?\s*\(\s*(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)(?:\s+-?\d+(?:\.\d+)?)?\s*\)""",
+            RegexOption.IGNORE_CASE,
+        )
+
+    return wkt
+        ?.takeIf { it.isNotBlank() }
+        ?.let { value ->
+            regex.find(value)?.destructured?.let { (lonText, latText) ->
+                val longitude = lonText.toDoubleOrNull()
+                val latitude = latText.toDoubleOrNull()
+
+                latitude
+                    ?.takeIf { it in -90.0..90.0 }
+                    ?.let { validLatitude ->
+                        longitude
+                            ?.takeIf { it in -180.0..180.0 }
+                            ?.let { validLongitude ->
+                                LatLng(validLatitude, validLongitude)
+                            }
+                    }
+            }
+        }
 }

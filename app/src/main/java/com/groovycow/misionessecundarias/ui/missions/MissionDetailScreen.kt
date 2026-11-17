@@ -1,10 +1,9 @@
 package com.groovycow.misionessecundarias.ui.missions
 
 import android.Manifest
-import android.annotation.SuppressLint
-import android.content.Context
 import android.content.pm.PackageManager
-import android.location.Location
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -60,10 +59,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
-import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
-import com.groovycow.misionessecundarias.domain.util.parseWktPoint
+import com.groovycow.misionessecundarias.domain.util.LocationValidator
 import com.groovycow.misionessecundarias.ui.applications.ApplicationUiState
 import com.groovycow.misionessecundarias.ui.applications.ApplicationViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -139,13 +137,54 @@ fun MissionDetailScreen(
     val locationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
     var distanceError by remember { mutableStateOf<String?>(null) }
 
-    val onValidateArrivalClick = {
-        fetchLocationAndValidate(context, missionLocationWkt, locationClient) { success, msg, lat, lon ->
-            if (success && lat != null && lon != null) {
-                onArrived(lat, lon)
+    val validateLocation: () -> Unit = {
+        locationClient.getCurrentLocation(
+            Priority.PRIORITY_HIGH_ACCURACY,
+            null,
+        ).addOnSuccessListener { location ->
+            if (location != null) {
+                val isValid =
+                    LocationValidator.isWithinRange(
+                        userLat = location.latitude,
+                        userLon = location.longitude,
+                        missionWkt = missionLocationWkt,
+                    )
+
+                if (isValid) {
+                    onArrived(location.latitude, location.longitude)
+                } else {
+                    distanceError = "Estás muy lejos. Debes estar a menos de 50 metros."
+                }
             } else {
-                distanceError = msg
+                distanceError = "No fue posible obtener tu ubicación GPS."
             }
+        }
+        Unit
+    }
+
+    val locationPermissionLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission(),
+        ) { isGranted ->
+            if (isGranted) {
+                validateLocation()
+            } else {
+                distanceError = "Debes conceder el permiso de ubicación para validar tu llegada."
+            }
+        }
+
+    val onValidateArrivalClick: () -> Unit = {
+        if (
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION,
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            locationPermissionLauncher.launch(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+            )
+        } else {
+            validateLocation()
         }
     }
 
@@ -400,38 +439,6 @@ private fun PrimaryActionText(state: ApplicationUiState) {
 
 private fun ApplicationUiState.canPerformPrimaryAction(): Boolean =
     !isCheckingOwnership && (isPublisher || (!isSubmitting && !wasSubmitted))
-
-@SuppressLint("MissingPermission")
-private fun fetchLocationAndValidate(
-    context: Context,
-    missionWkt: String?,
-    locationClient: FusedLocationProviderClient,
-    onResult: (Boolean, String?, Double?, Double?) -> Unit,
-) {
-    if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-        onResult(false, "Permiso de ubicación denegado.", null, null)
-        return
-    }
-    locationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
-        .addOnSuccessListener { location ->
-            if (location == null) {
-                onResult(false, "No se pudo obtener la ubicación actual.", null, null)
-                return@addOnSuccessListener
-            }
-            val missionPoint = parseWktPoint(missionWkt)
-            if (missionPoint != null) {
-                val results = FloatArray(1)
-                Location.distanceBetween(location.latitude, location.longitude, missionPoint.latitude, missionPoint.longitude, results)
-                if (results[0] <= 50.0) {
-                    onResult(true, null, location.latitude, location.longitude)
-                } else {
-                    onResult(false, "Estás a ${results[0].toInt()} metros. Debes estar a menos de 50 metros.", null, null)
-                }
-            } else {
-                onResult(true, null, location.latitude, location.longitude)
-            }
-        }
-}
 
 @Composable
 private fun PublisherCard(publisherName: String?) {

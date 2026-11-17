@@ -1,22 +1,45 @@
 package com.groovycow.misionessecundarias.domain.util
 
-// Esta es una clase simple para no depender de MapLibre en el dominio
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.sqrt
+
 data class GeoPoint(val latitude: Double, val longitude: Double)
 
-@Suppress("SwallowedException")
-fun parseWktPoint(wkt: String?): GeoPoint? {
-    if (wkt == null || !wkt.contains("POINT")) return null
-    return try {
-        // Ejemplo: "SRID=4326;POINT(-76.532 3.451)"
-        val coordsString = wkt.substringAfter("POINT(").substringBefore(")")
-        val parts = coordsString.split(" ")
+object GeoUtils {
+    @Suppress("SwallowedException")
+    fun parseWktPoint(wkt: String?): GeoPoint? {
+        if (wkt == null || !wkt.contains("POINT")) return null
+        return try {
+            val coordsString = wkt.substringAfter("POINT(").substringBefore(")")
+            val parts = coordsString.split(" ")
+            val longitude = parts[0].toDouble()
+            val latitude = parts[1].toDouble()
+            GeoPoint(latitude, longitude)
+        } catch (e: Exception) {
+            null
+        }
+    }
 
-        // ⚠️ IMPORTANTE: En PostGIS WKT, el orden es LONGITUD y luego LATITUD (X, Y)
-        val longitude = parts[0].toDouble()
-        val latitude = parts[1].toDouble()
+    // Fórmula de Haversine (testeable en JVM)
+    fun calculateDistanceInKm(
+        lat1: Double,
+        lon1: Double,
+        lat2: Double,
+        lon2: Double,
+    ): Double {
+        val r = 6371.0
+        val phi1 = Math.toRadians(lat1)
+        val phi2 = Math.toRadians(lat2)
+        val deltaPhi = Math.toRadians(lat2 - lat1)
+        val deltaLambda = Math.toRadians(lon2 - lon1)
 
-        GeoPoint(latitude, longitude)
-    } catch (e: Exception) {
-        null // Si el formato falla, devolvemos null para no romper la app
+        val a =
+            sin(deltaPhi / 2) * sin(deltaPhi / 2) +
+                cos(phi1) * cos(phi2) * sin(deltaLambda / 2) * sin(deltaLambda / 2)
+        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+
+        return r * c
     }
 }

@@ -61,7 +61,8 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.LocationServices
 import com.groovycow.misionessecundarias.domain.model.Mission
-import com.groovycow.misionessecundarias.domain.util.parseWktPoint
+import com.groovycow.misionessecundarias.domain.usecase.FilterMissionsUseCase
+import com.groovycow.misionessecundarias.domain.util.GeoUtils
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -74,6 +75,7 @@ fun MissionListScreen(
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
+    val filterMissionsUseCase = remember { FilterMissionsUseCase() }
 
     LaunchedEffect(Unit) {
         viewModel.loadMissions()
@@ -109,28 +111,16 @@ fun MissionListScreen(
             }
         }
 
-    val getDistanceInKm = { lat: Double, lon: Double ->
-        val userLat = userLocation?.latitude
-        val userLon = userLocation?.longitude
-        if (userLat != null && userLon != null) {
-            val results = FloatArray(1)
-            Location.distanceBetween(userLat, userLon, lat, lon, results)
-            results[0] / 1000.0
-        } else {
-            Double.MAX_VALUE
-        }
-    }
-
     val visibleMissions =
         remember(uiState.missions, searchQuery, selectedModality, selectedCategory, selectedDistance, userLocation) {
-            filterMissions(
+            filterMissionsUseCase(
                 missions = uiState.missions,
                 searchQuery = searchQuery,
                 selectedModality = selectedModality,
                 selectedCategory = selectedCategory,
                 selectedDistance = selectedDistance,
-                userLocation = userLocation,
-                getDistance = getDistanceInKm,
+                userLat = userLocation?.latitude,
+                userLon = userLocation?.longitude,
             )
         }
 
@@ -198,48 +188,9 @@ fun MissionListScreen(
                 uiState = uiState,
                 visibleMissions = visibleMissions,
                 userLocation = userLocation,
-                getDistanceInKm = getDistanceInKm,
                 onMissionClick = onMissionClick,
             )
         }
-    }
-}
-
-private fun filterMissions(
-    missions: List<Mission>,
-    searchQuery: String,
-    selectedModality: String?,
-    selectedCategory: String?,
-    selectedDistance: Int?,
-    userLocation: Location?,
-    getDistance: (Double, Double) -> Double,
-): List<Mission> {
-    return missions.filter { mission ->
-        val matchesSearch =
-            searchQuery.isBlank() ||
-                mission.title.contains(searchQuery, ignoreCase = true) ||
-                mission.description.contains(searchQuery, ignoreCase = true)
-
-        val matchesModality =
-            selectedModality == null ||
-                mission.modality.equals(selectedModality, ignoreCase = true)
-
-        val matchesCategory =
-            selectedCategory == null ||
-                mission.category?.trim().equals(selectedCategory, ignoreCase = true)
-
-        var matchesDistance = true
-        if (selectedDistance != null && userLocation != null) {
-            val point = parseWktPoint(mission.location)
-            if (point != null) {
-                val distance = getDistance(point.latitude, point.longitude)
-                matchesDistance = distance <= selectedDistance
-            } else {
-                matchesDistance = false
-            }
-        }
-
-        matchesSearch && matchesModality && matchesCategory && matchesDistance
     }
 }
 
@@ -490,7 +441,6 @@ private fun MissionListContent(
     uiState: MissionUiState,
     visibleMissions: List<Mission>,
     userLocation: Location?,
-    getDistanceInKm: (Double, Double) -> Double,
     onMissionClick: (Mission) -> Unit,
 ) {
     when {
@@ -520,8 +470,13 @@ private fun MissionListContent(
                         onClick = { onMissionClick(mission) },
                         distance =
                             if (userLocation != null && mission.location != null) {
-                                parseWktPoint(mission.location)?.let { point ->
-                                    getDistanceInKm(point.latitude, point.longitude)
+                                GeoUtils.parseWktPoint(mission.location)?.let { point ->
+                                    GeoUtils.calculateDistanceInKm(
+                                        userLocation.latitude,
+                                        userLocation.longitude,
+                                        point.latitude,
+                                        point.longitude,
+                                    )
                                 }
                             } else {
                                 null
