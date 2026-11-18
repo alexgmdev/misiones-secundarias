@@ -10,6 +10,7 @@ import com.groovycow.misionessecundarias.ui.theme.MisionesSecundariasTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
             MisionesSecundariasTheme {
                 AppNavigation()

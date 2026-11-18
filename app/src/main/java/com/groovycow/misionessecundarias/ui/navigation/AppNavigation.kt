@@ -26,6 +26,7 @@ import com.groovycow.misionessecundarias.ui.missions.MissionDetailRoute
 import com.groovycow.misionessecundarias.ui.missions.MissionListScreen
 import com.groovycow.misionessecundarias.ui.missions.PostulantesScreen
 import com.groovycow.misionessecundarias.ui.missions.create.CreateMissionScreen
+import com.groovycow.misionessecundarias.ui.missions.live.LiveMissionPanelScreen
 import com.groovycow.misionessecundarias.ui.settings.SettingsScreen
 import org.koin.androidx.compose.koinViewModel
 
@@ -65,8 +66,14 @@ sealed interface AppDestination {
     /** Detalle de la misión seleccionada. */
     data object MissionDetail : AppDestination
 
+    /** Misiones creadas por el usuario, alcanzable desde el estado de las misiones. */
+    data object MyMissions : AppDestination
+
     /** Gestión de postulantes de la misión seleccionada (HU-041, HU-044 y HU-045). */
     data object MissionApplicants : AppDestination
+
+    /** Panel de ejecución en vivo con avatares de los solucionadores (HU-051). */
+    data object LiveMissionPanel : AppDestination
 
     /** Postulaciones del usuario. */
     data object MyApplications : AppDestination
@@ -94,6 +101,7 @@ fun AppNavigation() {
     val isLoggedIn by sessionViewModel.isLoggedIn.collectAsState()
     val isSessionResolved by sessionViewModel.isSessionResolved.collectAsState()
     var selectedMission by remember { mutableStateOf<Mission?>(null) }
+    var detailOrigin by remember { mutableStateOf<AppDestination>(AppDestination.MissionList) }
     var destination by remember { mutableStateOf<AppDestination?>(null) }
     var loginNotice by remember { mutableStateOf<String?>(null) }
 
@@ -206,12 +214,28 @@ fun AppNavigation() {
             MissionListScreen(
                 onMissionClick = { mission ->
                     selectedMission = mission
+                    detailOrigin = AppDestination.MissionList
                     destination = AppDestination.MissionDetail
                 },
                 onMyApplicationsClick = {
                     destination = AppDestination.MyApplications
                 },
                 onBack = { destination = AppDestination.MainMenu },
+            )
+        }
+
+        AppDestination.MyMissions -> {
+            MissionListScreen(
+                onMissionClick = { mission ->
+                    selectedMission = mission
+                    detailOrigin = AppDestination.MyMissions
+                    destination = AppDestination.MissionDetail
+                },
+                onMyApplicationsClick = {
+                    destination = AppDestination.MyApplications
+                },
+                onBack = { destination = AppDestination.MyApplications },
+                startWithMyMissions = true,
             )
         }
 
@@ -228,7 +252,7 @@ fun AppNavigation() {
                 onMissingMission = { destination = AppDestination.MissionList },
                 onBack = {
                     selectedMission = null
-                    destination = AppDestination.MissionList
+                    destination = detailOrigin
                 },
                 onManageApplicants = { destination = AppDestination.MissionApplicants },
             )
@@ -243,6 +267,30 @@ fun AppNavigation() {
                     missionId = mission.id,
                     missionTitle = mission.title,
                     onBack = { destination = AppDestination.MissionDetail },
+                    isMissionInProgress = mission.status == "En progreso",
+                    isMissionCompleted = mission.status == "Completada",
+                    onOpenLivePanel = { destination = AppDestination.LiveMissionPanel },
+                    onMissionStarted = { started ->
+                        selectedMission = started
+                        destination = AppDestination.LiveMissionPanel
+                    },
+                )
+            }
+        }
+
+        AppDestination.LiveMissionPanel -> {
+            val mission = selectedMission
+            if (mission == null) {
+                destination = AppDestination.MissionList
+            } else {
+                LiveMissionPanelScreen(
+                    missionId = mission.id,
+                    missionTitle = mission.title,
+                    onBack = { destination = AppDestination.MissionApplicants },
+                    onMissionCompleted = { completed ->
+                        selectedMission = completed
+                        destination = AppDestination.MissionApplicants
+                    },
                 )
             }
         }
@@ -251,6 +299,7 @@ fun AppNavigation() {
             MyApplicationsScreen(
                 onBack = { destination = AppDestination.MainMenu },
                 onExploreMissions = { destination = AppDestination.MissionList },
+                onMyMissions = { destination = AppDestination.MyMissions },
             )
         }
 
@@ -342,6 +391,7 @@ private fun MissionDetailDestination(
     MissionDetailRoute(
         missionId = mission.id,
         publisherId = mission.publisherId,
+        missionLocationWkt = mission.location,
         missionTitle = mission.title,
         missionDescription = mission.description,
         missionDateTime = mission.dateTime,

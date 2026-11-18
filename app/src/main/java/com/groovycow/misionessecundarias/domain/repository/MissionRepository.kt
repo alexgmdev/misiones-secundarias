@@ -10,6 +10,15 @@ interface MissionRepository {
     /** Cambia a publicada una misión propia y devuelve el estado resultante. */
     suspend fun publishMission(id: String): Mission
 
+    /** Cambia a "En progreso" una misión propia publicada o asignada y devuelve el estado resultante. */
+    suspend fun startMission(id: String): Mission
+
+    /** Cambia a "Completada" una misión propia en progreso y devuelve el estado resultante. */
+    suspend fun completeMission(id: String): Mission
+
+    /** Misiones creadas por el usuario autenticado, en cualquier estado (incluye borradores). */
+    suspend fun getMyMissions(): List<Mission>
+
     suspend fun getPublishedMissions(): List<Mission>
 
     suspend fun getMissionById(id: String): Mission?
