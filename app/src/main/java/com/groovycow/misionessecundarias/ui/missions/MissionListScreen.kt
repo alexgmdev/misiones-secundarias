@@ -63,11 +63,13 @@ fun MissionListScreen(
     onMissionClick: (Mission) -> Unit,
     onMyApplicationsClick: () -> Unit = {},
     onBack: () -> Unit = {},
+    startWithMyMissions: Boolean = false,
     viewModel: MissionViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    LaunchedEffect(Unit) {
-        viewModel.loadMissions()
+    var showOnlyMine by remember { mutableStateOf(startWithMyMissions) }
+    LaunchedEffect(showOnlyMine) {
+        if (showOnlyMine) viewModel.loadMyMissions() else viewModel.loadMissions()
     }
 
     var searchQuery by remember { mutableStateOf("") }
@@ -169,6 +171,7 @@ fun MissionListScreen(
                             text = { Text("Todas") },
                             onClick = {
                                 selectedModality = null
+                                showOnlyMine = false
                                 filterMenuExpanded = false
                             },
                         )
@@ -186,6 +189,14 @@ fun MissionListScreen(
                                 filterMenuExpanded = false
                             },
                         )
+                        DropdownMenuItem(
+                            text = { Text("Mis misiones") },
+                            onClick = {
+                                selectedModality = null
+                                showOnlyMine = true
+                                filterMenuExpanded = false
+                            },
+                        )
                     }
                 }
             }
@@ -195,14 +206,7 @@ fun MissionListScreen(
             Spacer(modifier = Modifier.height(14.dp))
 
             Text(
-                text =
-                    if (selectedModality == null) {
-                        "Misiones disponibles"
-                    } else if (selectedModality == "campo") {
-                        "Misiones de campo"
-                    } else {
-                        "Misiones remotas"
-                    },
+                text = missionListTitle(showOnlyMine, selectedModality),
                 style = MaterialTheme.typography.titleLarge,
                 color = ForestGreen,
                 fontWeight = FontWeight.ExtraBold,
@@ -228,7 +232,7 @@ fun MissionListScreen(
                     MissionListMessage(
                         message =
                             if (searchQuery.isBlank() && selectedModality == null) {
-                                "No hay misiones disponibles todavía. ¡Vuelve pronto para una nueva aventura!"
+                                emptyMissionsMessage(showOnlyMine)
                             } else {
                                 "No encontramos misiones con esos criterios."
                             },
@@ -245,6 +249,7 @@ fun MissionListScreen(
                             MissionCard(
                                 mission = mission,
                                 onClick = { onMissionClick(mission) },
+                                showStatus = showOnlyMine,
                             )
                         }
                         item { Spacer(modifier = Modifier.height(12.dp)) }
@@ -254,6 +259,24 @@ fun MissionListScreen(
         }
     }
 }
+
+private fun missionListTitle(
+    showOnlyMine: Boolean,
+    modality: String?,
+): String =
+    when {
+        showOnlyMine -> "Mis misiones"
+        modality == "campo" -> "Misiones de campo"
+        modality == "remota" -> "Misiones remotas"
+        else -> "Misiones disponibles"
+    }
+
+private fun emptyMissionsMessage(showOnlyMine: Boolean): String =
+    if (showOnlyMine) {
+        "Todavía no has creado misiones. ¡Publica la primera!"
+    } else {
+        "No hay misiones disponibles todavía. ¡Vuelve pronto para una nueva aventura!"
+    }
 
 @Composable
 private fun MissionMapPlaceholder() {
@@ -329,6 +352,7 @@ private fun MissionMapPlaceholder() {
 fun MissionCard(
     mission: Mission,
     onClick: () -> Unit,
+    showStatus: Boolean = false,
 ) {
     val formattedDate = formatMissionDateTime(mission.dateTime)
 
@@ -379,6 +403,15 @@ fun MissionCard(
                 color = BarkBrown,
                 style = MaterialTheme.typography.bodyMedium,
             )
+            if (showStatus) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Estado: " + mission.status,
+                    color = ForestGreen,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
             mission.category?.takeIf { it.isNotBlank() }?.let { category ->
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(

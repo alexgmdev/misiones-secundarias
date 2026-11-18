@@ -3,7 +3,9 @@ package com.groovycow.misionessecundarias.ui.applications
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.groovycow.misionessecundarias.domain.model.MyApplication
+import com.groovycow.misionessecundarias.domain.model.PauseKind
 import com.groovycow.misionessecundarias.domain.usecase.CancelApplicationUseCase
+import com.groovycow.misionessecundarias.domain.usecase.GetActivePausesUseCase
 import com.groovycow.misionessecundarias.domain.usecase.GetMyApplicationsUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,11 +19,13 @@ data class MyApplicationsUiState(
     val cancellingApplicationId: String? = null,
     val actionMessage: String? = null,
     val isActionError: Boolean = false,
+    val activePauses: Map<String, Set<PauseKind>> = emptyMap(),
 )
 
 class MyApplicationsViewModel(
     private val getMyApplicationsUseCase: GetMyApplicationsUseCase,
     private val cancelApplicationUseCase: CancelApplicationUseCase,
+    private val getActivePausesUseCase: GetActivePausesUseCase,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(MyApplicationsUiState())
     val uiState: StateFlow<MyApplicationsUiState> = _uiState.asStateFlow()
@@ -32,7 +36,11 @@ class MyApplicationsViewModel(
 
             getMyApplicationsUseCase().fold(
                 onSuccess = { applications ->
-                    _uiState.value = MyApplicationsUiState(applications = applications)
+                    _uiState.value =
+                        MyApplicationsUiState(
+                            applications = applications,
+                            activePauses = fetchPauses(applications),
+                        )
                 },
                 onFailure = { exception ->
                     _uiState.value =
@@ -44,6 +52,22 @@ class MyApplicationsViewModel(
                 },
             )
         }
+    }
+
+    /** Actualiza en silencio las pausas activas de las misiones en las que el usuario fue aceptado. */
+    fun refreshPauses() {
+        viewModelScope.launch {
+            val pauses = fetchPauses(_uiState.value.applications)
+            _uiState.value = _uiState.value.copy(activePauses = pauses)
+        }
+    }
+
+    private suspend fun fetchPauses(applications: List<MyApplication>): Map<String, Set<PauseKind>> {
+        val inProgressIds =
+            applications
+                .filter { it.status == "Aceptado" && it.mission.status == "En progreso" }
+                .map { it.missionId }
+        return getActivePausesUseCase(inProgressIds).getOrDefault(_uiState.value.activePauses)
     }
 
     fun cancelApplication(applicationId: String) {

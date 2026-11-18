@@ -40,6 +40,30 @@ sealed interface MissionError {
 
     /** La misión no está en estado de borrador. */
     data object NotDraft : MissionError
+
+    /** Errores que impiden iniciar la ejecución de una misión (HU-050). */
+    sealed interface Start : MissionError
+
+    /** La misión no está en un estado desde el que pueda iniciarse. */
+    data object NotStartable : Start
+
+    /** Aún no llega la fecha y hora programadas de la misión. */
+    data object StartTooEarly : Start
+
+    /** No hay suficientes participantes aceptados para iniciar. */
+    data object NotEnoughParticipants : Start
+
+    /** La misión no existe o no es visible para el usuario. */
+    data object MissionNotFound : Start, Complete
+
+    /** Errores que impiden completar una misión en ejecución (HU-064). */
+    sealed interface Complete : MissionError
+
+    /** La misión no está en progreso, así que no puede completarse. */
+    data object NotCompletable : Complete
+
+    /** El progreso aún no llegó al 100 %. */
+    data object ProgressIncomplete : Complete
 }
 
 /** Campo del formulario asociado a un error de validación. */
