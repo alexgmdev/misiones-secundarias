@@ -1,0 +1,1 @@
+﻿No se encontraron las variables SUPABASE_URL ni SUPABASE_ANON_KEY

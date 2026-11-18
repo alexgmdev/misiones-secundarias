@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.groovycow.misionessecundarias.ui.auth.SessionViewModelTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-11-18T23:37:04.948Z" hostname="SC306E05" time="0.063">
+  <properties/>
+  <testcase name="updatesTheBooleanStateExplicitlyAfterLoginAndLogout" classname="com.groovycow.misionessecundarias.ui.auth.SessionViewModelTest" time="0.051"/>
+  <testcase name="staysLoadingWhileSessionIsLoadingFromStorage" classname="com.groovycow.misionessecundarias.ui.auth.SessionViewModelTest" time="0.002"/>
+  <testcase name="goesToMainMenuWhenThereIsASession" classname="com.groovycow.misionessecundarias.ui.auth.SessionViewModelTest" time="0.002"/>
+  <testcase name="decidesOnlyOnceAfterLoading" classname="com.groovycow.misionessecundarias.ui.auth.SessionViewModelTest" time="0.002"/>
+  <testcase name="goesToLoginWhenThereIsNoSession" classname="com.groovycow.misionessecundarias.ui.auth.SessionViewModelTest" time="0.002"/>
+  <testcase name="exposesLogoutAfterTheInitialDestinationWasResolved" classname="com.groovycow.misionessecundarias.ui.auth.SessionViewModelTest" time="0.003"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
