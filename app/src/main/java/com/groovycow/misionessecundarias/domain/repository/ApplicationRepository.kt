@@ -8,8 +8,8 @@ import com.groovycow.misionessecundarias.domain.model.MyApplication
 import com.groovycow.misionessecundarias.domain.model.PublicProfile
 
 interface ApplicationRepository {
-
     suspend fun getPublicProfile(userId: String): PublicProfile?
+
     suspend fun applyToMission(missionId: String): Application
 
     suspend fun getMyApplications(): List<MyApplication>

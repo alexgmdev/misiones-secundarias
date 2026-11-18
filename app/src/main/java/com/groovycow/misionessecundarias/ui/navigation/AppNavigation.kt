@@ -366,7 +366,7 @@ private fun shouldRedirectToWelcome(
         AppDestination.Register,
         AppDestination.RequestCode,
         is AppDestination.ResetPassword,
-            -> false
+        -> false
 
         else -> true
     }

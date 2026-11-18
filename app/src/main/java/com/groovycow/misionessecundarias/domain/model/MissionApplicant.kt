@@ -31,6 +31,7 @@ data class ApplicantProfile(
     val description: String? = null,
     val level: String? = null,
 )
+
 /**
  * Decisiones permitidas sobre una postulación pendiente.
  */

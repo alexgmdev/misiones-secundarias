@@ -35,8 +35,8 @@ class ApplicationRepositoryImpl(
                     columns =
                         Columns.raw(
                             "id,mission_id,solver_id,status,applied_at," +
-                                    "applicant:profiles!applications_solver_id_fkey(" +
-                                    "full_name,nickname,avatar_url,gender,description,level)",
+                                "applicant:profiles!applications_solver_id_fkey(" +
+                                "full_name,nickname,avatar_url,gender,description,level)",
                         ),
                 ) {
                     filter { eq("mission_id", missionId) }
@@ -72,7 +72,7 @@ class ApplicationRepositoryImpl(
                     columns =
                         Columns.raw(
                             "id,mission_id,status," +
-                                    "missions(publisher_id,max_participants,status)",
+                                "missions(publisher_id,max_participants,status)",
                         ),
                 ) {
                     filter { eq("id", applicationId) }
@@ -88,7 +88,7 @@ class ApplicationRepositoryImpl(
         }
         val missionAllowsDecision =
             target.mission.status == "Publicada" ||
-                    (decision == ApplicationDecision.REJECT && target.mission.status == "Asignada")
+                (decision == ApplicationDecision.REJECT && target.mission.status == "Asignada")
         check(missionAllowsDecision) {
             "La misión ya no admite esta decisión sobre postulantes."
         }

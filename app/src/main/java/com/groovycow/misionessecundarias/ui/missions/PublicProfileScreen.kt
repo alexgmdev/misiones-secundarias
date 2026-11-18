@@ -42,9 +42,10 @@ fun PublicProfileScreen(
     }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Row(
@@ -77,17 +78,19 @@ fun PublicProfileScreen(
                     AsyncImage(
                         model = profile.avatarUrl,
                         contentDescription = "Fotografía de perfil",
-                        modifier = Modifier
-                            .size(120.dp)
-                            .clip(CircleShape),
+                        modifier =
+                            Modifier
+                                .size(120.dp)
+                                .clip(CircleShape),
                         contentScale = ContentScale.Crop,
                     )
                 } else {
                     Box(
-                        modifier = Modifier
-                            .size(120.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                        modifier =
+                            Modifier
+                                .size(120.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.surfaceVariant),
                         contentAlignment = Alignment.Center,
                     ) {
                         Text("Sin foto")
@@ -97,10 +100,11 @@ fun PublicProfileScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = profile.nickname
-                        ?.takeIf { it.isNotBlank() }
-                        ?: profile.fullName
-                        ?: "Usuario",
+                    text =
+                        profile.nickname
+                            ?.takeIf { it.isNotBlank() }
+                            ?: profile.fullName
+                            ?: "Usuario",
                     style = MaterialTheme.typography.headlineSmall,
                 )
 
@@ -134,9 +138,10 @@ fun PublicProfileScreen(
                                 style = MaterialTheme.typography.titleMedium,
                             )
                             Text(
-                                text = profile.description
-                                    ?.takeIf { it.isNotBlank() }
-                                    ?: "Sin descripción disponible.",
+                                text =
+                                    profile.description
+                                        ?.takeIf { it.isNotBlank() }
+                                        ?: "Sin descripción disponible.",
                                 style = MaterialTheme.typography.bodyMedium,
                             )
                         }

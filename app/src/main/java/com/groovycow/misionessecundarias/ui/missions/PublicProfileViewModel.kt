@@ -18,7 +18,6 @@ data class PublicProfileUiState(
 class PublicProfileViewModel(
     private val getPublicProfile: GetPublicProfileUseCase,
 ) : ViewModel() {
-
     private val _uiState = MutableStateFlow(PublicProfileUiState())
     val uiState: StateFlow<PublicProfileUiState> = _uiState.asStateFlow()
 
@@ -28,19 +27,22 @@ class PublicProfileViewModel(
 
             getPublicProfile(userId).fold(
                 onSuccess = { profile ->
-                    _uiState.value = PublicProfileUiState(
-                        profile = profile,
-                        error = if (profile == null) {
-                            "No se encontró el perfil."
-                        } else {
-                            null
-                        },
-                    )
+                    _uiState.value =
+                        PublicProfileUiState(
+                            profile = profile,
+                            error =
+                                if (profile == null) {
+                                    "No se encontró el perfil."
+                                } else {
+                                    null
+                                },
+                        )
                 },
                 onFailure = {
-                    _uiState.value = PublicProfileUiState(
-                        error = "No fue posible consultar el perfil público.",
-                    )
+                    _uiState.value =
+                        PublicProfileUiState(
+                            error = "No fue posible consultar el perfil público.",
+                        )
                 },
             )
         }
