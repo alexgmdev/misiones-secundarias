@@ -71,14 +71,16 @@ fun MissionListScreen(
     onMissionClick: (Mission) -> Unit,
     onMyApplicationsClick: () -> Unit = {},
     onBack: () -> Unit = {},
+    startWithMyMissions: Boolean = false,
     viewModel: MissionViewModel = koinViewModel(),
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     val filterMissionsUseCase = remember { FilterMissionsUseCase() }
 
-    LaunchedEffect(Unit) {
-        viewModel.loadMissions()
+    var showOnlyMine by remember { mutableStateOf(startWithMyMissions) }
+    LaunchedEffect(showOnlyMine) {
+        if (showOnlyMine) viewModel.loadMyMissions() else viewModel.loadMissions()
     }
 
     var searchQuery by remember { mutableStateOf("") }
@@ -149,7 +151,14 @@ fun MissionListScreen(
             MissionSearchAndFilterBar(
                 searchQuery = searchQuery,
                 onSearchQueryChange = { searchQuery = it },
-                onModalityChange = { selectedModality = it },
+                onModalityChange = {
+                    selectedModality = it
+                    showOnlyMine = false
+                },
+                onShowMine = {
+                    selectedModality = null
+                    showOnlyMine = true
+                },
                 onCategoryChange = { selectedCategory = it },
                 onDistanceChange = { distance ->
                     selectedDistance = distance
@@ -177,7 +186,7 @@ fun MissionListScreen(
             Spacer(modifier = Modifier.height(14.dp))
 
             Text(
-                text = "Misiones disponibles (${visibleMissions.size})",
+                text = "${if (showOnlyMine) "Mis misiones" else "Misiones disponibles"} (${visibleMissions.size})",
                 style = MaterialTheme.typography.titleLarge,
                 color = ForestGreen,
                 fontWeight = FontWeight.ExtraBold,
@@ -188,6 +197,7 @@ fun MissionListScreen(
                 uiState = uiState,
                 visibleMissions = visibleMissions,
                 userLocation = userLocation,
+                showStatus = showOnlyMine,
                 onMissionClick = onMissionClick,
             )
         }
@@ -200,6 +210,7 @@ private fun MissionSearchAndFilterBar(
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
     onModalityChange: (String?) -> Unit,
+    onShowMine: () -> Unit,
     onCategoryChange: (String?) -> Unit,
     onDistanceChange: (Int?) -> Unit,
     availableCategories: List<String>,
@@ -266,6 +277,13 @@ private fun MissionSearchAndFilterBar(
                     text = { Text("Remota") },
                     onClick = {
                         onModalityChange("remota")
+                        filterMenuExpanded = false
+                    },
+                )
+                DropdownMenuItem(
+                    text = { Text("Mis misiones") },
+                    onClick = {
+                        onShowMine()
                         filterMenuExpanded = false
                     },
                 )
@@ -342,6 +360,7 @@ fun MissionCard(
     mission: Mission,
     onClick: () -> Unit,
     distance: Double? = null,
+    showStatus: Boolean = false,
 ) {
     val formattedDate = formatMissionDateTime(mission.dateTime)
     val isRemote = mission.modality.equals("remota", ignoreCase = true)
@@ -381,6 +400,16 @@ fun MissionCard(
             }
             Spacer(modifier = Modifier.height(8.dp))
             Text(text = formattedDate, color = BarkBrown, style = MaterialTheme.typography.bodyMedium)
+
+            if (showStatus) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Estado: " + mission.status,
+                    color = ForestGreen,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
 
             if (distance != null) {
                 Spacer(modifier = Modifier.height(4.dp))
@@ -441,6 +470,7 @@ private fun MissionListContent(
     uiState: MissionUiState,
     visibleMissions: List<Mission>,
     userLocation: Location?,
+    showStatus: Boolean,
     onMissionClick: (Mission) -> Unit,
 ) {
     when {
@@ -455,7 +485,12 @@ private fun MissionListContent(
         }
         visibleMissions.isEmpty() -> {
             MissionListMessage(
-                message = "No encontramos misiones con esos criterios.",
+                message =
+                    if (showStatus) {
+                        "Todavía no has creado misiones. ¡Publica la primera!"
+                    } else {
+                        "No encontramos misiones con esos criterios."
+                    },
                 borderColor = EarthOrange,
             )
         }
@@ -468,6 +503,7 @@ private fun MissionListContent(
                     MissionCard(
                         mission = mission,
                         onClick = { onMissionClick(mission) },
+                        showStatus = showStatus,
                         distance =
                             if (userLocation != null && mission.location != null) {
                                 GeoUtils.parseWktPoint(mission.location)?.let { point ->

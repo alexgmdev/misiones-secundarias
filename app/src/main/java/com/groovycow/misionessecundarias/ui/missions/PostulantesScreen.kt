@@ -49,7 +49,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.groovycow.misionessecundarias.domain.model.ApplicationDecision
+import com.groovycow.misionessecundarias.domain.model.Mission
 import com.groovycow.misionessecundarias.domain.model.MissionApplicant
+import com.groovycow.misionessecundarias.ui.missions.live.StartMissionViewModel
 import org.koin.androidx.compose.koinViewModel
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
@@ -61,15 +63,28 @@ fun PostulantesScreen(
     missionId: String,
     missionTitle: String,
     onBack: () -> Unit,
+    isMissionInProgress: Boolean = false,
+    isMissionCompleted: Boolean = false,
+    onOpenLivePanel: () -> Unit = {},
+    onMissionStarted: (Mission) -> Unit = {},
     viewModel: ApplicantsViewModel = koinViewModel(),
+    startViewModel: StartMissionViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val startState by startViewModel.uiState.collectAsState()
     var pendingDecision by remember {
         mutableStateOf<Pair<MissionApplicant, ApplicationDecision>?>(null)
     }
 
     LaunchedEffect(missionId) {
         viewModel.loadApplicants(missionId)
+    }
+
+    LaunchedEffect(startState.startedMission) {
+        startState.startedMission?.let { started ->
+            startViewModel.consumeStartedMission()
+            onMissionStarted(started)
+        }
     }
 
     Scaffold(
@@ -115,6 +130,15 @@ fun PostulantesScreen(
 
             ApplicantsGuide(
                 message = "Revisa a quienes quieren unirse y decide quién participará en tu misión.",
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+
+            LiveActionButton(
+                isMissionInProgress = isMissionInProgress,
+                isMissionCompleted = isMissionCompleted,
+                isStarting = startState.isStarting,
+                onStart = { startViewModel.start(missionId) },
+                onOpenLivePanel = onOpenLivePanel,
             )
             Spacer(modifier = Modifier.height(14.dp))
 
@@ -200,6 +224,10 @@ fun PostulantesScreen(
         )
     }
 
+    startState.error?.let { error ->
+        StartErrorDialog(message = error.toMessage(), onDismiss = startViewModel::dismissError)
+    }
+
     uiState.actionMessage?.let { message ->
         AlertDialog(
             onDismissRequest = viewModel::dismissNotice,
@@ -219,6 +247,81 @@ fun PostulantesScreen(
             },
         )
     }
+}
+
+@Composable
+private fun LiveActionButton(
+    isMissionInProgress: Boolean,
+    isMissionCompleted: Boolean,
+    isStarting: Boolean,
+    onStart: () -> Unit,
+    onOpenLivePanel: () -> Unit,
+) {
+    if (isMissionCompleted) {
+        Text(
+            text = "Misión completada",
+            modifier = Modifier.fillMaxWidth(),
+            color = ApplicantsLeaf,
+            fontWeight = FontWeight.ExtraBold,
+            textAlign = TextAlign.Center,
+        )
+    } else if (isMissionInProgress) {
+        OutlinedButton(
+            onClick = onOpenLivePanel,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            border = BorderStroke(2.dp, ApplicantsTeal),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = ApplicantsTeal),
+        ) {
+            Text("Ver panel en vivo", fontWeight = FontWeight.ExtraBold)
+        }
+    } else {
+        Button(
+            onClick = onStart,
+            enabled = !isStarting,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            colors =
+                ButtonDefaults.buttonColors(
+                    containerColor = ApplicantsOrange,
+                    contentColor = ApplicantsCream,
+                ),
+        ) {
+            if (isStarting) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    color = ApplicantsCream,
+                    strokeWidth = 2.dp,
+                )
+            } else {
+                Text("Iniciar Misión", fontWeight = FontWeight.ExtraBold)
+            }
+        }
+    }
+}
+
+@Composable
+private fun StartErrorDialog(
+    message: String,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = ApplicantsCream,
+        title = {
+            Text(
+                text = "No se pudo iniciar la misión",
+                color = ApplicantsCoral,
+                fontWeight = FontWeight.ExtraBold,
+            )
+        },
+        text = { Text(message, color = ApplicantsBrown) },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Aceptar", color = ApplicantsForest, fontWeight = FontWeight.Bold)
+            }
+        },
+    )
 }
 
 @Composable

@@ -78,6 +78,12 @@ private class UnusedMissionRepository : MissionRepository {
 
     override suspend fun publishMission(id: String): Mission = error("No se espera publicar misiones en esta prueba")
 
+    override suspend fun startMission(id: String): Mission = error("No se espera iniciar misiones en esta prueba")
+
+    override suspend fun completeMission(id: String): Mission = error("No se espera completar misiones en esta prueba")
+
+    override suspend fun getMyMissions(): List<Mission> = emptyList()
+
     override suspend fun getPublishedMissions(): List<Mission> = emptyList()
 
     override suspend fun getMissionById(id: String): Mission? = null
