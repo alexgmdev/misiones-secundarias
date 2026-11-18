@@ -1,9 +1,11 @@
+
 package com.groovycow.misionessecundarias.data.repository
 
 import com.groovycow.misionessecundarias.domain.model.Application
 import com.groovycow.misionessecundarias.domain.model.ApplicationDecision
 import com.groovycow.misionessecundarias.domain.model.MissionApplicant
 import com.groovycow.misionessecundarias.domain.model.MyApplication
+import com.groovycow.misionessecundarias.domain.model.PublicProfile
 import com.groovycow.misionessecundarias.domain.repository.ApplicationRepository
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.gotrue.auth
@@ -33,13 +35,30 @@ class ApplicationRepositoryImpl(
                     columns =
                         Columns.raw(
                             "id,mission_id,solver_id,status,applied_at," +
-                                "applicant:profiles!applications_solver_id_fkey(full_name)",
+                                    "applicant:profiles!applications_solver_id_fkey(" +
+                                    "full_name,nickname,avatar_url,gender,description,level)",
                         ),
                 ) {
                     filter { eq("mission_id", missionId) }
                 }
                 .decodeList<MissionApplicant>()
                 .sortedByDescending { it.appliedAt }
+        }
+
+    override suspend fun getPublicProfile(userId: String): PublicProfile? =
+        withContext(Dispatchers.IO) {
+            authenticatedUserId("consultar el perfil público")
+
+            supabase.from("profiles")
+                .select(
+                    columns =
+                        Columns.raw(
+                            "id,full_name,nickname,avatar_url,gender,description,level",
+                        ),
+                ) {
+                    filter { eq("id", userId) }
+                }
+                .decodeSingleOrNull<PublicProfile>()
         }
 
     override suspend fun updateApplicationStatus(
@@ -53,7 +72,7 @@ class ApplicationRepositoryImpl(
                     columns =
                         Columns.raw(
                             "id,mission_id,status," +
-                                "missions(publisher_id,max_participants,status)",
+                                    "missions(publisher_id,max_participants,status)",
                         ),
                 ) {
                     filter { eq("id", applicationId) }
@@ -69,7 +88,7 @@ class ApplicationRepositoryImpl(
         }
         val missionAllowsDecision =
             target.mission.status == "Publicada" ||
-                (decision == ApplicationDecision.REJECT && target.mission.status == "Asignada")
+                    (decision == ApplicationDecision.REJECT && target.mission.status == "Asignada")
         check(missionAllowsDecision) {
             "La misión ya no admite esta decisión sobre postulantes."
         }

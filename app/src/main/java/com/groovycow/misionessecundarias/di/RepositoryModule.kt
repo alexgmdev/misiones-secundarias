@@ -1,3 +1,4 @@
+
 package com.groovycow.misionessecundarias.di
 
 import com.groovycow.misionessecundarias.data.repository.ApplicationRepositoryImpl
@@ -22,6 +23,7 @@ import com.groovycow.misionessecundarias.domain.usecase.GetMissionApplicantsUseC
 import com.groovycow.misionessecundarias.domain.usecase.GetMissionsUseCase
 import com.groovycow.misionessecundarias.domain.usecase.GetMyApplicationsUseCase
 import com.groovycow.misionessecundarias.domain.usecase.GetMyMissionsUseCase
+import com.groovycow.misionessecundarias.domain.usecase.GetPublicProfileUseCase
 import com.groovycow.misionessecundarias.domain.usecase.MarkArrivedUseCase
 import com.groovycow.misionessecundarias.domain.usecase.MarkOnWayUseCase
 import com.groovycow.misionessecundarias.domain.usecase.PublishMissionUseCase
@@ -34,6 +36,7 @@ import com.groovycow.misionessecundarias.ui.applications.ApplicationViewModel
 import com.groovycow.misionessecundarias.ui.applications.MyApplicationsViewModel
 import com.groovycow.misionessecundarias.ui.missions.ApplicantsViewModel
 import com.groovycow.misionessecundarias.ui.missions.MissionViewModel
+import com.groovycow.misionessecundarias.ui.missions.PublicProfileViewModel
 import com.groovycow.misionessecundarias.ui.missions.create.CreateMissionViewModel
 import com.groovycow.misionessecundarias.ui.missions.live.ChecklistViewModel
 import com.groovycow.misionessecundarias.ui.missions.live.CompleteMissionViewModel
@@ -66,6 +69,7 @@ val repositoryModule =
         factory { GetMissionApplicantsUseCase(get()) }
         factory { UpdateApplicationStatusUseCase(get()) }
         factory { GetLivePanelParticipantsUseCase(get()) }
+        factory { GetPublicProfileUseCase(get()) }
         factory { GetChecklistUseCase(get()) }
         factory { GetActivePausesUseCase(get()) }
         factory { SetMissionPauseUseCase(get()) }
@@ -78,12 +82,14 @@ val repositoryModule =
         factory { MarkOnWayUseCase(get()) }
         factory { MarkArrivedUseCase(get()) }
 
+        // ViewModels
         viewModel { MissionViewModel(get(), get()) }
         viewModel { CreateMissionViewModel(get(), get()) }
         viewModel { PublishMissionViewModel(get()) }
         viewModel { ApplicationViewModel(get(), get(), get(), get(), get()) }
         viewModel { MyApplicationsViewModel(get(), get(), get()) }
         viewModel { ApplicantsViewModel(get(), get()) }
+        viewModel { PublicProfileViewModel(get()) }
         viewModel { LivePanelViewModel(get()) }
         viewModel { ChecklistViewModel(get(), get(), get(), get()) }
         viewModel { PausesViewModel(get(), get()) }

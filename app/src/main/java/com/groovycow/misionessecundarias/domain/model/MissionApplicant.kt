@@ -1,4 +1,3 @@
-p
 package com.groovycow.misionessecundarias.domain.model
 
 import kotlinx.serialization.SerialName
@@ -20,16 +19,18 @@ data class MissionApplicant(
 /**
  * Datos públicos del usuario postulado.
  */
+
 @Serializable
 data class ApplicantProfile(
-    @SerialName("full_name") val fullName: String,
+    @SerialName("full_name")
+    val fullName: String,
     val nickname: String? = null,
-    @SerialName("avatar_url") val avatarUrl: String? = null,
+    @SerialName("avatar_url")
+    val avatarUrl: String? = null,
     val gender: String? = null,
     val description: String? = null,
     val level: String? = null,
 )
-
 /**
  * Decisiones permitidas sobre una postulación pendiente.
  */
