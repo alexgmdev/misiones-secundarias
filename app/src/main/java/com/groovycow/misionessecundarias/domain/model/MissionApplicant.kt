@@ -1,9 +1,12 @@
+p
 package com.groovycow.misionessecundarias.domain.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-/** Postulación visible para el publicador de una misión. */
+/**
+ * Postulación visible para el publicador de una misión.
+ */
 @Serializable
 data class MissionApplicant(
     val id: String,
@@ -14,17 +17,23 @@ data class MissionApplicant(
     @SerialName("applicant") val profile: ApplicantProfile,
 )
 
-/** Datos públicos mínimos del usuario postulado. */
+/**
+ * Datos públicos del usuario postulado.
+ */
 @Serializable
 data class ApplicantProfile(
     @SerialName("full_name") val fullName: String,
+    val nickname: String? = null,
+    @SerialName("avatar_url") val avatarUrl: String? = null,
+    val gender: String? = null,
+    val description: String? = null,
+    val level: String? = null,
 )
 
-/** Decisiones permitidas sobre una postulación pendiente. */
+/**
+ * Decisiones permitidas sobre una postulación pendiente.
+ */
 enum class ApplicationDecision(val databaseValue: String) {
-    /** Incluye al usuario entre los participantes aceptados. */
     ACCEPT("Aceptado"),
-
-    /** Informa que el usuario no fue seleccionado. */
     REJECT("Rechazado"),
 }
