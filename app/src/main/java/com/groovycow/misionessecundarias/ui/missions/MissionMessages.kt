@@ -23,6 +23,7 @@ fun MissionError.toMessage(): String =
         MissionError.MeetingPointRequired -> "Define el punto de encuentro antes de publicar"
         MissionError.InvalidDateTime -> "Revisa la fecha y hora de inicio antes de publicar"
         MissionError.NotDraft -> "Solo se puede publicar una misión en estado de borrador"
+        MissionError.MissionNotCompleted -> "La misión debe estar completada para generar el código de verificación"
         is MissionError.Start -> toStartMessage()
         is MissionError.Complete -> toCompleteMessage()
     }

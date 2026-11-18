@@ -64,6 +64,9 @@ sealed interface MissionError {
 
     /** El progreso aún no llegó al 100 %. */
     data object ProgressIncomplete : Complete
+
+    /** La misión no ha finalizado exitosamente ('Completada' o 'Rendida aprobada'). */
+    data object MissionNotCompleted : MissionError
 }
 
 /** Campo del formulario asociado a un error de validación. */

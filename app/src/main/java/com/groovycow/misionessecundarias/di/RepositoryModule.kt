@@ -15,6 +15,7 @@ import com.groovycow.misionessecundarias.domain.usecase.CheckMissionOwnershipUse
 import com.groovycow.misionessecundarias.domain.usecase.CompleteMissionUseCase
 import com.groovycow.misionessecundarias.domain.usecase.CreateMissionUseCase
 import com.groovycow.misionessecundarias.domain.usecase.DeleteChecklistItemUseCase
+import com.groovycow.misionessecundarias.domain.usecase.GenerateVerificationCodeUseCase
 import com.groovycow.misionessecundarias.domain.usecase.GetActivePausesUseCase
 import com.groovycow.misionessecundarias.domain.usecase.GetChecklistUseCase
 import com.groovycow.misionessecundarias.domain.usecase.GetLivePanelParticipantsUseCase
@@ -74,6 +75,7 @@ val repositoryModule =
         factory { DeleteChecklistItemUseCase(get()) }
         factory { StartMissionUseCase(get(), get(), Clock.system(ZoneId.of("America/Bogota"))) }
         factory { CompleteMissionUseCase(get(), get()) }
+        factory { GenerateVerificationCodeUseCase(get()) }
         factory { MissionDraftValidator(Clock.system(ZoneId.of("America/Bogota"))) }
         factory { MarkOnWayUseCase(get()) }
         factory { MarkArrivedUseCase(get()) }
@@ -89,4 +91,5 @@ val repositoryModule =
         viewModel { PausesViewModel(get(), get()) }
         viewModel { StartMissionViewModel(get()) }
         viewModel { CompleteMissionViewModel(get()) }
+        viewModel { com.groovycow.misionessecundarias.ui.missions.live.GenerateCodeViewModel(get()) }
     }
