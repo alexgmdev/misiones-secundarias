@@ -15,6 +15,7 @@ fun MissionDetailScreenPreview() {
     MisionesSecundariasTheme {
         MissionDetailScreen(
             missionTitle = "Limpieza del Río Cali",
+            missionLocationWkt = "asdasd",
             missionDescription = "Necesitamos ayuda para recoger basura en la orilla del río este sábado.",
             missionDateTime = "2026-11-04T20:04:37.93485+00:00",
             maxParticipants = 5,

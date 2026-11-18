@@ -22,6 +22,8 @@ import com.groovycow.misionessecundarias.domain.usecase.GetMissionApplicantsUseC
 import com.groovycow.misionessecundarias.domain.usecase.GetMissionsUseCase
 import com.groovycow.misionessecundarias.domain.usecase.GetMyApplicationsUseCase
 import com.groovycow.misionessecundarias.domain.usecase.GetMyMissionsUseCase
+import com.groovycow.misionessecundarias.domain.usecase.MarkArrivedUseCase
+import com.groovycow.misionessecundarias.domain.usecase.MarkOnWayUseCase
 import com.groovycow.misionessecundarias.domain.usecase.PublishMissionUseCase
 import com.groovycow.misionessecundarias.domain.usecase.SetChecklistItemDoneUseCase
 import com.groovycow.misionessecundarias.domain.usecase.SetMissionPauseUseCase
@@ -73,11 +75,13 @@ val repositoryModule =
         factory { StartMissionUseCase(get(), get(), Clock.system(ZoneId.of("America/Bogota"))) }
         factory { CompleteMissionUseCase(get(), get()) }
         factory { MissionDraftValidator(Clock.system(ZoneId.of("America/Bogota"))) }
+        factory { MarkOnWayUseCase(get()) }
+        factory { MarkArrivedUseCase(get()) }
 
         viewModel { MissionViewModel(get(), get()) }
         viewModel { CreateMissionViewModel(get(), get()) }
         viewModel { PublishMissionViewModel(get()) }
-        viewModel { ApplicationViewModel(get(), get()) }
+        viewModel { ApplicationViewModel(get(), get(), get(), get(), get()) }
         viewModel { MyApplicationsViewModel(get(), get(), get()) }
         viewModel { ApplicantsViewModel(get(), get()) }
         viewModel { LivePanelViewModel(get()) }
