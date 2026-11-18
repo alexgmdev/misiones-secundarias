@@ -1,5 +1,9 @@
 package com.groovycow.misionessecundarias.ui.missions
 
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -28,6 +32,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -42,13 +47,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import com.groovycow.misionessecundarias.domain.util.LocationValidator
 import com.groovycow.misionessecundarias.ui.applications.ApplicationUiState
 import com.groovycow.misionessecundarias.ui.applications.ApplicationViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -57,6 +70,7 @@ import org.koin.androidx.compose.koinViewModel
 fun MissionDetailRoute(
     missionId: String,
     publisherId: String,
+    missionLocationWkt: String?,
     missionTitle: String,
     missionDescription: String,
     missionDateTime: String,
@@ -73,10 +87,11 @@ fun MissionDetailRoute(
     val applicationState by applicationViewModel.uiState.collectAsState()
 
     LaunchedEffect(missionId) {
-        applicationViewModel.loadMission(publisherId)
+        applicationViewModel.loadMission(publisherId, missionId)
     }
 
     MissionDetailScreen(
+        missionLocationWkt = missionLocationWkt,
         missionTitle = missionTitle,
         missionDescription = missionDescription,
         missionDateTime = missionDateTime,
@@ -89,6 +104,8 @@ fun MissionDetailRoute(
         onBack = onBack,
         onManageApplicants = onManageApplicants,
         onApply = { applicationViewModel.applyToMission(missionId) },
+        onMarkOnWay = { applicationViewModel.markOnWay(missionId) },
+        onArrived = { lat, lon -> applicationViewModel.markArrived(missionId, lat, lon) },
         onDismissApplicationMessage = applicationViewModel::dismissMessage,
         applicationState = applicationState,
     )
@@ -97,6 +114,7 @@ fun MissionDetailRoute(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MissionDetailScreen(
+    missionLocationWkt: String?,
     missionTitle: String,
     missionDescription: String,
     missionDateTime: String,
@@ -109,26 +127,76 @@ fun MissionDetailScreen(
     onBack: () -> Unit,
     onManageApplicants: () -> Unit = {},
     onApply: () -> Unit = {},
+    onMarkOnWay: () -> Unit = {},
+    onArrived: (Double?, Double?) -> Unit = { _, _ -> },
     onDismissApplicationMessage: () -> Unit = {},
     applicationState: ApplicationUiState = ApplicationUiState(),
 ) {
     val formattedDate = formatMissionDateTime(missionDateTime)
+    val context = LocalContext.current
+    val locationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
+    var distanceError by remember { mutableStateOf<String?>(null) }
+
+    val validateLocation: () -> Unit = {
+        locationClient.getCurrentLocation(
+            Priority.PRIORITY_HIGH_ACCURACY,
+            null,
+        ).addOnSuccessListener { location ->
+            if (location != null) {
+                val isValid =
+                    LocationValidator.isWithinRange(
+                        userLat = location.latitude,
+                        userLon = location.longitude,
+                        missionWkt = missionLocationWkt,
+                    )
+
+                if (isValid) {
+                    onArrived(location.latitude, location.longitude)
+                } else {
+                    distanceError = "Estás muy lejos. Debes estar a menos de 50 metros."
+                }
+            } else {
+                distanceError = "No fue posible obtener tu ubicación GPS."
+            }
+        }
+        Unit
+    }
+
+    val locationPermissionLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission(),
+        ) { isGranted ->
+            if (isGranted) {
+                validateLocation()
+            } else {
+                distanceError = "Debes conceder el permiso de ubicación para validar tu llegada."
+            }
+        }
+
+    val onValidateArrivalClick: () -> Unit = {
+        if (
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION,
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            locationPermissionLauncher.launch(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+            )
+        } else {
+            validateLocation()
+        }
+    }
 
     Scaffold(
         containerColor = SandBackground,
         topBar = {
             TopAppBar(
                 modifier = Modifier.statusBarsPadding(),
-                title = {
-                    Text("Misión", color = ForestGreen, fontWeight = FontWeight.ExtraBold)
-                },
+                title = { Text("Misión", color = ForestGreen, fontWeight = FontWeight.ExtraBold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Volver",
-                            tint = EarthOrange,
-                        )
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver", tint = EarthOrange)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = SandBackground),
@@ -171,7 +239,7 @@ fun MissionDetailScreen(
             Spacer(modifier = Modifier.height(14.dp))
 
             Text(
-                text = "Empieza el " + formattedDate,
+                text = "Empieza el $formattedDate",
                 modifier = Modifier.fillMaxWidth(),
                 color = BarkBrown,
                 style = MaterialTheme.typography.titleMedium,
@@ -184,19 +252,13 @@ fun MissionDetailScreen(
 
             InfoLabel(
                 title = "Tipo de misión",
-                value =
-                    if (modality.equals("remota", ignoreCase = true)) {
-                        "Misión remota"
-                    } else {
-                        "Misión de campo"
-                    },
+                value = if (modality.equals("remota", ignoreCase = true)) "Misión remota" else "Misión de campo",
                 accentColor = RiverTeal,
                 backgroundColor = LightRiver,
             )
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // --- AQUÍ ESTÁ TU UBICACIÓN APROXIMADA (HU-028) ---
             if (modality.equals("campo", ignoreCase = true)) {
                 InfoSection(
                     title = "Ubicación aproximada",
@@ -206,13 +268,10 @@ fun MissionDetailScreen(
                 )
                 Spacer(modifier = Modifier.height(14.dp))
             }
-            // ---------------------------------------------------
 
             InfoSection(
                 title = "Para esta misión necesitarás",
-                text =
-                    requirements?.takeIf { it.isNotBlank() }
-                        ?: "No hay requerimientos específicos.",
+                text = requirements?.takeIf { it.isNotBlank() } ?: "No hay requerimientos específicos.",
                 accentColor = LeafGreen,
                 backgroundColor = LightLeaf,
             )
@@ -231,48 +290,37 @@ fun MissionDetailScreen(
             Spacer(modifier = Modifier.height(14.dp))
             InfoSection(
                 title = "Participantes",
-                text = "Cupo máximo: " + maxParticipants + " participantes. Los participantes aceptados aparecerán aquí.",
+                text = "Cupo máximo: $maxParticipants participantes. Los participantes aceptados aparecerán aquí.",
                 accentColor = RiverTeal,
                 backgroundColor = LightRiver,
             )
 
             Spacer(modifier = Modifier.height(18.dp))
-            Button(
-                onClick = if (applicationState.isPublisher) onManageApplicants else onApply,
-                enabled = applicationState.canPerformPrimaryAction(),
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .height(58.dp),
-                colors =
-                    ButtonDefaults.buttonColors(
-                        containerColor = LeafGreen,
-                        contentColor = CreamSurface,
-                        disabledContainerColor = LightLeaf,
-                        disabledContentColor = ForestGreen,
-                    ),
-                shape = RoundedCornerShape(14.dp),
-            ) {
-                if (applicationState.isCheckingOwnership || applicationState.isSubmitting) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = CreamSurface,
-                        strokeWidth = 2.dp,
-                    )
-                } else {
-                    Text(
-                        text =
-                            when {
-                                applicationState.isPublisher -> "Gestionar postulantes"
-                                applicationState.wasSubmitted -> "Postulación enviada"
-                                else -> "Postularse a la misión"
-                            },
-                        fontWeight = FontWeight.ExtraBold,
-                    )
-                }
-            }
+
+            MissionActionSection(
+                applicationState = applicationState,
+                onMarkOnWay = onMarkOnWay,
+                onApply = onApply,
+                onManageApplicants = onManageApplicants,
+                onValidateArrival = onValidateArrivalClick,
+            )
+
             Spacer(modifier = Modifier.height(20.dp))
         }
+    }
+
+    distanceError?.let { error ->
+        AlertDialog(
+            onDismissRequest = { distanceError = null },
+            containerColor = CreamSurface,
+            title = { Text("Muy lejos", color = AlertCoral, fontWeight = FontWeight.ExtraBold) },
+            text = { Text(error, color = BarkBrown) },
+            confirmButton = {
+                TextButton(onClick = { distanceError = null }) {
+                    Text("Entendido", color = ForestGreen, fontWeight = FontWeight.Bold)
+                }
+            },
+        )
     }
 
     applicationState.message?.let { message ->
@@ -281,14 +329,12 @@ fun MissionDetailScreen(
             containerColor = CreamSurface,
             title = {
                 Text(
-                    text = if (applicationState.isError) "No fue posible postularte" else "Postulación registrada",
+                    text = if (applicationState.isError) "Error" else "Información",
                     color = if (applicationState.isError) AlertCoral else ForestGreen,
                     fontWeight = FontWeight.ExtraBold,
                 )
             },
-            text = {
-                Text(text = message, color = BarkBrown)
-            },
+            text = { Text(text = message, color = BarkBrown) },
             confirmButton = {
                 TextButton(onClick = onDismissApplicationMessage) {
                     Text("Aceptar", color = ForestGreen, fontWeight = FontWeight.Bold)
@@ -296,6 +342,99 @@ fun MissionDetailScreen(
             },
         )
     }
+}
+
+@Composable
+private fun MissionActionSection(
+    applicationState: ApplicationUiState,
+    onMarkOnWay: () -> Unit,
+    onApply: () -> Unit,
+    onManageApplicants: () -> Unit,
+    onValidateArrival: () -> Unit,
+) {
+    if (applicationState.isAccepted) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = LightEarth),
+            border = BorderStroke(2.dp, EarthOrange),
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("Panel de Asistencia", fontWeight = FontWeight.Bold, color = ForestGreen)
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(
+                        checked = applicationState.isOnWay,
+                        onCheckedChange = { isChecked ->
+                            if (isChecked && !applicationState.isOnWay) onMarkOnWay()
+                        },
+                        enabled = !applicationState.isOnWay && !applicationState.isUpdatingStatus,
+                    )
+                    Text("Voy en camino", fontWeight = FontWeight.SemiBold)
+                }
+
+                Button(
+                    onClick = onValidateArrival,
+                    enabled = applicationState.isOnWay && !applicationState.hasArrived && !applicationState.isUpdatingStatus,
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    colors =
+                        ButtonDefaults.buttonColors(
+                            containerColor = if (applicationState.hasArrived) LeafGreen else EarthOrange,
+                        ),
+                ) {
+                    if (applicationState.isUpdatingStatus) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = CreamSurface,
+                        )
+                    } else {
+                        Text(
+                            if (applicationState.hasArrived) {
+                                "¡Llegada Registrada!"
+                            } else {
+                                "Marcar Llegué (GPS < 50m)"
+                            },
+                        )
+                    }
+                }
+            }
+        }
+    } else {
+        Button(
+            onClick = if (applicationState.isPublisher) onManageApplicants else onApply,
+            enabled = applicationState.canPerformPrimaryAction(),
+            modifier = Modifier.fillMaxWidth().height(58.dp),
+            colors =
+                ButtonDefaults.buttonColors(
+                    containerColor = LeafGreen,
+                    contentColor = CreamSurface,
+                    disabledContainerColor = LightLeaf,
+                    disabledContentColor = ForestGreen,
+                ),
+            shape = RoundedCornerShape(14.dp),
+        ) {
+            if (applicationState.isCheckingOwnership || applicationState.isSubmitting) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = CreamSurface,
+                    strokeWidth = 2.dp,
+                )
+            } else {
+                PrimaryActionText(applicationState)
+            }
+        }
+    }
+}
+
+@Composable
+private fun PrimaryActionText(state: ApplicationUiState) {
+    val text =
+        when {
+            state.isPublisher -> "Gestionar postulantes"
+            state.wasSubmitted -> "Postulación enviada"
+            else -> "Postularse a la misión"
+        }
+    Text(text = text, fontWeight = FontWeight.ExtraBold)
 }
 
 private fun ApplicationUiState.canPerformPrimaryAction(): Boolean =
@@ -328,12 +467,8 @@ private fun PublisherCard(publisherName: String?) {
 @Composable
 private fun MissionLocationPanel(modality: String) {
     val isRemote = modality.equals("remota", ignoreCase = true)
-
     Card(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .height(190.dp),
+        modifier = Modifier.fillMaxWidth().height(190.dp),
         shape = RoundedCornerShape(18.dp),
         border = BorderStroke(3.dp, RiverTeal),
         colors = CardDefaults.cardColors(containerColor = LightRiver),
@@ -342,7 +477,7 @@ private fun MissionLocationPanel(modality: String) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             if (isRemote) {
                 Text(
-                    text = "Esta misión es remota y no requiere una ubicación física.",
+                    "Esta misión es remota y no requiere una ubicación física.",
                     color = ForestGreen,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
@@ -365,11 +500,7 @@ private fun MissionLocationPanel(modality: String) {
                         drawLine(
                             color = MapLine,
                             start = Offset(x, 0f),
-                            end =
-                                Offset(
-                                    (x + size.width * 0.25f).coerceAtMost(size.width),
-                                    size.height,
-                                ),
+                            end = Offset((x + size.width * 0.25f).coerceAtMost(size.width), size.height),
                             strokeWidth = 4f,
                         )
                     }
@@ -378,17 +509,13 @@ private fun MissionLocationPanel(modality: String) {
                         drawLine(
                             color = MapLine,
                             start = Offset(0f, y),
-                            end =
-                                Offset(
-                                    size.width,
-                                    (y + size.height * 0.2f).coerceAtMost(size.height),
-                                ),
+                            end = Offset(size.width, (y + size.height * 0.2f).coerceAtMost(size.height)),
                             strokeWidth = 4f,
                         )
                     }
                 }
                 Text(
-                    text = "MAPA DE UBICACIÓN",
+                    "MAPA DE UBICACIÓN",
                     color = ForestGreen,
                     fontWeight = FontWeight.ExtraBold,
                     modifier =
@@ -399,8 +526,8 @@ private fun MissionLocationPanel(modality: String) {
                             .padding(horizontal = 10.dp, vertical = 5.dp),
                 )
                 Icon(
-                    imageVector = Icons.Default.LocationOn,
-                    contentDescription = "Ubicación aproximada de la misión",
+                    Icons.Default.LocationOn,
+                    contentDescription = "Ubicación aproximada",
                     tint = AlertCoral,
                     modifier = Modifier.size(54.dp),
                 )
@@ -439,12 +566,7 @@ private fun InfoSection(
     backgroundColor: Color,
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = title,
-            color = ForestGreen,
-            fontWeight = FontWeight.ExtraBold,
-            style = MaterialTheme.typography.titleMedium,
-        )
+        Text(title, color = ForestGreen, fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.titleMedium)
         Spacer(modifier = Modifier.height(7.dp))
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -452,12 +574,7 @@ private fun InfoSection(
             border = BorderStroke(2.dp, accentColor),
             colors = CardDefaults.cardColors(containerColor = backgroundColor),
         ) {
-            Text(
-                text = text,
-                modifier = Modifier.padding(16.dp),
-                color = BarkBrown,
-                style = MaterialTheme.typography.bodyLarge,
-            )
+            Text(text, modifier = Modifier.padding(16.dp), color = BarkBrown, style = MaterialTheme.typography.bodyLarge)
         }
     }
 }

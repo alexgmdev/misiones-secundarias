@@ -1,5 +1,6 @@
 package com.groovycow.misionessecundarias.domain.repository
 
+import com.groovycow.misionessecundarias.data.repository.ApplicationStatusDto
 import com.groovycow.misionessecundarias.domain.model.Application
 import com.groovycow.misionessecundarias.domain.model.ApplicationDecision
 import com.groovycow.misionessecundarias.domain.model.MissionApplicant
@@ -20,4 +21,14 @@ interface ApplicationRepository {
         applicationId: String,
         decision: ApplicationDecision,
     )
+
+    suspend fun markOnWay(missionId: String): Result<Unit>
+
+    suspend fun markArrived(
+        missionId: String,
+        latitude: Double?,
+        longitude: Double?,
+    ): Result<Unit>
+
+    suspend fun getMyApplicationStatus(missionId: String): ApplicationStatusDto?
 }

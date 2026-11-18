@@ -91,7 +91,7 @@ class MissionRepositoryImpl(private val supabase: SupabaseClient) : MissionRepos
 
     override suspend fun getPublishedMissions(): List<Mission> =
         withContext(Dispatchers.IO) {
-            supabase.from("missions")
+            supabase.from("public_missions")
                 .select(columns = Columns.raw("*, profiles(full_name)")) { // <-- JOIN con profiles
                     filter {
                         neq("status", "Borrador")
@@ -101,7 +101,7 @@ class MissionRepositoryImpl(private val supabase: SupabaseClient) : MissionRepos
 
     override suspend fun getMissionById(id: String): Mission? =
         withContext(Dispatchers.IO) {
-            supabase.from("missions")
+            supabase.from("public_missions")
                 .select(columns = Columns.raw("*, profiles(full_name)")) { // <-- JOIN con profiles
                     filter {
                         eq("id", id)

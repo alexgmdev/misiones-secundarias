@@ -342,6 +342,7 @@ private fun MissionDetailDestination(
     MissionDetailRoute(
         missionId = mission.id,
         publisherId = mission.publisherId,
+        missionLocationWkt = mission.location,
         missionTitle = mission.title,
         missionDescription = mission.description,
         missionDateTime = mission.dateTime,
