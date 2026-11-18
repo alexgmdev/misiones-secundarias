@@ -56,6 +56,7 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun MissionDetailRoute(
     missionId: String,
+    publisherId: String,
     missionTitle: String,
     missionDescription: String,
     missionDateTime: String,
@@ -66,12 +67,13 @@ fun MissionDetailRoute(
     publisherName: String?,
     approximateZone: String,
     onBack: () -> Unit,
+    onManageApplicants: () -> Unit,
     applicationViewModel: ApplicationViewModel = koinViewModel(),
 ) {
     val applicationState by applicationViewModel.uiState.collectAsState()
 
     LaunchedEffect(missionId) {
-        applicationViewModel.reset()
+        applicationViewModel.loadMission(publisherId)
     }
 
     MissionDetailScreen(
@@ -85,6 +87,7 @@ fun MissionDetailRoute(
         publisherName = publisherName,
         approximateZone = approximateZone,
         onBack = onBack,
+        onManageApplicants = onManageApplicants,
         onApply = { applicationViewModel.applyToMission(missionId) },
         onDismissApplicationMessage = applicationViewModel::dismissMessage,
         applicationState = applicationState,
@@ -104,6 +107,7 @@ fun MissionDetailScreen(
     publisherName: String?,
     approximateZone: String,
     onBack: () -> Unit,
+    onManageApplicants: () -> Unit = {},
     onApply: () -> Unit = {},
     onDismissApplicationMessage: () -> Unit = {},
     applicationState: ApplicationUiState = ApplicationUiState(),
@@ -234,8 +238,8 @@ fun MissionDetailScreen(
 
             Spacer(modifier = Modifier.height(18.dp))
             Button(
-                onClick = onApply,
-                enabled = !applicationState.isSubmitting && !applicationState.wasSubmitted,
+                onClick = if (applicationState.isPublisher) onManageApplicants else onApply,
+                enabled = applicationState.canPerformPrimaryAction(),
                 modifier =
                     Modifier
                         .fillMaxWidth()
@@ -249,7 +253,7 @@ fun MissionDetailScreen(
                     ),
                 shape = RoundedCornerShape(14.dp),
             ) {
-                if (applicationState.isSubmitting) {
+                if (applicationState.isCheckingOwnership || applicationState.isSubmitting) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(24.dp),
                         color = CreamSurface,
@@ -258,10 +262,10 @@ fun MissionDetailScreen(
                 } else {
                     Text(
                         text =
-                            if (applicationState.wasSubmitted) {
-                                "Postulación enviada"
-                            } else {
-                                "Postularse a la misión"
+                            when {
+                                applicationState.isPublisher -> "Gestionar postulantes"
+                                applicationState.wasSubmitted -> "Postulación enviada"
+                                else -> "Postularse a la misión"
                             },
                         fontWeight = FontWeight.ExtraBold,
                     )
@@ -293,6 +297,9 @@ fun MissionDetailScreen(
         )
     }
 }
+
+private fun ApplicationUiState.canPerformPrimaryAction(): Boolean =
+    !isCheckingOwnership && (isPublisher || (!isSubmitting && !wasSubmitted))
 
 @Composable
 private fun PublisherCard(publisherName: String?) {

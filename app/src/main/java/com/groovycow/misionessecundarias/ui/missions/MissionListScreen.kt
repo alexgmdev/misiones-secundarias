@@ -41,6 +41,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -65,6 +66,10 @@ fun MissionListScreen(
     viewModel: MissionViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    LaunchedEffect(Unit) {
+        viewModel.loadMissions()
+    }
+
     var searchQuery by remember { mutableStateOf("") }
     var selectedModality by remember { mutableStateOf<String?>(null) }
     var filterMenuExpanded by remember { mutableStateOf(false) }
