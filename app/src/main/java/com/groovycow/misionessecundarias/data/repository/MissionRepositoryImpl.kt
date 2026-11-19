@@ -154,7 +154,7 @@ class MissionRepositoryImpl(private val supabase: SupabaseClient) : MissionRepos
                 "La misión debe estar en progreso, completada o rendida aprobada para generar el código."
             }
 
-            VERIFICATION_CODE_TOKEN
+            generateRandomVerificationCode()
         }
 
     override suspend fun publishMission(id: String): Mission =
@@ -221,8 +221,16 @@ class MissionRepositoryImpl(private val supabase: SupabaseClient) : MissionRepos
         return recoveredUser?.id ?: throw MissionSessionRequiredException()
     }
 
+    private fun generateRandomVerificationCode(): String {
+        val allowedChars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+        val randomPart = (1..CODE_RANDOM_LENGTH)
+            .map { allowedChars.random() }
+            .joinToString("")
+        return "CALI-$randomPart"
+    }
+
     private companion object {
-        const val VERIFICATION_CODE_TOKEN = "CALI2026"
+        private const val CODE_RANDOM_LENGTH = 4
         val LOGGER: Logger = Logger.getLogger(MissionRepositoryImpl::class.java.name)
     }
 }

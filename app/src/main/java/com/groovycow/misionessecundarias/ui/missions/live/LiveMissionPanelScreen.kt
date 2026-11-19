@@ -174,6 +174,7 @@ fun LiveMissionPanelScreen(
             CompleteMissionSection(
                 missionId = missionId,
                 progressPercent = checklistState.progressPercent,
+                participants = uiState.participants,
                 onMissionCompleted = onMissionCompleted,
             )
             Spacer(modifier = Modifier.height(24.dp))

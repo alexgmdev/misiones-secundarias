@@ -67,6 +67,9 @@ sealed interface MissionError {
 
     /** La misión no ha finalizado exitosamente ('Completada' o 'Rendida aprobada'). */
     data object MissionNotCompleted : MissionError
+
+    /** El relato de la bitácora es obligatorio. */
+    data object LogbookEntryRequired : MissionError
 }
 
 /** Campo del formulario asociado a un error de validación. */

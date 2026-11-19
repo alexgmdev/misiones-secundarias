@@ -2,10 +2,12 @@ package com.groovycow.misionessecundarias.di
 
 import com.groovycow.misionessecundarias.data.repository.ApplicationRepositoryImpl
 import com.groovycow.misionessecundarias.data.repository.ChecklistRepositoryImpl
+import com.groovycow.misionessecundarias.data.repository.LogbookRepositoryImpl
 import com.groovycow.misionessecundarias.data.repository.MissionRepositoryImpl
 import com.groovycow.misionessecundarias.data.repository.PauseRepositoryImpl
 import com.groovycow.misionessecundarias.domain.repository.ApplicationRepository
 import com.groovycow.misionessecundarias.domain.repository.ChecklistRepository
+import com.groovycow.misionessecundarias.domain.repository.LogbookRepository
 import com.groovycow.misionessecundarias.domain.repository.MissionRepository
 import com.groovycow.misionessecundarias.domain.repository.PauseRepository
 import com.groovycow.misionessecundarias.domain.usecase.AddChecklistItemUseCase
@@ -38,6 +40,7 @@ import com.groovycow.misionessecundarias.ui.missions.MissionViewModel
 import com.groovycow.misionessecundarias.ui.missions.create.CreateMissionViewModel
 import com.groovycow.misionessecundarias.ui.missions.live.ChecklistViewModel
 import com.groovycow.misionessecundarias.ui.missions.live.CompleteMissionViewModel
+import com.groovycow.misionessecundarias.ui.missions.live.GenerateCodeViewModel
 import com.groovycow.misionessecundarias.ui.missions.live.LivePanelViewModel
 import com.groovycow.misionessecundarias.ui.missions.live.PausesViewModel
 import com.groovycow.misionessecundarias.ui.missions.live.StartMissionViewModel
@@ -54,6 +57,7 @@ val repositoryModule =
         single<ApplicationRepository> { ApplicationRepositoryImpl(get()) }
         single<ChecklistRepository> { ChecklistRepositoryImpl(get()) }
         single<PauseRepository> { PauseRepositoryImpl(get()) }
+        single<LogbookRepository> { LogbookRepositoryImpl(get()) }
 
         // Casos de Uso
         factory { GetMissionsUseCase(get()) }
@@ -76,6 +80,7 @@ val repositoryModule =
         factory { StartMissionUseCase(get(), get(), Clock.system(ZoneId.of("America/Bogota"))) }
         factory { CompleteMissionUseCase(get(), get()) }
         factory { GenerateVerificationCodeUseCase(get()) }
+        factory { com.groovycow.misionessecundarias.domain.usecase.SaveMissionLogbookUseCase(get()) }
         factory { MissionDraftValidator(Clock.system(ZoneId.of("America/Bogota"))) }
         factory { MarkOnWayUseCase(get()) }
         factory { MarkArrivedUseCase(get()) }
@@ -91,5 +96,6 @@ val repositoryModule =
         viewModel { PausesViewModel(get(), get()) }
         viewModel { StartMissionViewModel(get()) }
         viewModel { CompleteMissionViewModel(get()) }
-        viewModel { com.groovycow.misionessecundarias.ui.missions.live.GenerateCodeViewModel(get()) }
+        viewModel { GenerateCodeViewModel(get()) }
+        viewModel { com.groovycow.misionessecundarias.ui.missions.live.MissionLogbookViewModel(get()) }
     }

@@ -10,9 +10,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -21,6 +24,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -36,6 +41,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.groovycow.misionessecundarias.domain.model.Mission
+import com.groovycow.misionessecundarias.domain.model.MissionApplicant
 import com.groovycow.misionessecundarias.ui.missions.toMessage
 import org.koin.androidx.compose.koinViewModel
 
@@ -43,13 +49,13 @@ import org.koin.androidx.compose.koinViewModel
 private const val FULL_PROGRESS = 100
 
 /**
- * Sección de Evaluación y Cierre de Misión (HU-064 & Token de Cierre 'CALI2026').
+ * Sección de Evaluación y Cierre de Misión (HU-064, Código de Cierre & Bitácora Obligatoria).
  *
  * Flujo:
  * 1. Al llegar al 100 % de progreso, el publicador presiona "Generar Código de Verificación".
- * 2. Se muestra el token 'CALI2026' en la tarjeta de certificación.
- * 3. Dentro de esta vista del código se ubica el botón "Completar Misión", el cual
- *    finaliza formalmente la misión y notifica el éxito.
+ * 2. Se muestra el token dinámico de certificación de asistencia.
+ * 3. Se solicita de forma obligatoria redactar y presionar "Guardar Bitácora", vinculando los participantes.
+ * 4. Tras guardar la bitácora, se habilita el botón "Completar Misión" para finalizar la misión.
  */
 @Composable
 fun CompleteMissionSection(
@@ -57,11 +63,15 @@ fun CompleteMissionSection(
     progressPercent: Int,
     onMissionCompleted: (Mission) -> Unit,
     modifier: Modifier = Modifier,
+    participants: List<MissionApplicant> = emptyList(),
     viewModel: CompleteMissionViewModel = koinViewModel(),
     generateCodeViewModel: GenerateCodeViewModel = koinViewModel(),
+    logbookViewModel: MissionLogbookViewModel = koinViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
     val generateState by generateCodeViewModel.uiState.collectAsState()
+    val logbookState by logbookViewModel.uiState.collectAsState()
+
     val canGenerateCode = progressPercent >= FULL_PROGRESS && generateState.verificationCode == null && state.completedMission == null
 
     Column(modifier = modifier.fillMaxWidth()) {
@@ -96,12 +106,16 @@ fun CompleteMissionSection(
             }
         }
 
-        // Una vez generado el código, se muestra la tarjeta con la clave y el botón "Completar Misión"
+        // Una vez generado el código, se muestra la tarjeta del código, el campo de bitácora y el botón de cierre
         if (generateState.verificationCode != null || state.completedMission != null) {
             GenerateCodeCard(
-                verificationCode = generateState.verificationCode ?: "CALI2026",
+                verificationCode = generateState.verificationCode ?: "CALI-OK",
                 isCompleting = state.isCompleting,
                 isCompleted = state.completedMission != null,
+                logbookState = logbookState,
+                participants = participants,
+                onEntryChanged = logbookViewModel::onEntryChanged,
+                onSaveLogbook = { logbookViewModel.saveLogbook(missionId, participants) },
                 onCompleteMission = { viewModel.complete(missionId) },
             )
         }
@@ -135,12 +149,26 @@ fun CompleteMissionSection(
         )
     }
 
+    logbookState.error?.let { error ->
+        AlertDialog(
+            onDismissRequest = logbookViewModel::dismissError,
+            containerColor = CompleteCream,
+            title = { Text("Bitácora Obligatoria", color = CompleteCoral, fontWeight = FontWeight.ExtraBold) },
+            text = { Text(error.toMessage(), color = CompleteForest) },
+            confirmButton = {
+                TextButton(onClick = logbookViewModel::dismissError) {
+                    Text("Aceptar", color = CompleteForest, fontWeight = FontWeight.Bold)
+                }
+            },
+        )
+    }
+
     state.completedMission?.let { mission ->
         AlertDialog(
             onDismissRequest = { onMissionCompleted(mission) },
             containerColor = CompleteCream,
             title = { Text("¡Misión completada!", color = CompleteForest, fontWeight = FontWeight.ExtraBold) },
-            text = { Text("La misión fue marcada como Completada exitosamente.", color = CompleteForest) },
+            text = { Text("La misión y su bitácora fueron guardadas exitosamente.", color = CompleteForest) },
             confirmButton = {
                 TextButton(onClick = { onMissionCompleted(mission) }) {
                     Text("Continuar", color = CompleteForest, fontWeight = FontWeight.Bold)
@@ -151,13 +179,17 @@ fun CompleteMissionSection(
 }
 
 /**
- * Tarjeta que visualiza el código único ('CALI2026') e incluye el botón para finalizar formalmente la misión.
+ * Tarjeta que visualiza el código único, el formulario de bitácora obligatoria y los participantes asociados.
  */
 @Composable
 fun GenerateCodeCard(
     verificationCode: String,
     isCompleting: Boolean,
     isCompleted: Boolean,
+    logbookState: LogbookUiState,
+    participants: List<MissionApplicant>,
+    onEntryChanged: (String) -> Unit,
+    onSaveLogbook: () -> Unit,
     onCompleteMission: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -196,7 +228,7 @@ fun GenerateCodeCard(
                 color = CompleteLightLeaf,
                 shape = RoundedCornerShape(12.dp),
                 border = BorderStroke(1.dp, CompleteLeaf),
-                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
@@ -228,9 +260,144 @@ fun GenerateCodeCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Sección de Bitácora Obligatoria
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = null,
+                        tint = CompleteForest,
+                        modifier = Modifier.size(20.dp),
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Añadir Bitácora (Obligatoria)",
+                        color = CompleteForest,
+                        fontWeight = FontWeight.ExtraBold,
+                        style = MaterialTheme.typography.titleSmall,
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                // Muestra los participantes asociados
+                if (participants.isNotEmpty()) {
+                    Text(
+                        text = "Participantes asociados:",
+                        color = CompleteForest,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        participants.forEach { participant ->
+                            Surface(
+                                color = CompleteLightLeaf,
+                                shape = CircleShape,
+                                border = BorderStroke(1.dp, CompleteLeaf),
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Person,
+                                        contentDescription = null,
+                                        tint = CompleteForest,
+                                        modifier = Modifier.size(14.dp),
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = participant.profile.fullName.substringBefore(' '),
+                                        color = CompleteForest,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                if (logbookState.savedLogbook == null) {
+                    OutlinedTextField(
+                        value = logbookState.entry,
+                        onValueChange = onEntryChanged,
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { Text("Relata qué y cómo se vivió la misión...") },
+                        minLines = 3,
+                        maxLines = 5,
+                        colors =
+                            OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = CompleteForest,
+                                unfocusedBorderColor = CompleteLeaf,
+                                focusedContainerColor = CompleteCream,
+                                unfocusedContainerColor = CompleteCream,
+                            ),
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Button(
+                        onClick = onSaveLogbook,
+                        enabled = !logbookState.isSaving && logbookState.entry.trim().isNotEmpty(),
+                        modifier = Modifier.fillMaxWidth().height(44.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        colors =
+                            ButtonDefaults.buttonColors(
+                                containerColor = CompleteForest,
+                                contentColor = CompleteCream,
+                            ),
+                    ) {
+                        if (logbookState.isSaving) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(18.dp),
+                                color = CompleteCream,
+                                strokeWidth = 2.dp,
+                            )
+                        } else {
+                            Text("Guardar Bitácora", fontWeight = FontWeight.Bold)
+                        }
+                    }
+                } else {
+                    Surface(
+                        color = CompleteLightLeaf,
+                        shape = RoundedCornerShape(10.dp),
+                        border = BorderStroke(1.dp, CompleteLeaf),
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                tint = CompleteLeaf,
+                                modifier = Modifier.size(20.dp),
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Bitácora guardada oficialmente",
+                                color = CompleteForest,
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // El botón de Completar Misión requiere haber guardado la bitácora previamente
             Button(
                 onClick = onCompleteMission,
-                enabled = !isCompleting && !isCompleted,
+                enabled = !isCompleting && !isCompleted && logbookState.savedLogbook != null,
                 modifier = Modifier.fillMaxWidth().height(52.dp),
                 shape = RoundedCornerShape(14.dp),
                 colors =

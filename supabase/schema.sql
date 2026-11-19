@@ -91,6 +91,19 @@ CREATE TABLE mission_pauses (
     PRIMARY KEY (mission_id, kind)
 );
 
+-- Bitácora de la misión (HU - Evaluación y Cierre): relato del publicador y vivencias de participantes
+CREATE TABLE mission_logbooks (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    mission_id UUID REFERENCES missions(id) ON DELETE CASCADE NOT NULL,
+    author_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+    role TEXT NOT NULL CHECK (role IN ('publicador', 'participante')),
+    entry TEXT NOT NULL CONSTRAINT logbook_entry_not_empty CHECK (char_length(btrim(entry)) >= 1),
+    participant_ids UUID[] DEFAULT '{}'::UUID[] NOT NULL,
+    participant_names TEXT[] DEFAULT '{}'::TEXT[] NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    CONSTRAINT unique_mission_author UNIQUE (mission_id, author_id)
+);
+
 -- ==========================================
 -- 3. SEGURIDAD (RLS Y POLÍTICAS)
 -- ==========================================
@@ -99,6 +112,7 @@ ALTER TABLE missions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE applications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mission_checklist_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mission_pauses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE mission_logbooks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE profile_private ENABLE ROW LEVEL SECURITY;
 ALTER TABLE login_attempts ENABLE ROW LEVEL SECURITY; -- sin políticas: solo service role
 
@@ -134,6 +148,29 @@ CREATE POLICY "Publishers manage own pauses" ON mission_pauses FOR ALL TO authen
 CREATE POLICY "Accepted solvers read pauses" ON mission_pauses FOR SELECT TO authenticated
     USING (EXISTS (SELECT 1 FROM applications a WHERE a.mission_id = mission_pauses.mission_id AND a.solver_id = auth.uid() AND a.status = 'Aceptado'));
 
+-- Bitácora: el publicador y los solucionadores aceptados gestionan sus entradas; lectura pública para el historial
+CREATE POLICY "Publishers manage own logbooks" ON mission_logbooks FOR ALL TO authenticated
+    USING (auth.uid() = author_id AND auth.uid() IN (SELECT publisher_id FROM missions WHERE id = mission_id))
+    WITH CHECK (auth.uid() = author_id AND auth.uid() IN (SELECT publisher_id FROM missions WHERE id = mission_id));
+
+CREATE POLICY "Accepted solvers insert logbooks" ON mission_logbooks FOR INSERT TO authenticated
+    WITH CHECK (
+        auth.uid() = author_id AND
+        role = 'participante' AND
+        EXISTS (
+            SELECT 1 FROM applications
+            WHERE mission_id = mission_logbooks.mission_id
+              AND solver_id = auth.uid()
+              AND status = 'Aceptado'
+        )
+    );
+
+CREATE POLICY "Accepted solvers update own logbooks" ON mission_logbooks FOR UPDATE TO authenticated
+    USING (auth.uid() = author_id)
+    WITH CHECK (auth.uid() = author_id);
+
+CREATE POLICY "Public logbooks viewable" ON mission_logbooks FOR SELECT USING (true);
+
 
 -- configuración para evitar problemas de permisos
 -- Permisos explícitos para la Data API (necesario desde Nov 2026)
@@ -147,6 +184,7 @@ GRANT SELECT, INSERT, DELETE ON public.mission_checklist_items TO authenticated;
 GRANT UPDATE (is_done) ON public.mission_checklist_items TO authenticated;
 GRANT SELECT, INSERT ON public.mission_pauses TO authenticated;
 GRANT UPDATE (is_active) ON public.mission_pauses TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON public.mission_logbooks TO authenticated;
 
 -- Datos privados y intentos de login
 REVOKE ALL ON public.profile_private FROM anon, authenticated;
