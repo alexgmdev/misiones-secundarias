@@ -2,6 +2,7 @@ package com.groovycow.misionessecundarias.ui.navigation
 
 import androidx.compose.runtime.Composable
 import com.groovycow.misionessecundarias.ui.onboarding.OnboardingScreen
+import com.groovycow.misionessecundarias.ui.profile.edit.EditProfileScreen
 import com.groovycow.misionessecundarias.ui.profile.me.MyProfileScreen
 
 /**
@@ -35,6 +36,7 @@ sealed interface ProfileFlowDestination : AppDestination {
  * @param onOnboardingFinished Acción al terminar u omitir el onboarding; recibe `fromSettings`.
  * @param onEditProfile Acción del botón "Editar Perfil" de Mi perfil.
  * @param onOpenHistory Acción del botón "Histórico de Misiones" de Mi perfil.
+ * @param onProfileEdited Acción al guardar (o cancelar) la edición del perfil: vuelve a Mi perfil.
  */
 @Composable
 internal fun ProfileFlowRoute(
@@ -43,21 +45,16 @@ internal fun ProfileFlowRoute(
     onOnboardingFinished: (fromSettings: Boolean) -> Unit = {},
     onEditProfile: () -> Unit = {},
     onOpenHistory: () -> Unit = {},
+    onProfileEdited: () -> Unit = {},
 ) {
-    if (destination is ProfileFlowDestination.Onboarding) {
-        OnboardingScreen(fromSettings = destination.fromSettings, onFinish = onOnboardingFinished)
-        return
+    when (destination) {
+        is ProfileFlowDestination.Onboarding ->
+            OnboardingScreen(fromSettings = destination.fromSettings, onFinish = onOnboardingFinished)
+        ProfileFlowDestination.MyProfile ->
+            MyProfileScreen(onBack = onBack, onEditProfile = onEditProfile, onOpenHistory = onOpenHistory)
+        ProfileFlowDestination.EditProfile ->
+            EditProfileScreen(onBack = onProfileEdited, onSaved = onProfileEdited)
+        ProfileFlowDestination.MissionHistory ->
+            FeaturePlaceholderScreen(title = "Historial de misiones", onBack = onBack)
     }
-    if (destination == ProfileFlowDestination.MyProfile) {
-        MyProfileScreen(onBack = onBack, onEditProfile = onEditProfile, onOpenHistory = onOpenHistory)
-        return
-    }
-    val title =
-        when (destination) {
-            ProfileFlowDestination.MyProfile -> "Mi perfil"
-            ProfileFlowDestination.EditProfile -> "Editar perfil"
-            ProfileFlowDestination.MissionHistory -> "Historial de misiones"
-            is ProfileFlowDestination.Onboarding -> "Bienvenida"
-        }
-    FeaturePlaceholderScreen(title = title, onBack = onBack)
 }

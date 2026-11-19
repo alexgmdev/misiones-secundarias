@@ -17,6 +17,7 @@ import com.groovycow.misionessecundarias.domain.validation.DescriptionValidator
 import com.groovycow.misionessecundarias.domain.validation.NicknameValidator
 import com.groovycow.misionessecundarias.domain.validation.ProfileDraftValidator
 import com.groovycow.misionessecundarias.ui.profile.ProfileSummaryViewModel
+import com.groovycow.misionessecundarias.ui.profile.edit.EditProfileViewModel
 import com.groovycow.misionessecundarias.ui.profile.me.MyProfileViewModel
 import com.groovycow.misionessecundarias.ui.profile.setup.InitialProfileViewModel
 import org.koin.androidx.viewmodel.dsl.viewModel
@@ -43,5 +44,6 @@ val profileModule =
 
         viewModel { InitialProfileViewModel(get(), get()) }
         viewModel { MyProfileViewModel(get()) }
+        viewModel { EditProfileViewModel(get(), get()) }
         viewModel { ProfileSummaryViewModel(get()) }
     }
