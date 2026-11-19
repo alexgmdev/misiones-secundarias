@@ -19,23 +19,26 @@ class GenerateVerificationCodeUseCase(
      */
     suspend operator fun invoke(missionId: String): Result<String> {
         return try {
-            val mission =
-                missionRepository.getMissionById(missionId)
-                    ?: throw MissionValidationException(MissionError.MissionNotFound)
-
-            if (
-                mission.status != IN_PROGRESS_STATUS &&
-                mission.status != COMPLETED_STATUS &&
-                mission.status != RENDERED_APPROVED_STATUS
-            ) {
-                throw MissionValidationException(MissionError.MissionNotCompleted)
-            }
-
+            validateMissionForCodeGeneration(missionId)
             Result.success(missionRepository.generateVerificationCode(missionId))
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (exception: Exception) {
             Result.failure(exception)
+        }
+    }
+
+    private suspend fun validateMissionForCodeGeneration(missionId: String) {
+        val mission =
+            missionRepository.getMissionById(missionId)
+                ?: throw MissionValidationException(MissionError.MissionNotFound)
+
+        if (
+            mission.status != IN_PROGRESS_STATUS &&
+            mission.status != COMPLETED_STATUS &&
+            mission.status != RENDERED_APPROVED_STATUS
+        ) {
+            throw MissionValidationException(MissionError.MissionNotCompleted)
         }
     }
 
