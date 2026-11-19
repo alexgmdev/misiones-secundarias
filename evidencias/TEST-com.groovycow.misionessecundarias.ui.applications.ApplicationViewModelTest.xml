@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.groovycow.misionessecundarias.ui.applications.ApplicationViewModelTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-11-18T23:37:04.262Z" hostname="SC306E05" time="0.535">
-  <properties/>
-  <testcase name="markArrived updates state correctly on success" classname="com.groovycow.misionessecundarias.ui.applications.ApplicationViewModelTest" time="0.503"/>
-  <testcase name="markOnWay handles failure correctly" classname="com.groovycow.misionessecundarias.ui.applications.ApplicationViewModelTest" time="0.018"/>
-  <testcase name="markOnWay updates state correctly on success" classname="com.groovycow.misionessecundarias.ui.applications.ApplicationViewModelTest" time="0.012"/>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>

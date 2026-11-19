@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.groovycow.misionessecundarias.domain.usecase.GetLivePanelParticipantsUseCaseTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-11-18T23:37:01.983Z" hostname="SC306E05" time="0.207">
-  <properties/>
-  <testcase name="wrapsRepositoryFailureInResult" classname="com.groovycow.misionessecundarias.domain.usecase.GetLivePanelParticipantsUseCaseTest" time="0.166"/>
-  <testcase name="returnsEmptyListWhenNobodyWasAccepted" classname="com.groovycow.misionessecundarias.domain.usecase.GetLivePanelParticipantsUseCaseTest" time="0.027"/>
-  <testcase name="returnsOnlyAcceptedParticipants" classname="com.groovycow.misionessecundarias.domain.usecase.GetLivePanelParticipantsUseCaseTest" time="0.013"/>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>

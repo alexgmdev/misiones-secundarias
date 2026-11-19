@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.groovycow.misionessecundarias.ui.settings.SettingsViewModelTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-11-18T23:37:07.565Z" hostname="SC306E05" time="0.089">
-  <properties/>
-  <testcase name="successfulSignOutEmitsAOneTimeEvent" classname="com.groovycow.misionessecundarias.ui.settings.SettingsViewModelTest" time="0.082"/>
-  <testcase name="failedSignOutShowsAndDismissesTheError" classname="com.groovycow.misionessecundarias.ui.settings.SettingsViewModelTest" time="0.007"/>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>
