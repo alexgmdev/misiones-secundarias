@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.groovycow.misionessecundarias.ui.missions.MissionDateFormatterTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-11-18T23:37:06.317Z" hostname="SC306E05" time="0.04">
-  <properties/>
-  <testcase name="shouldDisplayUtcTimestampInBogotaTime" classname="com.groovycow.misionessecundarias.ui.missions.MissionDateFormatterTest" time="0.04"/>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>

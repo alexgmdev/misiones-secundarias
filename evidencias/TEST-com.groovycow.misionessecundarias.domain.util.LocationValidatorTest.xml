@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.groovycow.misionessecundarias.domain.util.LocationValidatorTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-11-18T23:37:04.116Z" hostname="SC306E05" time="0.005">
-  <properties/>
-  <testcase name="isWithinRange returns false when missionWkt is null" classname="com.groovycow.misionessecundarias.domain.util.LocationValidatorTest" time="0.003"/>
-  <testcase name="isWithinRange returns true when distance is less than 50 meters" classname="com.groovycow.misionessecundarias.domain.util.LocationValidatorTest" time="0.001"/>
-  <testcase name="isWithinRange returns false when distance is greater than 50 meters" classname="com.groovycow.misionessecundarias.domain.util.LocationValidatorTest" time="0.0"/>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>
