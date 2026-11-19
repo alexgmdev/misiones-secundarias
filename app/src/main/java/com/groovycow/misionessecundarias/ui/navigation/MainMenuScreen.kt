@@ -63,6 +63,7 @@ enum class MainMenuDestination(
 fun MainMenuScreen(
     onNavigate: (MainMenuDestination) -> Unit,
     username: String? = null,
+    avatar: (@Composable () -> Unit)? = null,
 ) {
     Scaffold(containerColor = SandBackground) { paddingValues ->
         Row(
@@ -76,6 +77,7 @@ fun MainMenuScreen(
             Spacer(modifier = Modifier.width(14.dp))
             MainMenuContent(
                 username = username,
+                avatar = avatar,
                 onNavigate = onNavigate,
                 modifier = Modifier.weight(1f),
             )
@@ -145,6 +147,7 @@ private fun SideRailButton(
 @Composable
 private fun MainMenuContent(
     username: String?,
+    avatar: (@Composable () -> Unit)?,
     onNavigate: (MainMenuDestination) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -184,6 +187,7 @@ private fun MainMenuContent(
         Spacer(modifier = Modifier.height(12.dp))
         GameAvatar(
             onClick = { onNavigate(MainMenuDestination.AVATAR) },
+            avatar = avatar,
         )
         Spacer(modifier = Modifier.height(20.dp))
 
@@ -239,7 +243,10 @@ private fun NotificationButton() {
 }
 
 @Composable
-private fun GameAvatar(onClick: () -> Unit) {
+private fun GameAvatar(
+    onClick: () -> Unit,
+    avatar: (@Composable () -> Unit)? = null,
+) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             modifier =
@@ -248,28 +255,32 @@ private fun GameAvatar(onClick: () -> Unit) {
                     .clickable(onClick = onClick),
             contentAlignment = Alignment.Center,
         ) {
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                val radius = size.minDimension / 2
-                drawCircle(color = SunYellow, radius = radius)
-                drawCircle(color = RiverTeal, radius = radius * 0.82f)
-                drawCircle(color = CreamSurface, radius = radius * 0.67f)
-                drawCircle(
-                    color = LightLeaf,
-                    radius = radius * 0.16f,
-                    center = center.copy(x = center.x * 0.35f, y = center.y * 0.43f),
-                )
-                drawCircle(
-                    color = EarthOrange,
-                    radius = radius * 0.12f,
-                    center = center.copy(x = center.x * 1.75f, y = center.y * 1.55f),
+            if (avatar != null) {
+                avatar()
+            } else {
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val radius = size.minDimension / 2
+                    drawCircle(color = SunYellow, radius = radius)
+                    drawCircle(color = RiverTeal, radius = radius * 0.82f)
+                    drawCircle(color = CreamSurface, radius = radius * 0.67f)
+                    drawCircle(
+                        color = LightLeaf,
+                        radius = radius * 0.16f,
+                        center = center.copy(x = center.x * 0.35f, y = center.y * 0.43f),
+                    )
+                    drawCircle(
+                        color = EarthOrange,
+                        radius = radius * 0.12f,
+                        center = center.copy(x = center.x * 1.75f, y = center.y * 1.55f),
+                    )
+                }
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = "Personalizar avatar",
+                    tint = ForestGreen,
+                    modifier = Modifier.size(82.dp),
                 )
             }
-            Icon(
-                imageVector = Icons.Default.Person,
-                contentDescription = "Personalizar avatar",
-                tint = ForestGreen,
-                modifier = Modifier.size(82.dp),
-            )
             Text(
                 text = "1",
                 color = CreamSurface,

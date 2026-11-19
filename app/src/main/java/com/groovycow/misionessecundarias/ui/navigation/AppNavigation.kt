@@ -13,6 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.groovycow.misionessecundarias.domain.model.Mission
 import com.groovycow.misionessecundarias.ui.applications.MyApplicationsScreen
 import com.groovycow.misionessecundarias.ui.auth.SessionViewModel
@@ -27,6 +28,10 @@ import com.groovycow.misionessecundarias.ui.missions.MissionListScreen
 import com.groovycow.misionessecundarias.ui.missions.PostulantesScreen
 import com.groovycow.misionessecundarias.ui.missions.create.CreateMissionScreen
 import com.groovycow.misionessecundarias.ui.missions.live.LiveMissionPanelScreen
+import com.groovycow.misionessecundarias.ui.profile.ProfileSummaryViewModel
+import com.groovycow.misionessecundarias.ui.profile.components.ProfileAvatar
+import com.groovycow.misionessecundarias.ui.profile.setup.InitialProfileScreen
+import com.groovycow.misionessecundarias.ui.settings.ChangePasswordScreen
 import com.groovycow.misionessecundarias.ui.settings.SettingsScreen
 import org.koin.androidx.compose.koinViewModel
 
@@ -51,8 +56,11 @@ sealed interface AppDestination {
      */
     data class ResetPassword(val email: String) : AppDestination
 
-    /** Configuración inicial de perfil (`perfil-inicial`; placeholder hasta HU-005). */
+    /** Configuración inicial de perfil obligatoria, "Crea tu perfil" (HU-005). */
     data object InitialProfile : AppDestination
+
+    /** Transitorio tras iniciar sesión: consulta si el perfil está completo (gate, D10). */
+    data object CheckingProfile : AppDestination
 
     /** Menú principal (`menu-principal`). */
     data object MainMenu : AppDestination
@@ -80,6 +88,9 @@ sealed interface AppDestination {
 
     /** Ajustes de la aplicación y cierre de sesión. */
     data object Settings : AppDestination
+
+    /** Cambio de contraseña con la sesión activa, abierto desde Ajustes → Seguridad (HU-010). */
+    data object ChangePassword : AppDestination
 
     /**
      * Pantalla de funcionalidad aún no implementada.
@@ -130,11 +141,11 @@ fun AppNavigation() {
         return
     }
 
-    BackHandler(enabled = currentDestination == AppDestination.InitialProfile) {
-        destination = AppDestination.MainMenu
-    }
     BackHandler(enabled = currentDestination == AppDestination.Login || currentDestination == AppDestination.Register) {
         destination = AppDestination.Welcome
+    }
+    BackHandler(enabled = currentDestination == AppDestination.ChangePassword) {
+        destination = AppDestination.Settings
     }
     BackHandler(enabled = currentDestination == AppDestination.RequestCode) {
         destination = AppDestination.Login
@@ -157,7 +168,7 @@ fun AppNavigation() {
             LoginScreen(
                 onSignedIn = {
                     sessionViewModel.updateLoginState(true)
-                    destination = AppDestination.MainMenu
+                    destination = AppDestination.CheckingProfile
                 },
                 onRegister = { destination = AppDestination.Register },
                 onForgotPassword = {
@@ -197,16 +208,48 @@ fun AppNavigation() {
             )
         }
 
+        AppDestination.CheckingProfile -> {
+            LaunchedEffect(Unit) {
+                sessionViewModel.checkProfileGate { isComplete ->
+                    destination = if (isComplete) AppDestination.MainMenu else AppDestination.InitialProfile
+                }
+            }
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        }
+
         AppDestination.InitialProfile -> {
-            FeaturePlaceholderScreen(
-                title = "Configuración inicial de perfil",
+            InitialProfileScreen(
+                // Punto único de navegación tras guardar el perfil inicial.
+                onProfileCompleted = { destination = ProfileFlowDestination.Onboarding(fromSettings = false) },
+            )
+        }
+
+        is ProfileFlowDestination -> {
+            ProfileFlowRoute(
+                destination = currentDestination,
                 onBack = { destination = AppDestination.MainMenu },
+                onEditProfile = { destination = ProfileFlowDestination.EditProfile },
+                onOpenHistory = { destination = ProfileFlowDestination.MissionHistory },
+                onProfileEdited = { destination = ProfileFlowDestination.MyProfile },
+                onOnboardingFinished = { fromSettings ->
+                    destination = if (fromSettings) AppDestination.Settings else AppDestination.MainMenu
+                },
             )
         }
 
         AppDestination.MainMenu -> {
+            val profileSummaryViewModel: ProfileSummaryViewModel = koinViewModel()
+            val summary by profileSummaryViewModel.uiState.collectAsState()
+            LaunchedEffect(Unit) { profileSummaryViewModel.refresh() }
             MainMenuScreen(
                 onNavigate = { menuDestination -> destination = menuDestination.toAppDestination() },
+                username = summary.nickname,
+                avatar =
+                    summary.avatarId?.let { avatarId ->
+                        { ProfileAvatar(avatar = avatarId, size = 148.dp) }
+                    },
             )
         }
 
@@ -306,12 +349,18 @@ fun AppNavigation() {
         AppDestination.Settings -> {
             SettingsScreen(
                 onBack = { destination = AppDestination.MainMenu },
+                onChangePassword = { destination = AppDestination.ChangePassword },
+                onOpenGuide = { destination = ProfileFlowDestination.Onboarding(fromSettings = true) },
                 onSignedOut = {
                     sessionViewModel.updateLoginState(false)
                     loginNotice = SIGNED_OUT_NOTICE
                     destination = AppDestination.Welcome
                 },
             )
+        }
+
+        AppDestination.ChangePassword -> {
+            ChangePasswordScreen(onBack = { destination = AppDestination.Settings })
         }
 
         is AppDestination.Placeholder -> {
@@ -358,6 +407,7 @@ private fun StartDestination.toAppDestination(): AppDestination? =
         StartDestination.LOADING -> null
         StartDestination.LOGIN -> AppDestination.Welcome
         StartDestination.MAIN_MENU -> AppDestination.MainMenu
+        StartDestination.PROFILE_SETUP -> AppDestination.InitialProfile
     }
 
 /** Traduce una opción del menú principal al destino de navegación correspondiente. */
@@ -367,6 +417,8 @@ private fun MainMenuDestination.toAppDestination(): AppDestination =
         MainMenuDestination.PUBLISH_MISSION -> AppDestination.PublishMission
         MainMenuDestination.MY_APPLICATIONS -> AppDestination.MyApplications
         MainMenuDestination.SETTINGS -> AppDestination.Settings
+        MainMenuDestination.PROFILE -> ProfileFlowDestination.MyProfile
+        MainMenuDestination.AVATAR -> ProfileFlowDestination.EditProfile
         else -> AppDestination.Placeholder(this)
     }
 
