@@ -68,7 +68,13 @@ class MissionLogbookViewModelTest {
 
     @Test
     fun networkFailureMapsToNoConnection() {
-        coEvery { saveMissionLogbookUseCase("m1", "Excelente vivencia", listOf(participant)) } returns Result.failure(IllegalStateException("x", IOException()))
+        coEvery {
+            saveMissionLogbookUseCase(
+                "m1",
+                "Excelente vivencia",
+                listOf(participant),
+            )
+        } returns Result.failure(IllegalStateException("x", IOException()))
         val viewModel = MissionLogbookViewModel(saveMissionLogbookUseCase)
         viewModel.onEntryChanged("Excelente vivencia")
 

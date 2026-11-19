@@ -22,22 +22,43 @@ class SaveMissionLogbookUseCaseTest {
     @Test
     fun savesPublisherLogbookSuccessfullyWithParticipants() =
         runTest {
-            val participant = MissionApplicant("a1", "m1", "s1", "Aceptado", "2026-11-20T10:00:00Z", ApplicantProfile("Juan Pérez"))
-            val expectedLogbook = MissionLogbook(
-                "l1",
-                "m1",
-                "p1",
-                "publicador",
-                "Excelente evento comunitario",
-                listOf("s1"),
-                listOf("Juan Pérez"),
-            )
-            coEvery { logbookRepository.savePublisherLogbook("m1", "Excelente evento comunitario", listOf(participant)) } returns expectedLogbook
+            val participant =
+                MissionApplicant(
+                    "a1",
+                    "m1",
+                    "s1",
+                    "Aceptado",
+                    "2026-11-20T10:00:00Z",
+                    ApplicantProfile("Juan Pérez"),
+                )
+            val expectedLogbook =
+                MissionLogbook(
+                    "l1",
+                    "m1",
+                    "p1",
+                    "publicador",
+                    "Excelente evento comunitario",
+                    listOf("s1"),
+                    listOf("Juan Pérez"),
+                )
+            coEvery {
+                logbookRepository.savePublisherLogbook(
+                    "m1",
+                    "Excelente evento comunitario",
+                    listOf(participant),
+                )
+            } returns expectedLogbook
 
             val result = useCase("m1", "  Excelente evento comunitario  ", listOf(participant))
 
             assertEquals(expectedLogbook, result.getOrNull())
-            coVerify(exactly = 1) { logbookRepository.savePublisherLogbook("m1", "Excelente evento comunitario", listOf(participant)) }
+            coVerify {
+                logbookRepository.savePublisherLogbook(
+                    "m1",
+                    "Excelente evento comunitario",
+                    listOf(participant),
+                )
+            }
         }
 
     @Test
