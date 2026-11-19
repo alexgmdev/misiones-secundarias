@@ -14,9 +14,20 @@ CREATE TABLE profiles (
     first_name TEXT CONSTRAINT profiles_first_name_length CHECK (first_name IS NULL OR char_length(btrim(first_name)) BETWEEN 1 AND 60),
     last_name TEXT CONSTRAINT profiles_last_name_length CHECK (last_name IS NULL OR char_length(btrim(last_name)) BETWEEN 1 AND 60),
     avatar_url TEXT,
+    -- Perfil público (cambio: supabase/changes/2026-11-18_profiles_public_fields.sql)
+    nickname TEXT CONSTRAINT profiles_nickname_format CHECK (nickname IS NULL OR nickname ~ '^[A-Za-z0-9_]{3,20}$'),
+    gender TEXT CONSTRAINT profiles_gender_values CHECK (gender IS NULL OR gender IN ('femenino', 'masculino', 'prefiero_no_decir')),
+    description TEXT CONSTRAINT profiles_description_length CHECK (description IS NULL OR char_length(description) <= 280),
+    avatar_id TEXT CONSTRAINT profiles_avatar_id_format CHECK (avatar_id IS NULL OR avatar_id ~ '^[a-z_]{1,30}$'),
+    photo_url TEXT CONSTRAINT profiles_photo_url_origin CHECK (photo_url IS NULL OR position('/storage/v1/object/public/avatars/' || id::text || '/' in photo_url) > 0),
+    profile_completed BOOLEAN GENERATED ALWAYS AS (
+        nickname IS NOT NULL AND gender IS NOT NULL AND avatar_id IS NOT NULL AND photo_url IS NOT NULL
+    ) STORED,
     role TEXT DEFAULT 'user' CHECK (role IN ('user', 'moderator')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+
+CREATE UNIQUE INDEX profiles_nickname_lower_key ON profiles (lower(nickname));
 
 -- Datos personales del perfil (celular y fecha de nacimiento): solo visibles para su dueño.
 -- Cambio: supabase/changes/2026-11-03_auth_profiles_privacy.sql
@@ -156,6 +167,8 @@ REVOKE ALL ON public.login_attempts FROM anon, authenticated;
 
 --reglas para la tabla de profiles
 GRANT SELECT ON public.profiles TO anon, authenticated;
+-- Edición del perfil público: solo estas columnas (cambio 2026-11-18_profiles_public_fields.sql)
+GRANT UPDATE (nickname, gender, description, avatar_id, photo_url) ON public.profiles TO authenticated;
 GRANT SELECT ON public.applications TO anon, authenticated;
 -- ==========================================
 -- 4. TRIGGER PARA AUTO-CREAR PERFILES (David - Auth)
@@ -223,3 +236,41 @@ as $$
 $$;
 comment on function public.purge_login_attempts() is 'Borra intentos de login de más de 1 día. Solo service role.';
 revoke execute on function public.purge_login_attempts() from public, anon, authenticated;
+
+-- ==========================================
+-- 6. PERFIL PÚBLICO Y FOTOS (perfil-configuracion)
+-- ==========================================
+-- Cambios: supabase/changes/2026-11-18_profiles_public_fields.sql y 2026-11-18_storage_avatars.sql
+-- Indica si un nickname está libre (true); su propio nickname cuenta como libre.
+create or replace function public.nickname_disponible(p_nickname text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select not exists (
+    select 1 from public.profiles
+    where lower(nickname) = lower(p_nickname)
+      and id is distinct from auth.uid()
+  );
+$$;
+comment on function public.nickname_disponible(text) is 'Indica si un nickname está libre (true); excluye al usuario actual.';
+revoke execute on function public.nickname_disponible(text) from public, anon;
+grant execute on function public.nickname_disponible(text) to authenticated;
+
+-- Bucket público de fotos de perfil: máximo 2 MB, solo JPEG, ruta `{uid}/foto.jpg`.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('avatars', 'avatars', true, 2097152, array['image/jpeg'])
+on conflict (id) do update
+  set public = true, file_size_limit = 2097152, allowed_mime_types = array['image/jpeg'];
+
+create policy "avatars_select_public" on storage.objects
+  for select using (bucket_id = 'avatars');
+create policy "avatars_insert_own_folder" on storage.objects
+  for insert to authenticated
+  with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
+create policy "avatars_update_own_folder" on storage.objects
+  for update to authenticated
+  using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text)
+  with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);

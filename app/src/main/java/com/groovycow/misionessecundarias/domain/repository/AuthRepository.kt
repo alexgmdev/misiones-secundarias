@@ -96,4 +96,11 @@ interface AuthRepository {
      * @throws com.groovycow.misionessecundarias.domain.model.AuthException si falla la operación.
      */
     suspend fun signOut()
+
+    /**
+     * Obtiene el correo del usuario de la sesión activa.
+     *
+     * @return Correo de la sesión, o `null` si no hay sesión o el usuario no tiene correo.
+     */
+    fun currentUserEmail(): String?
 }

@@ -4,6 +4,7 @@ import com.groovycow.misionessecundarias.data.repository.AuthErrorMapper
 import com.groovycow.misionessecundarias.data.repository.AuthRepositoryImpl
 import com.groovycow.misionessecundarias.domain.repository.AuthRepository
 import com.groovycow.misionessecundarias.domain.usecase.CancelRecoveryUseCase
+import com.groovycow.misionessecundarias.domain.usecase.ChangeCurrentPasswordUseCase
 import com.groovycow.misionessecundarias.domain.usecase.ChangePasswordUseCase
 import com.groovycow.misionessecundarias.domain.usecase.ObserveSessionUseCase
 import com.groovycow.misionessecundarias.domain.usecase.RegisterUseCase
@@ -22,6 +23,7 @@ import com.groovycow.misionessecundarias.ui.auth.login.LoginViewModel
 import com.groovycow.misionessecundarias.ui.auth.recovery.RequestCodeViewModel
 import com.groovycow.misionessecundarias.ui.auth.recovery.ResetPasswordViewModel
 import com.groovycow.misionessecundarias.ui.auth.register.RegisterViewModel
+import com.groovycow.misionessecundarias.ui.settings.ChangePasswordViewModel
 import com.groovycow.misionessecundarias.ui.settings.SettingsViewModel
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
@@ -49,11 +51,13 @@ val authModule =
         factory { VerifyRecoveryCodeUseCase(get(), get()) }
         factory { ChangePasswordUseCase(get(), get()) }
         factory { CancelRecoveryUseCase(get()) }
+        factory { ChangeCurrentPasswordUseCase(get(), get()) }
 
-        viewModel { SessionViewModel(get()) }
+        viewModel { SessionViewModel(get(), get()) }
         viewModel { LoginViewModel(get()) }
         viewModel { RequestCodeViewModel(get(), get()) }
         viewModel { (email: String) -> ResetPasswordViewModel(email, get(), get(), get(), get(), get(), get()) }
         viewModel { RegisterViewModel(get(), get(), get(), get(), get(), get()) }
         viewModel { SettingsViewModel(get()) }
+        viewModel { ChangePasswordViewModel(get()) }
     }

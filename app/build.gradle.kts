@@ -85,6 +85,7 @@ dependencies {
     implementation(libs.supabase.gotrue)
     implementation(libs.supabase.postgrest)
     implementation(libs.supabase.functions)
+    implementation(libs.supabase.storage)
     implementation(libs.kotlinx.serialization.json)
     implementation("io.ktor:ktor-client-okhttp:2.3.12")
 
@@ -92,6 +93,9 @@ dependencies {
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
+
+    // Coil
+    implementation(libs.coil.compose)
 
     // MapLibre
     implementation(libs.maplibre)
