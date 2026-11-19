@@ -11,6 +11,7 @@ const val RECOVERY_CODE_SENT_MESSAGE = "Si el correo está registrado, recibirá
  *
  * @return Texto para el usuario, sin detalles técnicos.
  */
+@Suppress("CyclomaticComplexMethod")
 fun FieldError.toMessage(): String =
     when (this) {
         FieldError.Required -> "Este campo es obligatorio"
@@ -23,6 +24,10 @@ fun FieldError.toMessage(): String =
         FieldError.FutureBirthDate -> "La fecha de nacimiento no puede ser futura"
         FieldError.UnderAge -> "Debes ser mayor de 18 años"
         FieldError.InvalidCode -> "Ingresa el código numérico"
+        FieldError.NicknameLength -> "El nickname debe tener entre 3 y 20 caracteres"
+        FieldError.NicknameInvalidChars -> "El nickname solo admite letras, números y guion bajo"
+        FieldError.DescriptionTooLong -> "Máximo 280 caracteres"
+        FieldError.SelectionRequired -> "Este campo es obligatorio"
     }
 
 /**

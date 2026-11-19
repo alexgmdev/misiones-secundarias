@@ -2,6 +2,7 @@ package com.groovycow.misionessecundarias
 
 import android.app.Application
 import com.groovycow.misionessecundarias.di.authModule
+import com.groovycow.misionessecundarias.di.profileModule
 import com.groovycow.misionessecundarias.di.repositoryModule
 import com.groovycow.misionessecundarias.di.supabaseModule
 import org.koin.android.ext.koin.androidContext
@@ -12,7 +13,7 @@ class MisionesApp : Application() {
         super.onCreate()
         startKoin {
             androidContext(this@MisionesApp)
-            modules(supabaseModule, repositoryModule, authModule)
+            modules(supabaseModule, repositoryModule, authModule, profileModule)
         }
     }
 }
