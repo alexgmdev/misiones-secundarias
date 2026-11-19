@@ -44,6 +44,6 @@ val profileModule =
 
         viewModel { InitialProfileViewModel(get(), get()) }
         viewModel { MyProfileViewModel(get()) }
-        viewModel { EditProfileViewModel(get(), get()) }
+        viewModel { EditProfileViewModel(get(), get(), get(), get()) }
         viewModel { ProfileSummaryViewModel(get()) }
     }

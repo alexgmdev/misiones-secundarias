@@ -7,9 +7,11 @@ import com.groovycow.misionessecundarias.domain.model.Gender
 import com.groovycow.misionessecundarias.domain.model.ProfileDraft
 import com.groovycow.misionessecundarias.domain.model.ProfileError
 import com.groovycow.misionessecundarias.domain.model.ProfileException
+import com.groovycow.misionessecundarias.domain.usecase.CompressProfilePhotoUseCase
 import com.groovycow.misionessecundarias.domain.usecase.GetMyProfileUseCase
 import com.groovycow.misionessecundarias.domain.usecase.ProfileValidationException
 import com.groovycow.misionessecundarias.domain.usecase.UpdateProfileUseCase
+import com.groovycow.misionessecundarias.domain.usecase.UploadProfilePhotoUseCase
 import com.groovycow.misionessecundarias.domain.validation.FieldError
 import com.groovycow.misionessecundarias.domain.validation.ProfileField
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,7 +29,9 @@ import kotlinx.coroutines.launch
  * @property gender Género elegido, o null.
  * @property description Descripción digitada.
  * @property avatarId Avatar elegido, o null.
- * @property photoUrl URL de la foto actual (solo lectura por ahora; HU-009 añadirá el cambio de foto).
+ * @property photoUrl URL de la foto actual guardada.
+ * @property photoPreviewUri Uri de la foto nueva ya comprimida con éxito (vista previa; se sube al guardar), o null.
+ * @property photoError Error al preparar la foto elegida (formato o tamaño), o null.
  * @property fieldErrors Errores de validación por campo.
  * @property error Error del guardado (nickname en uso, red o servidor), o null.
  * @property isLoading `true` mientras se guarda (deshabilita el botón).
@@ -41,6 +45,8 @@ data class EditProfileUiState(
     val description: String = "",
     val avatarId: AvatarId? = null,
     val photoUrl: String? = null,
+    val photoPreviewUri: String? = null,
+    val photoError: ProfileError? = null,
     val fieldErrors: Map<ProfileField, FieldError> = emptyMap(),
     val error: ProfileError? = null,
     val isLoading: Boolean = false,
@@ -48,25 +54,34 @@ data class EditProfileUiState(
 )
 
 /**
- * ViewModel de Editar perfil (HU-008): precarga el perfil propio, valida y guarda los cambios.
+ * ViewModel de Editar perfil (HU-008/HU-009): precarga el perfil propio, valida y guarda los cambios y la foto nueva.
  *
  * @param getMyProfile Caso de uso que obtiene el perfil propio.
  * @param updateProfile Caso de uso que valida y actualiza el perfil (el nickname propio no cuenta como en uso).
+ * @param uploadPhoto Caso de uso que sube la foto comprimida y devuelve su URL con `?v=` anti-caché.
+ * @param compressPhoto Caso de uso que valida el formato y comprime la foto a JPEG.
  */
 class EditProfileViewModel(
     private val getMyProfile: GetMyProfileUseCase,
     private val updateProfile: UpdateProfileUseCase,
+    private val uploadPhoto: UploadProfilePhotoUseCase,
+    private val compressPhoto: CompressProfilePhotoUseCase,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(EditProfileUiState())
 
     /** Estado observable de la pantalla. */
     val uiState: StateFlow<EditProfileUiState> = _uiState.asStateFlow()
 
+    private var photoJpeg: ByteArray? = null
+    private var uploadedPhotoUrl: String? = null
+
     /** Carga (o recarga) el perfil actual y prellena el formulario, descartando ediciones previas. */
     fun load() {
         viewModelScope.launch {
             getMyProfile()
                 .onSuccess { profile ->
+                    photoJpeg = null
+                    uploadedPhotoUrl = null
                     _uiState.value =
                         EditProfileUiState(
                             isLoaded = true,
@@ -93,6 +108,24 @@ class EditProfileViewModel(
     /** Actualiza el avatar. @param value Avatar elegido. */
     fun onAvatarChange(value: AvatarId) = edit(ProfileField.Avatar) { it.copy(avatarId = value) }
 
+    /**
+     * Comprime la foto elegida. Si falla muestra el error bajo la foto y conserva la foto previa; si funciona,
+     * la deja en vista previa y se sube al guardar.
+     *
+     * @param uri Uri (texto) de la imagen elegida.
+     */
+    fun onPhotoPicked(uri: String) {
+        viewModelScope.launch {
+            compressPhoto(uri)
+                .onSuccess { bytes ->
+                    photoJpeg = bytes
+                    uploadedPhotoUrl = null
+                    _uiState.update { it.copy(photoPreviewUri = uri, photoError = null, error = null) }
+                }
+                .onFailure { failure -> _uiState.update { it.copy(photoError = failure.toProfileError()) } }
+        }
+    }
+
     /** Guarda los cambios si el formulario está cargado y no hay otro guardado en curso. */
     fun save() {
         val current = _uiState.value
@@ -100,7 +133,9 @@ class EditProfileViewModel(
         _uiState.update { it.copy(isLoading = true, error = null, fieldErrors = emptyMap()) }
         viewModelScope.launch {
             val draft = ProfileDraft(current.nickname, current.gender, current.description, current.avatarId)
-            updateProfile(draft)
+            val photoUrl = uploadedPhotoUrl ?: photoJpeg?.let { bytes -> uploadPhoto(bytes).getOrElse { return@launch failSave(it) } }
+            uploadedPhotoUrl = photoUrl
+            updateProfile(draft, photoUrl)
                 .onSuccess { _uiState.update { it.copy(isLoading = false, isSaved = true) } }
                 .onFailure { failure ->
                     _uiState.update {
@@ -113,6 +148,8 @@ class EditProfileViewModel(
                 }
         }
     }
+
+    private fun failSave(failure: Throwable) = _uiState.update { it.copy(isLoading = false, error = failure.toProfileError()) }
 
     private fun edit(
         field: ProfileField,

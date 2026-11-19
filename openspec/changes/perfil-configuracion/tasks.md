@@ -110,7 +110,7 @@ Compartidos: `…/ui/navigation/MainMenuScreen.kt` (HU-006: param `avatar`; **Jo
 - [ ] D.4 (S) **Coordinación**: avisar a Jojhan del cambio en `MainMenuScreen`; Commit manual `HU-006` (incluye D.1-D.3).
 - [x] D.5 (L) RED `T/ui/profile/edit/EditProfileViewModelTest.kt` (datos): precarga, edición exitosa, campo obligatorio vacío, nickname propio permitido, nickname de otro rechazado, `isLoading`, errores de red/servidor. GREEN `EditProfileViewModel` (datos) + `EditProfileScreen` (familia B, `GenderSelector`, `AvatarPicker`, contador). [PP Edición exitosa, Campo obligatorio vacío, Nickname propio, Nickname de otro]
 - [x] D.6 (S) `AppNavigation`/`ProfileNavigation`: destino `EditProfile` y regreso a Mi perfil con datos refrescados. Commit manual `HU-008`.
-- [ ] D.7 (M) RED (en `EditProfileViewModelTest`, bloque de foto): foto nueva comprime y sube, formato no soportado, demasiado grande, sin conexión conserva la foto actual. GREEN lógica de foto en `EditProfileViewModel`/`UploadProfilePhotoUseCase` y selector en `EditProfileScreen`. [PP Foto nueva, Formato no soportado, Foto demasiado grande, Sin conexión]
+- [x] D.7 (M) RED (en `EditProfileViewModelTest`, bloque de foto): foto nueva comprime y sube, formato no soportado, demasiado grande, sin conexión conserva la foto actual. GREEN lógica de foto en `EditProfileViewModel`/`UploadProfilePhotoUseCase` y selector en `EditProfileScreen`. [PP Foto nueva, Formato no soportado, Foto demasiado grande, Sin conexión]
 - [ ] D.8 (S) Manual HU-006/008/009: Gherkin completo, foto de cámara > 2 MB, PNG, formato GIF, avión, saludo del menú actualizado. Commit manual `HU-009` (hunks de foto vía `git add -p` si comparte archivos con HU-008), push, CI verde y PR a `develop`.
 
 ## PR E: HU-007 Perfil público

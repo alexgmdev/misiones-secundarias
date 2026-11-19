@@ -1,5 +1,8 @@
 package com.groovycow.misionessecundarias.ui.profile.edit
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,6 +26,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -112,8 +116,7 @@ private fun EditForm(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        // Sección de foto: HU-009 añadirá aquí la acción "Cambiar foto".
-        PhotoSection(photoUrl = state.photoUrl)
+        PhotoSection(state = state, onPhotoPicked = viewModel::onPhotoPicked)
         DataSection(state = state, viewModel = viewModel)
         AvatarSection(state = state, viewModel = viewModel)
         if (state.error != null) {
@@ -150,10 +153,34 @@ private fun EditForm(
 }
 
 @Composable
-private fun PhotoSection(photoUrl: String?) {
+private fun PhotoSection(
+    state: EditProfileUiState,
+    onPhotoPicked: (String) -> Unit,
+) {
+    val photoPicker =
+        rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+            uri?.let { onPhotoPicked(it.toString()) }
+        }
     SectionCard(title = "Foto") {
-        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            ProfilePhoto(photoUrl = photoUrl, size = 96.dp)
+        Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+            ProfilePhoto(photoUrl = state.photoPreviewUri ?: state.photoUrl, size = 96.dp)
+            OutlinedButton(
+                onClick = { photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+                enabled = !state.isLoading,
+                shape = RoundedCornerShape(12.dp),
+                border = BorderStroke(2.dp, NaturePalette.RiverTeal),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = NaturePalette.RiverTeal),
+            ) {
+                Text("Cambiar foto", fontWeight = FontWeight.ExtraBold)
+            }
+            if (state.photoError != null) {
+                Text(
+                    text = ProfileMessages.error(state.photoError),
+                    color = NaturePalette.AlertCoral,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                )
+            }
         }
     }
 }

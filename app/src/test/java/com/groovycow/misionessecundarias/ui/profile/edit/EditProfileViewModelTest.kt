@@ -6,9 +6,11 @@ import com.groovycow.misionessecundarias.domain.model.Profile
 import com.groovycow.misionessecundarias.domain.model.ProfileDraft
 import com.groovycow.misionessecundarias.domain.model.ProfileError
 import com.groovycow.misionessecundarias.domain.model.ProfileException
+import com.groovycow.misionessecundarias.domain.usecase.CompressProfilePhotoUseCase
 import com.groovycow.misionessecundarias.domain.usecase.GetMyProfileUseCase
 import com.groovycow.misionessecundarias.domain.usecase.ProfileValidationException
 import com.groovycow.misionessecundarias.domain.usecase.UpdateProfileUseCase
+import com.groovycow.misionessecundarias.domain.usecase.UploadProfilePhotoUseCase
 import com.groovycow.misionessecundarias.domain.validation.FieldError
 import com.groovycow.misionessecundarias.domain.validation.ProfileField
 import com.groovycow.misionessecundarias.testutil.MainDispatcherRule
@@ -28,6 +30,9 @@ class EditProfileViewModelTest {
 
     private val getMyProfile = mockk<GetMyProfileUseCase>()
     private val updateProfile = mockk<UpdateProfileUseCase>()
+    private val uploadPhoto = mockk<UploadProfilePhotoUseCase>()
+    private val compressPhoto = mockk<CompressProfilePhotoUseCase>()
+    private val jpeg = byteArrayOf(1, 2, 3)
 
     private val profile =
         Profile(
@@ -42,7 +47,7 @@ class EditProfileViewModelTest {
 
     private fun loadedViewModel(): EditProfileViewModel {
         coEvery { getMyProfile() } returns Result.success(profile)
-        return EditProfileViewModel(getMyProfile, updateProfile).also { it.load() }
+        return EditProfileViewModel(getMyProfile, updateProfile, uploadPhoto, compressPhoto).also { it.load() }
     }
 
     @Test
@@ -60,7 +65,7 @@ class EditProfileViewModelTest {
     @Test
     fun loadFailureShowsErrorAndRetryRecovers() {
         coEvery { getMyProfile() } returns Result.failure(ProfileException(ProfileError.NoConnection))
-        val vm = EditProfileViewModel(getMyProfile, updateProfile)
+        val vm = EditProfileViewModel(getMyProfile, updateProfile, uploadPhoto, compressPhoto)
         vm.load()
         assertFalse(vm.uiState.value.isLoaded)
         assertEquals(ProfileError.NoConnection, vm.uiState.value.loadError)
@@ -174,10 +179,88 @@ class EditProfileViewModelTest {
 
     @Test
     fun saveBeforeLoadedIsIgnored() {
-        val vm = EditProfileViewModel(getMyProfile, updateProfile)
+        val vm = EditProfileViewModel(getMyProfile, updateProfile, uploadPhoto, compressPhoto)
 
         vm.save()
 
         coVerify(exactly = 0) { updateProfile(any(), any()) }
+    }
+
+    @Test
+    fun pickedPhotoIsPreviewedCompressedAndUploadedOnSave() {
+        val vm = loadedViewModel()
+        coEvery { compressPhoto("content://nueva") } returns Result.success(jpeg)
+        coEvery { uploadPhoto(jpeg) } returns Result.success("https://x/nueva.jpg?v=9")
+        coEvery { updateProfile(any(), any()) } returns Result.success(Unit)
+
+        vm.onPhotoPicked("content://nueva")
+        assertEquals("content://nueva", vm.uiState.value.photoPreviewUri)
+        coVerify(exactly = 0) { uploadPhoto(any()) }
+
+        vm.save()
+
+        coVerify { uploadPhoto(jpeg) }
+        coVerify { updateProfile(any(), "https://x/nueva.jpg?v=9") }
+        assertTrue(vm.uiState.value.isSaved)
+    }
+
+    @Test
+    fun unsupportedFormatShowsErrorAndKeepsCurrentPhoto() {
+        val vm = loadedViewModel()
+        coEvery { compressPhoto(any()) } returns Result.failure(ProfileException(ProfileError.UnsupportedPhotoFormat))
+
+        vm.onPhotoPicked("content://gif")
+
+        assertEquals(ProfileError.UnsupportedPhotoFormat, vm.uiState.value.photoError)
+        assertNull(vm.uiState.value.photoPreviewUri)
+        assertEquals("https://x/foto.jpg", vm.uiState.value.photoUrl)
+    }
+
+    @Test
+    fun tooLargePhotoShowsErrorAndKeepsPreviousPick() {
+        val vm = loadedViewModel()
+        coEvery { compressPhoto("content://ok") } returns Result.success(jpeg)
+        coEvery { compressPhoto("content://enorme") } returns Result.failure(ProfileException(ProfileError.PhotoTooLarge))
+        vm.onPhotoPicked("content://ok")
+
+        vm.onPhotoPicked("content://enorme")
+
+        assertEquals(ProfileError.PhotoTooLarge, vm.uiState.value.photoError)
+        assertEquals("content://ok", vm.uiState.value.photoPreviewUri)
+    }
+
+    @Test
+    fun uploadNoConnectionKeepsEditsAndDoesNotUpdate() {
+        val vm = loadedViewModel()
+        coEvery { compressPhoto(any()) } returns Result.success(jpeg)
+        coEvery { uploadPhoto(any()) } returns Result.failure(ProfileException(ProfileError.NoConnection))
+        vm.onNicknameChange("ExplorerCali")
+        vm.onPhotoPicked("content://nueva")
+
+        vm.save()
+
+        assertEquals(ProfileError.NoConnection, vm.uiState.value.error)
+        assertEquals("ExplorerCali", vm.uiState.value.nickname)
+        assertEquals("content://nueva", vm.uiState.value.photoPreviewUri)
+        assertFalse(vm.uiState.value.isLoading)
+        assertFalse(vm.uiState.value.isSaved)
+        coVerify(exactly = 0) { updateProfile(any(), any()) }
+    }
+
+    @Test
+    fun retryAfterUpdateFailureDoesNotReuploadPhoto() {
+        val vm = loadedViewModel()
+        coEvery { compressPhoto(any()) } returns Result.success(jpeg)
+        coEvery { uploadPhoto(any()) } returns Result.success("https://x/n.jpg?v=1")
+        coEvery { updateProfile(any(), any()) } returns Result.failure(ProfileException(ProfileError.NoConnection))
+        vm.onPhotoPicked("content://nueva")
+        vm.save()
+
+        coEvery { updateProfile(any(), any()) } returns Result.success(Unit)
+        vm.save()
+
+        coVerify(exactly = 1) { uploadPhoto(any()) }
+        coVerify { updateProfile(any(), "https://x/n.jpg?v=1") }
+        assertTrue(vm.uiState.value.isSaved)
     }
 }
