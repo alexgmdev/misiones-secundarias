@@ -16,6 +16,8 @@ import com.groovycow.misionessecundarias.domain.usecase.UploadProfilePhotoUseCas
 import com.groovycow.misionessecundarias.domain.validation.DescriptionValidator
 import com.groovycow.misionessecundarias.domain.validation.NicknameValidator
 import com.groovycow.misionessecundarias.domain.validation.ProfileDraftValidator
+import com.groovycow.misionessecundarias.ui.profile.setup.InitialProfileViewModel
+import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
 /** Módulo Koin de perfiles: repositorio, compresor de fotos, validadores y casos de uso. */
@@ -36,4 +38,6 @@ val profileModule =
         factory { UploadProfilePhotoUseCase(get()) }
         factory { UpdateProfileUseCase(get(), get()) }
         factory { CompleteInitialProfileUseCase(get(), get()) }
+
+        viewModel { InitialProfileViewModel(get(), get()) }
     }

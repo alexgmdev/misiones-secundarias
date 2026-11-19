@@ -3,6 +3,7 @@ package com.groovycow.misionessecundarias.ui.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.groovycow.misionessecundarias.domain.model.SessionState
+import com.groovycow.misionessecundarias.domain.usecase.IsProfileCompleteUseCase
 import com.groovycow.misionessecundarias.domain.usecase.ObserveSessionUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,6 +21,9 @@ enum class StartDestination {
 
     /** Hay sesión: ir al menú principal. */
     MAIN_MENU,
+
+    /** Hay sesión pero el perfil está incompleto: ir a "Crea tu perfil" (HU-005). */
+    PROFILE_SETUP,
 }
 
 /**
@@ -27,8 +31,12 @@ enum class StartDestination {
  * el estado actual para impedir el acceso a pantallas protegidas cuando no hay sesión.
  *
  * @param observeSession Caso de uso que observa el estado de la sesión.
+ * @param isProfileComplete Caso de uso del gate de perfil completo (HU-005); cualquier fallo deja pasar.
  */
-class SessionViewModel(observeSession: ObserveSessionUseCase) : ViewModel() {
+class SessionViewModel(
+    observeSession: ObserveSessionUseCase,
+    private val isProfileComplete: IsProfileCompleteUseCase,
+) : ViewModel() {
     private val _startDestination = MutableStateFlow(StartDestination.LOADING)
     private val _isLoggedIn = MutableStateFlow(false)
     private val _isSessionResolved = MutableStateFlow(false)
@@ -51,7 +59,7 @@ class SessionViewModel(observeSession: ObserveSessionUseCase) : ViewModel() {
                 if (_startDestination.value == StartDestination.LOADING && state != SessionState.LOADING) {
                     _startDestination.value =
                         if (state == SessionState.AUTHENTICATED) {
-                            StartDestination.MAIN_MENU
+                            resolveAuthenticatedStart()
                         } else {
                             StartDestination.LOGIN
                         }
@@ -65,4 +73,17 @@ class SessionViewModel(observeSession: ObserveSessionUseCase) : ViewModel() {
         _isLoggedIn.value = isLoggedIn
         _isSessionResolved.value = true
     }
+
+    /**
+     * Gate de perfil tras iniciar sesión: consulta si el perfil está completo (D10).
+     *
+     * @param onResult Recibe `true` para ir al menú principal (perfil completo o fallo de la consulta, el gate falla abierto)
+     * y `false` para ir a "Crea tu perfil".
+     */
+    fun checkProfileGate(onResult: (Boolean) -> Unit) {
+        viewModelScope.launch { onResult(isProfileComplete().getOrDefault(true)) }
+    }
+
+    private suspend fun resolveAuthenticatedStart(): StartDestination =
+        if (isProfileComplete().getOrDefault(true)) StartDestination.MAIN_MENU else StartDestination.PROFILE_SETUP
 }

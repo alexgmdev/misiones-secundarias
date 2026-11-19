@@ -53,7 +53,7 @@ val authModule =
         factory { CancelRecoveryUseCase(get()) }
         factory { ChangeCurrentPasswordUseCase(get(), get()) }
 
-        viewModel { SessionViewModel(get()) }
+        viewModel { SessionViewModel(get(), get()) }
         viewModel { LoginViewModel(get()) }
         viewModel { RequestCodeViewModel(get(), get()) }
         viewModel { (email: String) -> ResetPasswordViewModel(email, get(), get(), get(), get(), get(), get()) }

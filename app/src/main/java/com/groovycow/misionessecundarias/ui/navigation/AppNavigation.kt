@@ -26,6 +26,7 @@ import com.groovycow.misionessecundarias.ui.missions.MissionDetailRoute
 import com.groovycow.misionessecundarias.ui.missions.MissionListScreen
 import com.groovycow.misionessecundarias.ui.missions.PostulantesScreen
 import com.groovycow.misionessecundarias.ui.missions.create.CreateMissionScreen
+import com.groovycow.misionessecundarias.ui.profile.setup.InitialProfileScreen
 import com.groovycow.misionessecundarias.ui.settings.ChangePasswordScreen
 import com.groovycow.misionessecundarias.ui.settings.SettingsScreen
 import org.koin.androidx.compose.koinViewModel
@@ -51,8 +52,11 @@ sealed interface AppDestination {
      */
     data class ResetPassword(val email: String) : AppDestination
 
-    /** Configuración inicial de perfil (`perfil-inicial`; placeholder hasta HU-005). */
+    /** Configuración inicial de perfil obligatoria, "Crea tu perfil" (HU-005). */
     data object InitialProfile : AppDestination
+
+    /** Transitorio tras iniciar sesión: consulta si el perfil está completo (gate, D10). */
+    data object CheckingProfile : AppDestination
 
     /** Menú principal (`menu-principal`). */
     data object MainMenu : AppDestination
@@ -126,9 +130,6 @@ fun AppNavigation() {
         return
     }
 
-    BackHandler(enabled = currentDestination == AppDestination.InitialProfile) {
-        destination = AppDestination.MainMenu
-    }
     BackHandler(enabled = currentDestination == AppDestination.Login || currentDestination == AppDestination.Register) {
         destination = AppDestination.Welcome
     }
@@ -156,7 +157,7 @@ fun AppNavigation() {
             LoginScreen(
                 onSignedIn = {
                     sessionViewModel.updateLoginState(true)
-                    destination = AppDestination.MainMenu
+                    destination = AppDestination.CheckingProfile
                 },
                 onRegister = { destination = AppDestination.Register },
                 onForgotPassword = {
@@ -196,9 +197,28 @@ fun AppNavigation() {
             )
         }
 
+        AppDestination.CheckingProfile -> {
+            LaunchedEffect(Unit) {
+                sessionViewModel.checkProfileGate { isComplete ->
+                    destination = if (isComplete) AppDestination.MainMenu else AppDestination.InitialProfile
+                }
+            }
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        }
+
         AppDestination.InitialProfile -> {
-            FeaturePlaceholderScreen(
-                title = "Configuración inicial de perfil",
+            InitialProfileScreen(
+                // Punto único de navegación tras guardar el perfil inicial.
+                // TODO(HU-013): redirigir a ProfileFlowDestination.Onboarding(fromSettings = false).
+                onProfileCompleted = { destination = AppDestination.MainMenu },
+            )
+        }
+
+        is ProfileFlowDestination -> {
+            ProfileFlowRoute(
+                destination = currentDestination,
                 onBack = { destination = AppDestination.MainMenu },
             )
         }
@@ -321,6 +341,7 @@ private fun StartDestination.toAppDestination(): AppDestination? =
         StartDestination.LOADING -> null
         StartDestination.LOGIN -> AppDestination.Welcome
         StartDestination.MAIN_MENU -> AppDestination.MainMenu
+        StartDestination.PROFILE_SETUP -> AppDestination.InitialProfile
     }
 
 /** Traduce una opción del menú principal al destino de navegación correspondiente. */

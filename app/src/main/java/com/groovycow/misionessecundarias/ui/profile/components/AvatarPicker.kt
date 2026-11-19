@@ -13,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.groovycow.misionessecundarias.domain.model.AvatarId
 import com.groovycow.misionessecundarias.ui.theme.NaturePalette
@@ -24,6 +25,8 @@ import com.groovycow.misionessecundarias.ui.theme.NaturePalette
  * @param onSelect Se invoca al tocar un avatar.
  * @param modifier Modificador del contenedor.
  * @param errorText Mensaje de error a mostrar bajo la cuadrícula, o null.
+ * @param selectedBorderColor Color del borde del avatar elegido (por defecto verde bosque).
+ * @param errorColor Color del mensaje de error (por defecto coral de alerta).
  */
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
@@ -32,6 +35,8 @@ fun AvatarPicker(
     onSelect: (AvatarId) -> Unit,
     modifier: Modifier = Modifier,
     errorText: String? = null,
+    selectedBorderColor: Color = NaturePalette.ForestGreen,
+    errorColor: Color = NaturePalette.AlertCoral,
 ) {
     Column(modifier = modifier) {
         FlowRow(
@@ -47,7 +52,7 @@ fun AvatarPicker(
                         Modifier
                             .clip(CircleShape)
                             .border(
-                                border = BorderStroke(if (isSelected) 3.dp else 0.dp, NaturePalette.ForestGreen),
+                                border = BorderStroke(if (isSelected) 3.dp else 0.dp, selectedBorderColor),
                                 shape = CircleShape,
                             )
                             .clickable { onSelect(avatar) },
@@ -57,7 +62,7 @@ fun AvatarPicker(
         if (errorText != null) {
             Text(
                 text = errorText,
-                color = NaturePalette.AlertCoral,
+                color = errorColor,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(top = 4.dp),
             )

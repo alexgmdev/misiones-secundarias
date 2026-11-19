@@ -16,7 +16,7 @@ Mismo patrón que `auth-registro-login`: capas `domain/{model,repository,validat
 | D4 | `GRANT UPDATE (nickname, gender, description, avatar_id, photo_url)` a `authenticated`; RLS "update own" existente | `GRANT UPDATE` de tabla; RPC `update_profile` | Mínimo privilegio; `full_name`/`role` siguen intocables |
 | D5 | Unicidad: índice único `lower(nickname)` + RPC `nickname_disponible(p_nickname)` que excluye `auth.uid()`; la violación `23505` se traduce a `NicknameTaken` | Solo índice; solo RPC | RPC da el error amable antes de subir la foto; el índice cierra la carrera. Excluir al propio usuario cubre "mi nickname no cuenta como en uso" (HU-008) |
 | D6 | Foto: `AndroidPhotoCompressor` (data) lee el `Uri`, acepta solo `image/jpeg`/`image/png` (`ContentResolver.getType`), decodifica con `inSampleSize`, escala ≤ 1080 px y prueba calidad 85→45 (pasos de 10) hasta ≤ 2 MB; si no baja → `PhotoTooLarge` | Subir original; validar solo tamaño | Fotos de cámara superan 2 MB; el bucket solo acepta JPEG |
-| D7 | Bucket `avatars` público, `file_size_limit = 2097152`, `allowed_mime_types = {image/jpeg}`, ruta fija `{uid}/foto.jpg` con `upsert = true`; `photo_url = publicUrl + "?v=<epochMillis>"` | Nombre de archivo único por subida | Ruta fija = sin huérfanos; el query param invalida la caché de Coil |
+| D7 | Bucket `avatars` público, `file_size_limit = 2097152`, `allowed_mime_types = {image/jpeg}`, ruta fija `{uid}/foto.jpg` con `upsert = true`; 3 políticas (select público, insert/update en carpeta propia, sin delete: la foto se sobrescribe); `photo_url = publicUrl + "?v=<epochMillis>"` | Nombre de archivo único por subida | Ruta fija = sin huérfanos; el query param invalida la caché de Coil |
 | D8 | CHECK `photo_url` debe contener `/storage/v1/object/public/avatars/<id>/` | Sin restricción | Con GRANT UPDATE cualquiera podría poner una URL arbitraria vía API |
 | D9 | Avatares: `enum class AvatarId(val key: String)` (8 entradas, colores de `NaturePalette` + ícono Material) dibujados por `ProfileAvatar` con `Canvas` al estilo `GameAvatar`; BD solo valida formato `^[a-z_]{1,30}$` | Imágenes en assets; CHECK con lista cerrada | Sin assets; agregar avatares no requiere migración |
 | D10 | Gate: `SessionViewModel` recibe `IsProfileCompleteUseCase`. Arranque en frío: con sesión resuelve `MAIN_MENU` o `PROFILE_SETUP`. Login: destino transitorio `AppDestination.CheckingProfile` (spinner) + `sessionViewModel.checkProfileGate(onResult)`. Registro: directo a `InitialProfile`. **Cualquier** fallo de la consulta deja pasar al menú | Gate en cada pantalla; bloquear sin red | Spec "Gate sin conexión"; si el SQL aún no está aplicado (columna inexistente) la app sigue usable |
@@ -135,7 +135,7 @@ alter table public.profiles add column if not exists profile_completed boolean
 create unique index if not exists profiles_nickname_lower_key on public.profiles (lower(nickname));
 grant update (nickname, gender, description, avatar_id, photo_url) on public.profiles to authenticated;
 -- nickname_disponible: security definer, search_path '', excluye auth.uid(); execute solo a authenticated
--- storage: insert into storage.buckets ... on conflict (id) do update; políticas select/insert/update/delete
+-- storage: insert into storage.buckets ... on conflict (id) do update; 3 políticas (select público, insert/update en carpeta propia; sin delete)
 --   en storage.objects con bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text
 notify pgrst, 'reload schema';
 ```
