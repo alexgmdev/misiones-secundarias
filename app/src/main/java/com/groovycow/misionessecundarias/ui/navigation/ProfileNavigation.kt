@@ -2,6 +2,7 @@ package com.groovycow.misionessecundarias.ui.navigation
 
 import androidx.compose.runtime.Composable
 import com.groovycow.misionessecundarias.ui.onboarding.OnboardingScreen
+import com.groovycow.misionessecundarias.ui.profile.me.MyProfileScreen
 
 /**
  * Destinos del flujo de perfil y configuración (D12), enrutados desde una sola rama de [AppNavigation].
@@ -32,15 +33,23 @@ sealed interface ProfileFlowDestination : AppDestination {
  * @param destination Destino del flujo de perfil a mostrar.
  * @param onBack Acción al volver desde un marcador.
  * @param onOnboardingFinished Acción al terminar u omitir el onboarding; recibe `fromSettings`.
+ * @param onEditProfile Acción del botón "Editar Perfil" de Mi perfil.
+ * @param onOpenHistory Acción del botón "Histórico de Misiones" de Mi perfil.
  */
 @Composable
 internal fun ProfileFlowRoute(
     destination: ProfileFlowDestination,
     onBack: () -> Unit,
     onOnboardingFinished: (fromSettings: Boolean) -> Unit = {},
+    onEditProfile: () -> Unit = {},
+    onOpenHistory: () -> Unit = {},
 ) {
     if (destination is ProfileFlowDestination.Onboarding) {
         OnboardingScreen(fromSettings = destination.fromSettings, onFinish = onOnboardingFinished)
+        return
+    }
+    if (destination == ProfileFlowDestination.MyProfile) {
+        MyProfileScreen(onBack = onBack, onEditProfile = onEditProfile, onOpenHistory = onOpenHistory)
         return
     }
     val title =

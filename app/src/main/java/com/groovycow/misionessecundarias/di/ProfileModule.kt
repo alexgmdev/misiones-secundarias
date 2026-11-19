@@ -16,6 +16,8 @@ import com.groovycow.misionessecundarias.domain.usecase.UploadProfilePhotoUseCas
 import com.groovycow.misionessecundarias.domain.validation.DescriptionValidator
 import com.groovycow.misionessecundarias.domain.validation.NicknameValidator
 import com.groovycow.misionessecundarias.domain.validation.ProfileDraftValidator
+import com.groovycow.misionessecundarias.ui.profile.ProfileSummaryViewModel
+import com.groovycow.misionessecundarias.ui.profile.me.MyProfileViewModel
 import com.groovycow.misionessecundarias.ui.profile.setup.InitialProfileViewModel
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
@@ -40,4 +42,6 @@ val profileModule =
         factory { CompleteInitialProfileUseCase(get(), get()) }
 
         viewModel { InitialProfileViewModel(get(), get()) }
+        viewModel { MyProfileViewModel(get()) }
+        viewModel { ProfileSummaryViewModel(get()) }
     }

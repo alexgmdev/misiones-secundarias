@@ -13,6 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.groovycow.misionessecundarias.domain.model.Mission
 import com.groovycow.misionessecundarias.ui.applications.MyApplicationsScreen
 import com.groovycow.misionessecundarias.ui.auth.SessionViewModel
@@ -26,6 +27,8 @@ import com.groovycow.misionessecundarias.ui.missions.MissionDetailRoute
 import com.groovycow.misionessecundarias.ui.missions.MissionListScreen
 import com.groovycow.misionessecundarias.ui.missions.PostulantesScreen
 import com.groovycow.misionessecundarias.ui.missions.create.CreateMissionScreen
+import com.groovycow.misionessecundarias.ui.profile.ProfileSummaryViewModel
+import com.groovycow.misionessecundarias.ui.profile.components.ProfileAvatar
 import com.groovycow.misionessecundarias.ui.profile.setup.InitialProfileScreen
 import com.groovycow.misionessecundarias.ui.settings.ChangePasswordScreen
 import com.groovycow.misionessecundarias.ui.settings.SettingsScreen
@@ -219,6 +222,8 @@ fun AppNavigation() {
             ProfileFlowRoute(
                 destination = currentDestination,
                 onBack = { destination = AppDestination.MainMenu },
+                onEditProfile = { destination = ProfileFlowDestination.EditProfile },
+                onOpenHistory = { destination = ProfileFlowDestination.MissionHistory },
                 onOnboardingFinished = { fromSettings ->
                     destination = if (fromSettings) AppDestination.Settings else AppDestination.MainMenu
                 },
@@ -226,8 +231,16 @@ fun AppNavigation() {
         }
 
         AppDestination.MainMenu -> {
+            val profileSummaryViewModel: ProfileSummaryViewModel = koinViewModel()
+            val summary by profileSummaryViewModel.uiState.collectAsState()
+            LaunchedEffect(Unit) { profileSummaryViewModel.refresh() }
             MainMenuScreen(
                 onNavigate = { menuDestination -> destination = menuDestination.toAppDestination() },
+                username = summary.nickname,
+                avatar =
+                    summary.avatarId?.let { avatarId ->
+                        { ProfileAvatar(avatar = avatarId, size = 148.dp) }
+                    },
             )
         }
 
@@ -354,6 +367,7 @@ private fun MainMenuDestination.toAppDestination(): AppDestination =
         MainMenuDestination.PUBLISH_MISSION -> AppDestination.PublishMission
         MainMenuDestination.MY_APPLICATIONS -> AppDestination.MyApplications
         MainMenuDestination.SETTINGS -> AppDestination.Settings
+        MainMenuDestination.PROFILE -> ProfileFlowDestination.MyProfile
         else -> AppDestination.Placeholder(this)
     }
 
