@@ -33,6 +33,7 @@ fun FieldError.toMessage(): String =
 fun AuthError.toMessage(): String =
     when (this) {
         AuthError.InvalidCredentials -> "Credenciales incorrectas"
+        AuthError.IncorrectCurrentPassword -> "La contraseña actual es incorrecta"
         AuthError.EmailInUse -> "El correo ya está en uso"
         AuthError.PhoneInUse -> "El celular ya está en uso"
         AuthError.WeakPassword -> "La contraseña es demasiado débil"

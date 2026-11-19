@@ -26,6 +26,7 @@ import com.groovycow.misionessecundarias.ui.missions.MissionDetailRoute
 import com.groovycow.misionessecundarias.ui.missions.MissionListScreen
 import com.groovycow.misionessecundarias.ui.missions.PostulantesScreen
 import com.groovycow.misionessecundarias.ui.missions.create.CreateMissionScreen
+import com.groovycow.misionessecundarias.ui.settings.ChangePasswordScreen
 import com.groovycow.misionessecundarias.ui.settings.SettingsScreen
 import org.koin.androidx.compose.koinViewModel
 
@@ -73,6 +74,9 @@ sealed interface AppDestination {
 
     /** Ajustes de la aplicación y cierre de sesión. */
     data object Settings : AppDestination
+
+    /** Cambio de contraseña con la sesión activa, abierto desde Ajustes → Seguridad (HU-010). */
+    data object ChangePassword : AppDestination
 
     /**
      * Pantalla de funcionalidad aún no implementada.
@@ -127,6 +131,9 @@ fun AppNavigation() {
     }
     BackHandler(enabled = currentDestination == AppDestination.Login || currentDestination == AppDestination.Register) {
         destination = AppDestination.Welcome
+    }
+    BackHandler(enabled = currentDestination == AppDestination.ChangePassword) {
+        destination = AppDestination.Settings
     }
     BackHandler(enabled = currentDestination == AppDestination.RequestCode) {
         destination = AppDestination.Login
@@ -257,12 +264,17 @@ fun AppNavigation() {
         AppDestination.Settings -> {
             SettingsScreen(
                 onBack = { destination = AppDestination.MainMenu },
+                onChangePassword = { destination = AppDestination.ChangePassword },
                 onSignedOut = {
                     sessionViewModel.updateLoginState(false)
                     loginNotice = SIGNED_OUT_NOTICE
                     destination = AppDestination.Welcome
                 },
             )
+        }
+
+        AppDestination.ChangePassword -> {
+            ChangePasswordScreen(onBack = { destination = AppDestination.Settings })
         }
 
         is AppDestination.Placeholder -> {
