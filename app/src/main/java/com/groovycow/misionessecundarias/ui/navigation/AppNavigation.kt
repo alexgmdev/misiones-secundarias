@@ -27,11 +27,11 @@ import com.groovycow.misionessecundarias.ui.missions.MissionDetailRoute
 import com.groovycow.misionessecundarias.ui.missions.MissionListScreen
 import com.groovycow.misionessecundarias.ui.missions.PostulantesScreen
 import com.groovycow.misionessecundarias.ui.missions.create.CreateMissionScreen
+import com.groovycow.misionessecundarias.ui.missions.live.LiveMissionPanelScreen
 import com.groovycow.misionessecundarias.ui.profile.ProfileSummaryViewModel
 import com.groovycow.misionessecundarias.ui.profile.components.ProfileAvatar
 import com.groovycow.misionessecundarias.ui.profile.setup.InitialProfileScreen
 import com.groovycow.misionessecundarias.ui.settings.ChangePasswordScreen
-import com.groovycow.misionessecundarias.ui.missions.live.LiveMissionPanelScreen
 import com.groovycow.misionessecundarias.ui.settings.SettingsScreen
 import org.koin.androidx.compose.koinViewModel
 
