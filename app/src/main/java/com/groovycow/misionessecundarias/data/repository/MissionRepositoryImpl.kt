@@ -139,6 +139,24 @@ class MissionRepositoryImpl(private val supabase: SupabaseClient) : MissionRepos
                 }.decodeSingleOrNull<Mission>()
         }
 
+    override suspend fun generateVerificationCode(id: String): String =
+        withContext(Dispatchers.IO) {
+            val publisherId = authenticatedUserId("generar el código de verificación")
+            val mission =
+                findOwnMission(id, publisherId)
+                    ?: error("La misión no existe o no te pertenece.")
+
+            check(
+                mission.status == "En progreso" ||
+                    mission.status == "Completada" ||
+                    mission.status == "Rendida aprobada",
+            ) {
+                "La misión debe estar en progreso, completada o rendida aprobada para generar el código."
+            }
+
+            generateRandomVerificationCode()
+        }
+
     override suspend fun publishMission(id: String): Mission =
         withContext(Dispatchers.IO) {
             val publisherId = authenticatedUserId("publicar una misión")
@@ -203,7 +221,17 @@ class MissionRepositoryImpl(private val supabase: SupabaseClient) : MissionRepos
         return recoveredUser?.id ?: throw MissionSessionRequiredException()
     }
 
+    private fun generateRandomVerificationCode(): String {
+        val allowedChars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+        val randomPart =
+            (1..CODE_RANDOM_LENGTH)
+                .map { allowedChars.random() }
+                .joinToString("")
+        return "CALI-$randomPart"
+    }
+
     private companion object {
+        private const val CODE_RANDOM_LENGTH = 4
         val LOGGER: Logger = Logger.getLogger(MissionRepositoryImpl::class.java.name)
     }
 }

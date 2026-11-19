@@ -22,4 +22,7 @@ interface MissionRepository {
     suspend fun getPublishedMissions(): List<Mission>
 
     suspend fun getMissionById(id: String): Mission?
+
+    /** Genera el código único de verificación de cierre para una misión completada o rendida aprobada. */
+    suspend fun generateVerificationCode(id: String): String
 }
