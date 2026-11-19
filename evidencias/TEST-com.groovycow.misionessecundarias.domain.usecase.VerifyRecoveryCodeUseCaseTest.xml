@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.groovycow.misionessecundarias.domain.usecase.VerifyRecoveryCodeUseCaseTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-11-18T23:37:04.015Z" hostname="SC306E05" time="0.089">
+  <properties/>
+  <testcase name="rejectedCodeIsInvalidOrExpired" classname="com.groovycow.misionessecundarias.domain.usecase.VerifyRecoveryCodeUseCaseTest" time="0.025"/>
+  <testcase name="validCodeIsVerifiedWithTrimmedValues" classname="com.groovycow.misionessecundarias.domain.usecase.VerifyRecoveryCodeUseCaseTest" time="0.018"/>
+  <testcase name="errorsAreReducedToInvalidCodeNoConnectionOrServerError" classname="com.groovycow.misionessecundarias.domain.usecase.VerifyRecoveryCodeUseCaseTest" time="0.03"/>
+  <testcase name="nonNumericCodeFailsWithoutCallingTheBackend" classname="com.groovycow.misionessecundarias.domain.usecase.VerifyRecoveryCodeUseCaseTest" time="0.015"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

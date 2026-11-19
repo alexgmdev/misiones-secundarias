@@ -1,0 +1,25 @@
+complexity:
+  LongMethod:
+    active: true
+    allowedLines: 250
+  LongParameterList:
+    active: false
+  TooManyFunctions:
+    active: false
+
+style:
+  MagicNumber:
+    active: false
+  MaxLineLength:
+    active: true
+    maxLineLength: 150
+
+naming:
+  FunctionNaming:
+    active: false
+  MatchingDeclarationName:
+    active: false
+
+exceptions:
+  TooGenericExceptionCaught:
+    active: false

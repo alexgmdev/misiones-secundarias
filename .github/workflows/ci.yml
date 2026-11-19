@@ -1,0 +1,64 @@
+name: CI - Build, Test & Lint
+
+on:
+  push:
+    branches: [ "develop", "dev/*" ]
+  pull_request:
+    branches: [ "develop", "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Configurar JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Crear local.properties con credenciales
+        run: |
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" > local.properties
+          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> local.properties
+
+      - name: Dar permisos de ejecución a Gradle
+        run: chmod +x gradlew
+
+      - name: Ejecutar Linter (Ktlint)
+        run: ./gradlew ktlintCheck
+
+      - name: Ejecutar Análisis Estático (Detekt)
+        run: ./gradlew detekt
+
+      - name: Ejecutar Pruebas Unitarias
+        run: ./gradlew testDebugUnitTest
+
+      - name: Generar Reporte de Cobertura (Jacoco)
+        run: ./gradlew jacocoTestReport
+
+      - name: Compilar APK de Debug
+        run: ./gradlew assembleDebug
+
+      # ==========================================
+      # ARTIFACTS (ENTREGABLES DEL PIPELINE)
+      # ==========================================
+
+      - name: Subir reporte de cobertura (Jacoco)
+        if: always() # Se sube incluso si los tests fallan, para poder auditar
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: app/build/reports/jacoco/jacocoTestReport/
+
+      - name: Subir APK de Debug
+        # Solo se sube si el build fue exitoso (si falla, no hay APK que subir)
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk

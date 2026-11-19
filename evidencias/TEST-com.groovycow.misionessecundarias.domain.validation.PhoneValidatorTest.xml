@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.groovycow.misionessecundarias.domain.validation.PhoneValidatorTest" tests="10" skipped="0" failures="0" errors="0" timestamp="2026-11-18T23:37:04.226Z" hostname="SC306E05" time="0.004">
+  <properties/>
+  <testcase name="nullInputIsRejected" classname="com.groovycow.misionessecundarias.domain.validation.PhoneValidatorTest" time="0.0"/>
+  <testcase name="phoneNotStartingWithThreeIsRejected" classname="com.groovycow.misionessecundarias.domain.validation.PhoneValidatorTest" time="0.001"/>
+  <testcase name="invalidPhoneReportsInvalidPhone" classname="com.groovycow.misionessecundarias.domain.validation.PhoneValidatorTest" time="0.0"/>
+  <testcase name="prefixWithoutPlusIsRemoved" classname="com.groovycow.misionessecundarias.domain.validation.PhoneValidatorTest" time="0.0"/>
+  <testcase name="freeFormatWithPrefixSpacesAndDashesIsNormalized" classname="com.groovycow.misionessecundarias.domain.validation.PhoneValidatorTest" time="0.0"/>
+  <testcase name="validPhoneIsUnchanged" classname="com.groovycow.misionessecundarias.domain.validation.PhoneValidatorTest" time="0.0"/>
+  <testcase name="freeFormatPhoneIsValid" classname="com.groovycow.misionessecundarias.domain.validation.PhoneValidatorTest" time="0.0"/>
+  <testcase name="blankPhoneIsRequired" classname="com.groovycow.misionessecundarias.domain.validation.PhoneValidatorTest" time="0.001"/>
+  <testcase name="nonDigitCharactersAreRejected" classname="com.groovycow.misionessecundarias.domain.validation.PhoneValidatorTest" time="0.0"/>
+  <testcase name="shortPhoneIsRejected" classname="com.groovycow.misionessecundarias.domain.validation.PhoneValidatorTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

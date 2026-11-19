@@ -1,0 +1,49 @@
+schema: spec-driven
+
+context: |
+  Stack: Android, Kotlin 2.1.10, AGP 8.5.0, JDK 17, modulo unico :app (com.groovycow.misionessecundarias), minSdk 29.
+  UI: Jetpack Compose + Material 3. DI: Koin 3.5.6. Backend: supabase-kt 2.6.0 (gotrue-kt, postgrest-kt). Room 2.6.1 (KSP). MapLibre.
+  Arquitectura: por feature con data/domain/ui, ViewModel + StateFlow, repositorios como interfaz (testeable con MockK).
+  Versiones en gradle/libs.versions.toml. Estilo: kotlin.code.style=official (sin ktlint/detekt).
+  Idioma: docs, comentarios, KDoc y strings de UI en espanol. Toda clase/funcion publica lleva KDoc.
+  Git: PR a develop; ramas hu/HU-XXX o dev/<nombre>. Requisitos en el TSV del backlog (HU-XXX con Gherkin).
+
+strict_tdd: true
+
+testing:
+  runner: "./gradlew :app:testDebugUnitTest"
+  single: "./gradlew :app:testDebugUnitTest --tests \"<FQCN>[.method]\""
+  frameworks: "JUnit 4.13.2, MockK 1.13.12, kotlinx-coroutines-test 1.8.1"
+  layers:
+    unit: true
+    integration: "device only (connectedAndroidTest, AndroidX Test + Espresso)"
+    e2e: false
+  coverage: false
+  quality:
+    linter: "./gradlew lint"
+    type_checker: "./gradlew :app:compileDebugKotlin"
+    formatter: false
+  caveat: "Sin Android SDK en la maquina de desarrollo (no ANDROID_HOME / local.properties): los tests Gradle fallan hasta configurar sdk.dir."
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+    - Identify affected modules/packages
+  specs:
+    - Use Given/When/Then format for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+  design:
+    - Include sequence diagrams for complex flows
+    - Document architecture decisions with rationale
+  tasks:
+    - Group tasks by phase (infrastructure, implementation, testing)
+    - Use hierarchical numbering (1.1, 1.2, etc.)
+    - Keep tasks small enough to complete in one session
+  apply:
+    - Follow existing code patterns and conventions
+    - Strict TDD: test first, KDoc en espanol en API publica
+  verify:
+    - Run tests if test infrastructure exists
+    - Compare implementation against every spec scenario
+  archive:
+    - Warn before merging destructive deltas (large removals)
