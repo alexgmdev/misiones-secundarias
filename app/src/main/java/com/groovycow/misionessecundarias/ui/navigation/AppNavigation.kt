@@ -27,11 +27,13 @@ import com.groovycow.misionessecundarias.ui.missions.MissionDetailRoute
 import com.groovycow.misionessecundarias.ui.missions.MissionListScreen
 import com.groovycow.misionessecundarias.ui.missions.PostulantesScreen
 import com.groovycow.misionessecundarias.ui.missions.create.CreateMissionScreen
+import com.groovycow.misionessecundarias.ui.missions.edit.EditMissionScreen
 import com.groovycow.misionessecundarias.ui.missions.live.LiveMissionPanelScreen
 import com.groovycow.misionessecundarias.ui.profile.ProfileSummaryViewModel
 import com.groovycow.misionessecundarias.ui.profile.components.ProfileAvatar
 import com.groovycow.misionessecundarias.ui.profile.setup.InitialProfileScreen
 import com.groovycow.misionessecundarias.ui.settings.ChangePasswordScreen
+import com.groovycow.misionessecundarias.ui.settings.PrivacyPolicyScreen
 import com.groovycow.misionessecundarias.ui.settings.SettingsScreen
 import org.koin.androidx.compose.koinViewModel
 
@@ -92,6 +94,12 @@ sealed interface AppDestination {
     /** Cambio de contraseña con la sesión activa, abierto desde Ajustes → Seguridad (HU-010). */
     data object ChangePassword : AppDestination
 
+    /** Políticas de privacidad y uso de datos, abiertas desde Ajustes (HU-122). */
+    data object PrivacyPolicy : AppDestination
+
+    /** Edición de los datos descriptivos de una misión publicada propia (HU-032). */
+    data object EditMission : AppDestination
+
     /**
      * Pantalla de funcionalidad aún no implementada.
      *
@@ -105,7 +113,7 @@ sealed interface AppDestination {
  * (Welcome sin sesión, MainMenu con sesión) y luego enruta entre destinos.
  */
 @Composable
-@Suppress("CyclomaticComplexMethod")
+@Suppress("CyclomaticComplexMethod", "LongMethod") // Enrutador central: una rama por destino.
 fun AppNavigation() {
     val sessionViewModel: SessionViewModel = koinViewModel()
     val startDestination by sessionViewModel.startDestination.collectAsState()
@@ -146,6 +154,12 @@ fun AppNavigation() {
     }
     BackHandler(enabled = currentDestination == AppDestination.ChangePassword) {
         destination = AppDestination.Settings
+    }
+    BackHandler(enabled = currentDestination == AppDestination.PrivacyPolicy) {
+        destination = AppDestination.Settings
+    }
+    BackHandler(enabled = currentDestination == AppDestination.EditMission) {
+        destination = AppDestination.MissionDetail
     }
     BackHandler(enabled = currentDestination == AppDestination.RequestCode) {
         destination = AppDestination.Login
@@ -298,6 +312,19 @@ fun AppNavigation() {
                     destination = detailOrigin
                 },
                 onManageApplicants = { destination = AppDestination.MissionApplicants },
+                onEditMission = { destination = AppDestination.EditMission },
+            )
+        }
+
+        AppDestination.EditMission -> {
+            EditMissionDestination(
+                mission = selectedMission,
+                onMissing = { destination = AppDestination.MissionDetail },
+                onBack = { destination = AppDestination.MissionDetail },
+                onSaved = { updated ->
+                    selectedMission = updated
+                    destination = AppDestination.MissionDetail
+                },
             )
         }
 
@@ -351,6 +378,7 @@ fun AppNavigation() {
                 onBack = { destination = AppDestination.MainMenu },
                 onChangePassword = { destination = AppDestination.ChangePassword },
                 onOpenGuide = { destination = ProfileFlowDestination.Onboarding(fromSettings = true) },
+                onOpenPrivacyPolicy = { destination = AppDestination.PrivacyPolicy },
                 onSignedOut = {
                     sessionViewModel.updateLoginState(false)
                     loginNotice = SIGNED_OUT_NOTICE
@@ -361,6 +389,10 @@ fun AppNavigation() {
 
         AppDestination.ChangePassword -> {
             ChangePasswordScreen(onBack = { destination = AppDestination.Settings })
+        }
+
+        AppDestination.PrivacyPolicy -> {
+            PrivacyPolicyScreen(onBack = { destination = AppDestination.Settings })
         }
 
         is AppDestination.Placeholder -> {
@@ -423,6 +455,28 @@ private fun MainMenuDestination.toAppDestination(): AppDestination =
     }
 
 /**
+ * Edición de una misión propia; si no hay misión seleccionada vuelve al detalle.
+ *
+ * @param mission Misión seleccionada, o `null` si no hay ninguna.
+ * @param onMissing Acción cuando no hay misión seleccionada.
+ * @param onBack Acción al volver sin guardar.
+ * @param onSaved Acción al guardar la misión actualizada.
+ */
+@Composable
+private fun EditMissionDestination(
+    mission: Mission?,
+    onMissing: () -> Unit,
+    onBack: () -> Unit,
+    onSaved: (Mission) -> Unit,
+) {
+    if (mission == null) {
+        onMissing()
+        return
+    }
+    EditMissionScreen(mission = mission, onBack = onBack, onSaved = onSaved)
+}
+
+/**
  * Detalle de misión; si no hay misión seleccionada invoca [onMissingMission] para volver a la lista.
  *
  * @param mission Misión seleccionada, o `null` si no hay ninguna.
@@ -435,6 +489,7 @@ private fun MissionDetailDestination(
     onMissingMission: () -> Unit,
     onBack: () -> Unit,
     onManageApplicants: () -> Unit,
+    onEditMission: () -> Unit,
 ) {
     if (mission == null) {
         onMissingMission()
@@ -451,9 +506,12 @@ private fun MissionDetailDestination(
         modality = mission.modality,
         category = mission.category,
         requirements = mission.requirements,
+        missionReward = mission.reward,
+        missionStatus = mission.status,
         publisherName = mission.publisherProfile?.fullName ?: "Usuario Desconocido",
         approximateZone = "Barrio San Fernando, Cali",
         onBack = onBack,
         onManageApplicants = onManageApplicants,
+        onEditMission = onEditMission,
     )
 }

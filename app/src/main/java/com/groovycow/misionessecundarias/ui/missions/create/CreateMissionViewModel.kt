@@ -30,6 +30,8 @@ data class CreateMissionUiState(
     val requirements: String = "",
     /** Categoría opcional ingresada. */
     val category: String = "",
+    /** Recompensa informativa opcional (HU-024). */
+    val reward: String = "",
     /** Punto de encuentro textual. */
     val meetingPoint: String = "",
     /** Latitud ingresada como texto para permitir edición gradual. */
@@ -48,6 +50,8 @@ data class CreateMissionUiState(
     val isSaving: Boolean = false,
     /** Misión creada exitosamente como borrador. */
     val savedMission: Mission? = null,
+    /** Borrador validado que se muestra en la previsualización (HU-023). */
+    val previewDraft: CreateMissionDraft? = null,
     /** Error no asociado a un campo ocurrido al guardar. */
     val submissionError: MissionError? = null,
 )
@@ -84,6 +88,9 @@ class CreateMissionViewModel(
     /** Actualiza la categoría opcional. */
     fun onCategoryChange(value: String) = updateField(null) { copy(category = value) }
 
+    /** Actualiza la recompensa informativa opcional (HU-024). */
+    fun onRewardChange(value: String) = updateField(null) { copy(reward = value) }
+
     /** Actualiza el punto de encuentro. */
     fun onMeetingPointChange(value: String) = updateField(MissionField.MEETING_POINT) { copy(meetingPoint = value) }
 
@@ -105,6 +112,34 @@ class CreateMissionViewModel(
     /** Restablece el formulario para un nuevo borrador. */
     fun reset() {
         _uiState.value = CreateMissionUiState()
+    }
+
+    /** Valida y muestra la previsualización sin persistir el borrador (HU-023). */
+    @Suppress("ReturnCount")
+    fun onPreview() {
+        val currentState = _uiState.value
+        if (currentState.isSaving || currentState.savedMission != null) return
+        val modality = currentState.modality ?: return
+        val draft = currentState.toDraft(modality)
+        val validation = validator.validate(draft)
+
+        if (!validation.isValid) {
+            _uiState.value =
+                currentState.copy(fieldErrors = validation.fieldErrors, submissionError = null)
+            return
+        }
+
+        _uiState.value =
+            currentState.copy(
+                previewDraft = draft,
+                fieldErrors = emptyMap(),
+                submissionError = null,
+            )
+    }
+
+    /** Vuelve del modo previsualización al formulario editable. */
+    fun onBackToEdit() {
+        _uiState.value = _uiState.value.copy(previewDraft = null)
     }
 
     /** Valida y guarda el borrador; ignora llamadas repetidas mientras guarda. */
@@ -141,7 +176,8 @@ class CreateMissionViewModel(
         val current = _uiState.value
         if (current.isSaving || current.savedMission != null) return
         val errors = field?.let { current.fieldErrors - it } ?: current.fieldErrors
-        _uiState.value = current.transform().copy(fieldErrors = errors, submissionError = null)
+        _uiState.value =
+            current.transform().copy(fieldErrors = errors, submissionError = null, previewDraft = null)
     }
 
     private fun CreateMissionUiState.toDraft(modality: MissionModality): CreateMissionDraft =
@@ -150,6 +186,7 @@ class CreateMissionViewModel(
             description = description,
             requirements = requirements,
             category = category,
+            reward = reward,
             modality = modality,
             date = date,
             time = time,
