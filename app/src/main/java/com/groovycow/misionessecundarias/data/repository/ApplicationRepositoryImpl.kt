@@ -283,6 +283,57 @@ class ApplicationRepositoryImpl(
         }.getOrElse {
             first == second
         }
+
+    override suspend fun markOnWay(missionId: String): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                val solverId = authenticatedUserId("actualizar estado")
+                supabase.from("applications").update({
+                    set("is_on_way", true)
+                }) {
+                    filter {
+                        eq("mission_id", missionId)
+                        eq("solver_id", solverId)
+                        eq("status", "Aceptado")
+                    }
+                }
+                Unit
+            }
+        }
+
+    override suspend fun markArrived(
+        missionId: String,
+        latitude: Double?,
+        longitude: Double?,
+    ): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                val solverId = authenticatedUserId("actualizar estado")
+                // Si en el futuro quieres guardar la lat/lon exacta, deberías agregar esas columnas a la tabla applications
+                supabase.from("applications").update({
+                    set("arrived_at", OffsetDateTime.now().toString())
+                }) {
+                    filter {
+                        eq("mission_id", missionId)
+                        eq("solver_id", solverId)
+                        eq("status", "Aceptado")
+                    }
+                }
+                Unit
+            }
+        }
+
+    override suspend fun getMyApplicationStatus(missionId: String): ApplicationStatusDto? =
+        withContext(Dispatchers.IO) {
+            val solverId = authenticatedUserId("consultar estado")
+            supabase.from("applications")
+                .select(columns = Columns.raw("id,status,is_on_way,arrived_at")) {
+                    filter {
+                        eq("mission_id", missionId)
+                        eq("solver_id", solverId)
+                    }
+                }.decodeSingleOrNull<ApplicationStatusDto>()
+        }
 }
 
 @Serializable
@@ -337,4 +388,12 @@ private data class ApplicationDecisionMission(
     @SerialName("publisher_id") val publisherId: String,
     @SerialName("max_participants") val maxParticipants: Int,
     val status: String,
+)
+
+@Serializable
+data class ApplicationStatusDto(
+    val id: String,
+    val status: String,
+    @SerialName("is_on_way") val isOnWay: Boolean = false,
+    @SerialName("arrived_at") val arrivedAt: String? = null,
 )

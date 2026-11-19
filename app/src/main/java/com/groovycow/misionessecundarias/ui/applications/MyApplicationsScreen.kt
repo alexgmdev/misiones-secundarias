@@ -51,16 +51,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.groovycow.misionessecundarias.domain.model.MyApplication
+import com.groovycow.misionessecundarias.domain.model.pauseNotice
+import kotlinx.coroutines.delay
 import org.koin.androidx.compose.koinViewModel
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+
+/** Cada cuánto el postulante consulta si el publicador puso la misión en pausa. */
+private const val PAUSE_REFRESH_MILLIS = 10_000L
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyApplicationsScreen(
     onBack: () -> Unit,
     onExploreMissions: () -> Unit = {},
+    onMyMissions: () -> Unit = {},
     viewModel: MyApplicationsViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -68,6 +74,10 @@ fun MyApplicationsScreen(
 
     LaunchedEffect(Unit) {
         viewModel.loadApplications()
+        while (true) {
+            delay(PAUSE_REFRESH_MILLIS)
+            viewModel.refreshPauses()
+        }
     }
 
     Scaffold(
@@ -80,6 +90,11 @@ fun MyApplicationsScreen(
                         color = ForestGreen,
                         fontWeight = FontWeight.ExtraBold,
                     )
+                },
+                actions = {
+                    TextButton(onClick = onMyMissions) {
+                        Text("Mis misiones", color = RiverTeal, fontWeight = FontWeight.Bold)
+                    }
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -135,6 +150,7 @@ fun MyApplicationsScreen(
                                 application = application,
                                 isCancelling = uiState.cancellingApplicationId == application.id,
                                 onCancel = { applicationToCancel = application },
+                                pauseNotice = pauseNotice(uiState.activePauses[application.missionId].orEmpty()),
                             )
                         }
                         item { Spacer(modifier = Modifier.height(12.dp)) }
@@ -317,6 +333,7 @@ private fun ApplicationStatusCard(
     application: MyApplication,
     isCancelling: Boolean,
     onCancel: () -> Unit,
+    pauseNotice: String? = null,
 ) {
     val statusStyle =
         when (application.status) {
@@ -380,6 +397,20 @@ private fun ApplicationStatusCard(
                 color = BarkBrown,
                 style = MaterialTheme.typography.bodyMedium,
             )
+
+            pauseNotice?.let { notice ->
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = notice,
+                    color = ForestGreen,
+                    fontWeight = FontWeight.ExtraBold,
+                    style = MaterialTheme.typography.labelLarge,
+                    modifier =
+                        Modifier
+                            .background(CreamSurface, RoundedCornerShape(10.dp))
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                )
+            }
 
             if (canCancel) {
                 Spacer(modifier = Modifier.height(12.dp))

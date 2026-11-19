@@ -84,12 +84,32 @@ CREATE TABLE applications (
     CONSTRAINT unique_application UNIQUE (mission_id, solver_id)
 );
 
+-- Checklist de ejecución de la misión (HU-053): tareas creadas y marcadas por el publicador
+CREATE TABLE mission_checklist_items (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    mission_id UUID REFERENCES missions(id) ON DELETE CASCADE NOT NULL,
+    title TEXT NOT NULL CONSTRAINT checklist_title_length CHECK (char_length(btrim(title)) BETWEEN 1 AND 80),
+    is_done BOOLEAN DEFAULT false NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+CREATE INDEX mission_checklist_items_mission_idx ON mission_checklist_items (mission_id, created_at);
+
+-- Pausas de la misión en ejecución (HU-054/055): las activa el publicador y las ven los aceptados
+CREATE TABLE mission_pauses (
+    mission_id UUID REFERENCES missions(id) ON DELETE CASCADE NOT NULL,
+    kind TEXT NOT NULL CHECK (kind IN ('socializacion', 'hidratacion', 'pausa_breve')),
+    is_active BOOLEAN DEFAULT false NOT NULL,
+    PRIMARY KEY (mission_id, kind)
+);
+
 -- ==========================================
 -- 3. SEGURIDAD (RLS Y POLÍTICAS)
 -- ==========================================
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE missions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE applications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE mission_checklist_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE mission_pauses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE profile_private ENABLE ROW LEVEL SECURITY;
 ALTER TABLE login_attempts ENABLE ROW LEVEL SECURITY; -- sin políticas: solo service role
 
@@ -113,6 +133,18 @@ CREATE POLICY "Solvers can apply" ON applications FOR INSERT WITH CHECK (auth.ui
 CREATE POLICY "Solvers can delete own applications" ON applications FOR DELETE USING (auth.uid() = solver_id);
 CREATE POLICY "Publishers can update application status" ON applications FOR UPDATE USING (auth.uid() IN (SELECT publisher_id FROM missions WHERE id = mission_id));
 
+-- Checklist: solo el publicador de la misión lee y gestiona sus tareas
+CREATE POLICY "Publishers manage own checklist" ON mission_checklist_items FOR ALL TO authenticated
+    USING (auth.uid() IN (SELECT publisher_id FROM missions WHERE id = mission_id))
+    WITH CHECK (auth.uid() IN (SELECT publisher_id FROM missions WHERE id = mission_id));
+
+-- Pausas: el publicador las gestiona y los solucionadores aceptados las leen
+CREATE POLICY "Publishers manage own pauses" ON mission_pauses FOR ALL TO authenticated
+    USING (auth.uid() IN (SELECT publisher_id FROM missions WHERE id = mission_id))
+    WITH CHECK (auth.uid() IN (SELECT publisher_id FROM missions WHERE id = mission_id));
+CREATE POLICY "Accepted solvers read pauses" ON mission_pauses FOR SELECT TO authenticated
+    USING (EXISTS (SELECT 1 FROM applications a WHERE a.mission_id = mission_pauses.mission_id AND a.solver_id = auth.uid() AND a.status = 'Aceptado'));
+
 
 -- configuración para evitar problemas de permisos
 -- Permisos explícitos para la Data API (necesario desde Nov 2026)
@@ -122,6 +154,10 @@ GRANT SELECT ON public.applications TO anon, authenticated;
 GRANT INSERT ON public.applications TO authenticated;
 GRANT DELETE ON public.applications TO authenticated;
 GRANT UPDATE (status) ON public.applications TO authenticated;
+GRANT SELECT, INSERT, DELETE ON public.mission_checklist_items TO authenticated;
+GRANT UPDATE (is_done) ON public.mission_checklist_items TO authenticated;
+GRANT SELECT, INSERT ON public.mission_pauses TO authenticated;
+GRANT UPDATE (is_active) ON public.mission_pauses TO authenticated;
 
 -- Datos privados y intentos de login
 REVOKE ALL ON public.profile_private FROM anon, authenticated;

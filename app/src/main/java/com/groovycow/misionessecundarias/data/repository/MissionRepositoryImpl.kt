@@ -10,6 +10,7 @@ import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
+import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
@@ -91,7 +92,7 @@ class MissionRepositoryImpl(private val supabase: SupabaseClient) : MissionRepos
 
     override suspend fun getPublishedMissions(): List<Mission> =
         withContext(Dispatchers.IO) {
-            supabase.from("missions")
+            supabase.from("public_missions")
                 .select(columns = Columns.raw("*, profiles(full_name)")) { // <-- JOIN con profiles
                     filter {
                         neq("status", "Borrador")
@@ -99,9 +100,38 @@ class MissionRepositoryImpl(private val supabase: SupabaseClient) : MissionRepos
                 }.decodeList<Mission>()
         }
 
+    override suspend fun completeMission(id: String): Mission =
+        withContext(Dispatchers.IO) {
+            val publisherId = authenticatedUserId("completar una misión")
+            val updatedMission =
+                supabase.from("missions")
+                    .update({ set("status", "Completada") }) {
+                        filter {
+                            eq("id", id)
+                            eq("publisher_id", publisherId)
+                            eq("status", "En progreso")
+                        }
+                        select()
+                    }
+                    .decodeSingleOrNull<Mission>()
+
+            updatedMission ?: findOwnMission(id, publisherId)?.takeIf { it.status == "Completada" }
+                ?: error("La misión no existe, no te pertenece o no está en progreso.")
+        }
+
+    override suspend fun getMyMissions(): List<Mission> =
+        withContext(Dispatchers.IO) {
+            val publisherId = authenticatedUserId("consultar mis misiones")
+            supabase.from("missions")
+                .select(columns = Columns.raw("*, profiles(full_name)")) {
+                    filter { eq("publisher_id", publisherId) }
+                    order("date_time", Order.DESCENDING)
+                }.decodeList<Mission>()
+        }
+
     override suspend fun getMissionById(id: String): Mission? =
         withContext(Dispatchers.IO) {
-            supabase.from("missions")
+            supabase.from("public_missions")
                 .select(columns = Columns.raw("*, profiles(full_name)")) { // <-- JOIN con profiles
                     filter {
                         eq("id", id)
@@ -126,6 +156,25 @@ class MissionRepositoryImpl(private val supabase: SupabaseClient) : MissionRepos
 
             updatedMission ?: findOwnMission(id, publisherId)?.takeIf { it.status == "Publicada" }
                 ?: error("La misión no existe, no te pertenece o no está en borrador.")
+        }
+
+    override suspend fun startMission(id: String): Mission =
+        withContext(Dispatchers.IO) {
+            val publisherId = authenticatedUserId("iniciar una misión")
+            val updatedMission =
+                supabase.from("missions")
+                    .update({ set("status", "En progreso") }) {
+                        filter {
+                            eq("id", id)
+                            eq("publisher_id", publisherId)
+                            isIn("status", listOf("Publicada", "Asignada"))
+                        }
+                        select()
+                    }
+                    .decodeSingleOrNull<Mission>()
+
+            updatedMission ?: findOwnMission(id, publisherId)?.takeIf { it.status == "En progreso" }
+                ?: error("La misión no existe, no te pertenece o no se puede iniciar en su estado actual.")
         }
 
     private suspend fun findOwnMission(

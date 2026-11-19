@@ -99,7 +99,7 @@ dependencies {
 
     // MapLibre
     implementation(libs.maplibre)
-
+    implementation(libs.maplibre.annotations)
     // Testing
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
@@ -111,6 +111,10 @@ dependencies {
 
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+    //servicios de google para la ubicacion
+    implementation(libs.play.services.location)
+
 }
 
 detekt {
