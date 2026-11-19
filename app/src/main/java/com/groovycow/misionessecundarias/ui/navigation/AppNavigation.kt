@@ -211,8 +211,7 @@ fun AppNavigation() {
         AppDestination.InitialProfile -> {
             InitialProfileScreen(
                 // Punto único de navegación tras guardar el perfil inicial.
-                // TODO(HU-013): redirigir a ProfileFlowDestination.Onboarding(fromSettings = false).
-                onProfileCompleted = { destination = AppDestination.MainMenu },
+                onProfileCompleted = { destination = ProfileFlowDestination.Onboarding(fromSettings = false) },
             )
         }
 
@@ -220,6 +219,9 @@ fun AppNavigation() {
             ProfileFlowRoute(
                 destination = currentDestination,
                 onBack = { destination = AppDestination.MainMenu },
+                onOnboardingFinished = { fromSettings ->
+                    destination = if (fromSettings) AppDestination.Settings else AppDestination.MainMenu
+                },
             )
         }
 
@@ -285,6 +287,7 @@ fun AppNavigation() {
             SettingsScreen(
                 onBack = { destination = AppDestination.MainMenu },
                 onChangePassword = { destination = AppDestination.ChangePassword },
+                onOpenGuide = { destination = ProfileFlowDestination.Onboarding(fromSettings = true) },
                 onSignedOut = {
                     sessionViewModel.updateLoginState(false)
                     loginNotice = SIGNED_OUT_NOTICE

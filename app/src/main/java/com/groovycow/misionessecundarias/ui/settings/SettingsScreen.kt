@@ -46,6 +46,7 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onSignedOut: () -> Unit,
     onChangePassword: () -> Unit = {},
+    onOpenGuide: () -> Unit = {},
     viewModel: SettingsViewModel = koinViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -120,6 +121,45 @@ fun SettingsScreen(
                             ),
                     ) {
                         Text("Cambiar contraseña", fontWeight = FontWeight.ExtraBold)
+                    }
+                }
+            }
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                border = BorderStroke(3.dp, Color(0xFFF2C94C)),
+                colors = CardDefaults.cardColors(containerColor = CreamSurface),
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        text = "Ayuda",
+                        color = ForestGreen,
+                        fontWeight = FontWeight.ExtraBold,
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Repasa cómo funcionan las misiones, las postulaciones y la convivencia.",
+                        color = BarkBrown,
+                        textAlign = TextAlign.Center,
+                    )
+                    Spacer(modifier = Modifier.height(20.dp))
+                    Button(
+                        onClick = onOpenGuide,
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .height(54.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors =
+                            ButtonDefaults.buttonColors(
+                                containerColor = ForestGreen,
+                                contentColor = CreamSurface,
+                            ),
+                    ) {
+                        Text("Ver guía de la app", fontWeight = FontWeight.ExtraBold)
                     }
                 }
             }

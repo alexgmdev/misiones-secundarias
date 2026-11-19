@@ -89,9 +89,9 @@ Compartidos: `…/ui/auth/SessionViewModel.kt` (HU-005), `…/ui/navigation/AppN
 - [ ] C.6 (S) Manual HU-005: login incompleto, registro nuevo, arranque en frío (matar la app), perfil completo salta, offline pasa al menú, Atrás en perfil inicial sin atrapar al usuario (el gate lo reabre).
 - [ ] C.7 (S) **Coordinación**: avisar a Jojhan/Alex (`AppNavigation`, `SessionViewModel`) y a QA que los usuarios existentes pasarán por HU-005 al ingresar (esperado).
 - [ ] C.8 (S) Commit manual `HU-005`.
-- [ ] C.9 (M) `ui/onboarding/OnboardingScreen.kt` (familia A): `HorizontalPager` de 4 páginas, indicadores, Omitir / Siguiente / Empezar (última página sin Omitir), param `fromSettings` para cerrar con volver a Ajustes en lugar de ir al menú. Sin persistencia. [ONB Primer ingreso, Avanzar, Última página, Empezar, Omitir tras perfil inicial, Cerrar desde Ajustes; D17]
-- [ ] C.10 (S) `AppNavigation`/`ProfileNavigation`: tras guardar `InitialProfile` -> `Onboarding(fromSettings = false)` -> `MainMenu`. [ONB Aparición tras el perfil inicial, Primer ingreso]
-- [ ] C.11 (S) `ui/settings/SettingsScreen.kt`: tarjeta "Ayuda" con `onOpenGuide` que abre `Onboarding(fromSettings = true)`. [ONB Reabrir]
+- [x] C.9 (M) `ui/onboarding/OnboardingScreen.kt` (familia A): `HorizontalPager` de 4 páginas, indicadores, Omitir / Siguiente / Empezar (última página sin Omitir), param `fromSettings` para cerrar con volver a Ajustes en lugar de ir al menú. Sin persistencia. [ONB Primer ingreso, Avanzar, Última página, Empezar, Omitir tras perfil inicial, Cerrar desde Ajustes; D17]
+- [x] C.10 (S) `AppNavigation`/`ProfileNavigation`: tras guardar `InitialProfile` -> `Onboarding(fromSettings = false)` -> `MainMenu`. [ONB Aparición tras el perfil inicial, Primer ingreso]
+- [x] C.11 (S) `ui/settings/SettingsScreen.kt`: tarjeta "Ayuda" con `onOpenGuide` que abre `Onboarding(fromSettings = true)`. [ONB Reabrir]
 - [ ] C.12 (S) Manual HU-013: pager, Omitir, Empezar, reapertura y cierre desde Ajustes.
 - [ ] C.13 (S) Commit manual `HU-013`, push, CI verde y PR a `develop`.
 
