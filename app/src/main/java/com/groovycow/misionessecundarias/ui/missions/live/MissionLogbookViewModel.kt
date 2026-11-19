@@ -38,7 +38,10 @@ class MissionLogbookViewModel(
     }
 
     /** Guarda la bitácora oficial del publicador vinculando los participantes. */
-    fun saveLogbook(missionId: String, participants: List<MissionApplicant>) {
+    fun saveLogbook(
+        missionId: String,
+        participants: List<MissionApplicant>,
+    ) {
         if (_uiState.value.isSaving || _uiState.value.savedLogbook != null) return
         val currentEntry = _uiState.value.entry
 
@@ -52,17 +55,19 @@ class MissionLogbookViewModel(
         viewModelScope.launch {
             saveMissionLogbookUseCase(missionId, currentEntry, participants).fold(
                 onSuccess = { logbook ->
-                    _uiState.value = _uiState.value.copy(
-                        isSaving = false,
-                        savedLogbook = logbook,
-                        error = null,
-                    )
+                    _uiState.value =
+                        _uiState.value.copy(
+                            isSaving = false,
+                            savedLogbook = logbook,
+                            error = null,
+                        )
                 },
                 onFailure = { exception ->
-                    _uiState.value = _uiState.value.copy(
-                        isSaving = false,
-                        error = exception.toMissionError(),
-                    )
+                    _uiState.value =
+                        _uiState.value.copy(
+                            isSaving = false,
+                            error = exception.toMissionError(),
+                        )
                 },
             )
         }
@@ -83,17 +88,19 @@ class MissionLogbookViewModel(
         viewModelScope.launch {
             saveMissionLogbookUseCase.saveParticipantEntry(missionId, currentEntry).fold(
                 onSuccess = { logbook ->
-                    _uiState.value = _uiState.value.copy(
-                        isSaving = false,
-                        savedLogbook = logbook,
-                        error = null,
-                    )
+                    _uiState.value =
+                        _uiState.value.copy(
+                            isSaving = false,
+                            savedLogbook = logbook,
+                            error = null,
+                        )
                 },
                 onFailure = { exception ->
-                    _uiState.value = _uiState.value.copy(
-                        isSaving = false,
-                        error = exception.toMissionError(),
-                    )
+                    _uiState.value =
+                        _uiState.value.copy(
+                            isSaving = false,
+                            error = exception.toMissionError(),
+                        )
                 },
             )
         }

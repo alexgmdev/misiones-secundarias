@@ -223,9 +223,10 @@ class MissionRepositoryImpl(private val supabase: SupabaseClient) : MissionRepos
 
     private fun generateRandomVerificationCode(): String {
         val allowedChars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
-        val randomPart = (1..CODE_RANDOM_LENGTH)
-            .map { allowedChars.random() }
-            .joinToString("")
+        val randomPart =
+            (1..CODE_RANDOM_LENGTH)
+                .map { allowedChars.random() }
+                .joinToString("")
         return "CALI-$randomPart"
     }
 
