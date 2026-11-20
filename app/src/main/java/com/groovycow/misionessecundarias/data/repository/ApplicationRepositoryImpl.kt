@@ -1,11 +1,11 @@
 
 package com.groovycow.misionessecundarias.data.repository
 
+import com.groovycow.misionessecundarias.domain.model.ApplicantPublicProfile
 import com.groovycow.misionessecundarias.domain.model.Application
 import com.groovycow.misionessecundarias.domain.model.ApplicationDecision
 import com.groovycow.misionessecundarias.domain.model.MissionApplicant
 import com.groovycow.misionessecundarias.domain.model.MyApplication
-import com.groovycow.misionessecundarias.domain.model.PublicProfile
 import com.groovycow.misionessecundarias.domain.repository.ApplicationRepository
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.gotrue.auth
@@ -17,6 +17,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.time.OffsetDateTime
 
+// gestión de supabase y supabase auth
 class ApplicationRepositoryImpl(
     private val supabase: SupabaseClient,
 ) : ApplicationRepository {
@@ -45,7 +46,7 @@ class ApplicationRepositoryImpl(
                 .sortedByDescending { it.appliedAt }
         }
 
-    override suspend fun getPublicProfile(userId: String): PublicProfile? =
+    override suspend fun getPublicProfile(userId: String): ApplicantPublicProfile? =
         withContext(Dispatchers.IO) {
             authenticatedUserId("consultar el perfil público")
 
@@ -53,12 +54,12 @@ class ApplicationRepositoryImpl(
                 .select(
                     columns =
                         Columns.raw(
-                            "id,full_name,nickname,avatar_url,gender,description,level",
+                            "id,full_name,nickname,avatar_url,photo_url,gender,description,level",
                         ),
                 ) {
                     filter { eq("id", userId) }
                 }
-                .decodeSingleOrNull<PublicProfile>()
+                .decodeSingleOrNull<ApplicantPublicProfile>()
         }
 
     override suspend fun updateApplicationStatus(

@@ -14,9 +14,20 @@ CREATE TABLE profiles (
     first_name TEXT CONSTRAINT profiles_first_name_length CHECK (first_name IS NULL OR char_length(btrim(first_name)) BETWEEN 1 AND 60),
     last_name TEXT CONSTRAINT profiles_last_name_length CHECK (last_name IS NULL OR char_length(btrim(last_name)) BETWEEN 1 AND 60),
     avatar_url TEXT,
+    -- Perfil público (cambio: supabase/changes/2026-11-18_profiles_public_fields.sql)
+    nickname TEXT CONSTRAINT profiles_nickname_format CHECK (nickname IS NULL OR nickname ~ '^[A-Za-z0-9_]{3,20}$'),
+    gender TEXT CONSTRAINT profiles_gender_values CHECK (gender IS NULL OR gender IN ('femenino', 'masculino', 'prefiero_no_decir')),
+    description TEXT CONSTRAINT profiles_description_length CHECK (description IS NULL OR char_length(description) <= 280),
+    avatar_id TEXT CONSTRAINT profiles_avatar_id_format CHECK (avatar_id IS NULL OR avatar_id ~ '^[a-z_]{1,30}$'),
+    photo_url TEXT CONSTRAINT profiles_photo_url_origin CHECK (photo_url IS NULL OR position('/storage/v1/object/public/avatars/' || id::text || '/' in photo_url) > 0),
+    profile_completed BOOLEAN GENERATED ALWAYS AS (
+        nickname IS NOT NULL AND gender IS NOT NULL AND avatar_id IS NOT NULL AND photo_url IS NOT NULL
+    ) STORED,
     role TEXT DEFAULT 'user' CHECK (role IN ('user', 'moderator')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+
+CREATE UNIQUE INDEX profiles_nickname_lower_key ON profiles (lower(nickname));
 
 -- Datos personales del perfil (celular y fecha de nacimiento): solo visibles para su dueño.
 -- Cambio: supabase/changes/2026-11-03_auth_profiles_privacy.sql
@@ -52,6 +63,7 @@ CREATE TABLE missions (
     date_time TIMESTAMP WITH TIME ZONE NOT NULL,
     location GEOGRAPHY(POINT) NULL,
     meeting_point TEXT NULL,
+    reward TEXT NULL,
     max_participants INTEGER DEFAULT 2,
     status TEXT DEFAULT 'Publicada' CHECK (status IN ('Borrador', 'Publicada', 'Asignada', 'En progreso', 'Completada', 'Cancelada', 'Reportada', 'Suspendida')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
@@ -62,6 +74,7 @@ CREATE TABLE missions (
     )
 );
 COMMENT ON COLUMN missions.meeting_point IS 'Punto de encuentro textual (solo misiones de campo)';
+COMMENT ON COLUMN missions.reward IS 'Recompensa informativa sin pasarela de pago (HU-024)';
 
 -- Tabla de Postulaciones
 CREATE TABLE applications (
@@ -91,6 +104,31 @@ CREATE TABLE mission_pauses (
     PRIMARY KEY (mission_id, kind)
 );
 
+-- Bitácora de la misión (HU - Evaluación y Cierre): relato del publicador y vivencias de participantes
+CREATE TABLE mission_logbooks (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    mission_id UUID REFERENCES missions(id) ON DELETE CASCADE NOT NULL,
+    author_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+    role TEXT NOT NULL CHECK (role IN ('publicador', 'participante')),
+    entry TEXT NOT NULL CONSTRAINT logbook_entry_not_empty CHECK (char_length(btrim(entry)) >= 1),
+    participant_ids UUID[] DEFAULT '{}'::UUID[] NOT NULL,
+    participant_names TEXT[] DEFAULT '{}'::TEXT[] NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    CONSTRAINT unique_mission_author UNIQUE (mission_id, author_id)
+);
+
+-- Calificaciones al publicador (HU-124): un voto por solucionador y misión completada
+CREATE TABLE publisher_ratings (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    mission_id UUID REFERENCES missions(id) ON DELETE CASCADE NOT NULL,
+    solver_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+    publisher_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+    stars INTEGER NOT NULL CHECK (stars BETWEEN 1 AND 5),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    CONSTRAINT unique_rating_per_solver_mission UNIQUE (mission_id, solver_id)
+);
+CREATE INDEX publisher_ratings_publisher_idx ON publisher_ratings (publisher_id);
+
 -- ==========================================
 -- 3. SEGURIDAD (RLS Y POLÍTICAS)
 -- ==========================================
@@ -99,6 +137,8 @@ ALTER TABLE missions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE applications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mission_checklist_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mission_pauses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE mission_logbooks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE publisher_ratings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE profile_private ENABLE ROW LEVEL SECURITY;
 ALTER TABLE login_attempts ENABLE ROW LEVEL SECURITY; -- sin políticas: solo service role
 
@@ -134,6 +174,45 @@ CREATE POLICY "Publishers manage own pauses" ON mission_pauses FOR ALL TO authen
 CREATE POLICY "Accepted solvers read pauses" ON mission_pauses FOR SELECT TO authenticated
     USING (EXISTS (SELECT 1 FROM applications a WHERE a.mission_id = mission_pauses.mission_id AND a.solver_id = auth.uid() AND a.status = 'Aceptado'));
 
+-- Bitácora: el publicador y los solucionadores aceptados gestionan sus entradas; lectura pública para el historial
+CREATE POLICY "Publishers manage own logbooks" ON mission_logbooks FOR ALL TO authenticated
+    USING (auth.uid() = author_id AND auth.uid() IN (SELECT publisher_id FROM missions WHERE id = mission_id))
+    WITH CHECK (auth.uid() = author_id AND auth.uid() IN (SELECT publisher_id FROM missions WHERE id = mission_id));
+
+CREATE POLICY "Accepted solvers insert logbooks" ON mission_logbooks FOR INSERT TO authenticated
+    WITH CHECK (
+        auth.uid() = author_id AND
+        role = 'participante' AND
+        EXISTS (
+            SELECT 1 FROM applications
+            WHERE mission_id = mission_logbooks.mission_id
+              AND solver_id = auth.uid()
+              AND status = 'Aceptado'
+        )
+    );
+
+CREATE POLICY "Accepted solvers update own logbooks" ON mission_logbooks FOR UPDATE TO authenticated
+    USING (auth.uid() = author_id)
+    WITH CHECK (auth.uid() = author_id);
+
+CREATE POLICY "Public logbooks viewable" ON mission_logbooks FOR SELECT USING (true);
+
+-- Calificaciones: inserta solo un participante aceptado de una misión completada; lectura pública para la reputación
+CREATE POLICY "Solvers rate completed missions" ON publisher_ratings FOR INSERT TO authenticated
+    WITH CHECK (
+        auth.uid() = solver_id
+        AND EXISTS (
+            SELECT 1 FROM applications a
+            JOIN missions m ON m.id = a.mission_id
+            WHERE a.mission_id = publisher_ratings.mission_id
+              AND a.solver_id = auth.uid()
+              AND a.status = 'Aceptado'
+              AND m.status = 'Completada'
+              AND m.publisher_id = publisher_ratings.publisher_id
+        )
+    );
+CREATE POLICY "Ratings viewable by everyone" ON publisher_ratings FOR SELECT USING (true);
+
 
 -- configuración para evitar problemas de permisos
 -- Permisos explícitos para la Data API (necesario desde Nov 2026)
@@ -147,6 +226,9 @@ GRANT SELECT, INSERT, DELETE ON public.mission_checklist_items TO authenticated;
 GRANT UPDATE (is_done) ON public.mission_checklist_items TO authenticated;
 GRANT SELECT, INSERT ON public.mission_pauses TO authenticated;
 GRANT UPDATE (is_active) ON public.mission_pauses TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON public.mission_logbooks TO authenticated;
+GRANT SELECT ON public.publisher_ratings TO anon, authenticated;
+GRANT INSERT ON public.publisher_ratings TO authenticated;
 
 -- Datos privados y intentos de login
 REVOKE ALL ON public.profile_private FROM anon, authenticated;
@@ -156,6 +238,8 @@ REVOKE ALL ON public.login_attempts FROM anon, authenticated;
 
 --reglas para la tabla de profiles
 GRANT SELECT ON public.profiles TO anon, authenticated;
+-- Edición del perfil público: solo estas columnas (cambio 2026-11-18_profiles_public_fields.sql)
+GRANT UPDATE (nickname, gender, description, avatar_id, photo_url) ON public.profiles TO authenticated;
 GRANT SELECT ON public.applications TO anon, authenticated;
 -- ==========================================
 -- 4. TRIGGER PARA AUTO-CREAR PERFILES (David - Auth)
@@ -223,3 +307,41 @@ as $$
 $$;
 comment on function public.purge_login_attempts() is 'Borra intentos de login de más de 1 día. Solo service role.';
 revoke execute on function public.purge_login_attempts() from public, anon, authenticated;
+
+-- ==========================================
+-- 6. PERFIL PÚBLICO Y FOTOS (perfil-configuracion)
+-- ==========================================
+-- Cambios: supabase/changes/2026-11-18_profiles_public_fields.sql y 2026-11-18_storage_avatars.sql
+-- Indica si un nickname está libre (true); su propio nickname cuenta como libre.
+create or replace function public.nickname_disponible(p_nickname text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select not exists (
+    select 1 from public.profiles
+    where lower(nickname) = lower(p_nickname)
+      and id is distinct from auth.uid()
+  );
+$$;
+comment on function public.nickname_disponible(text) is 'Indica si un nickname está libre (true); excluye al usuario actual.';
+revoke execute on function public.nickname_disponible(text) from public, anon;
+grant execute on function public.nickname_disponible(text) to authenticated;
+
+-- Bucket público de fotos de perfil: máximo 2 MB, solo JPEG, ruta `{uid}/foto.jpg`.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('avatars', 'avatars', true, 2097152, array['image/jpeg'])
+on conflict (id) do update
+  set public = true, file_size_limit = 2097152, allowed_mime_types = array['image/jpeg'];
+
+create policy "avatars_select_public" on storage.objects
+  for select using (bucket_id = 'avatars');
+create policy "avatars_insert_own_folder" on storage.objects
+  for insert to authenticated
+  with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
+create policy "avatars_update_own_folder" on storage.objects
+  for update to authenticated
+  using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text)
+  with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);

@@ -31,4 +31,16 @@ enum class FieldError {
 
     /** El código de recuperación está vacío o no es numérico (6 a 10 dígitos). */
     InvalidCode,
+
+    /** El nickname tiene menos de 3 o más de 20 caracteres. */
+    NicknameLength,
+
+    /** El nickname incluye caracteres distintos de letras, números y guion bajo. */
+    NicknameInvalidChars,
+
+    /** La descripción supera 280 caracteres. */
+    DescriptionTooLong,
+
+    /** Falta elegir una opción obligatoria (género, avatar o foto). */
+    SelectionRequired,
 }

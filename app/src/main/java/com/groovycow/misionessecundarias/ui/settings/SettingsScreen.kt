@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
@@ -43,6 +45,9 @@ import org.koin.androidx.compose.koinViewModel
 fun SettingsScreen(
     onBack: () -> Unit,
     onSignedOut: () -> Unit,
+    onChangePassword: () -> Unit = {},
+    onOpenGuide: () -> Unit = {},
+    onOpenPrivacyPolicy: () -> Unit = {},
     viewModel: SettingsViewModel = koinViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -76,10 +81,128 @@ fun SettingsScreen(
                 Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
+                    .verticalScroll(rememberScrollState())
                     .padding(16.dp),
-            verticalArrangement = Arrangement.Center,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                border = BorderStroke(3.dp, ForestGreen),
+                colors = CardDefaults.cardColors(containerColor = CreamSurface),
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        text = "Seguridad",
+                        color = ForestGreen,
+                        fontWeight = FontWeight.ExtraBold,
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Actualiza la contraseña de tu cuenta.",
+                        color = BarkBrown,
+                        textAlign = TextAlign.Center,
+                    )
+                    Spacer(modifier = Modifier.height(20.dp))
+                    Button(
+                        onClick = onChangePassword,
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .height(54.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors =
+                            ButtonDefaults.buttonColors(
+                                containerColor = ForestGreen,
+                                contentColor = CreamSurface,
+                            ),
+                    ) {
+                        Text("Cambiar contraseña", fontWeight = FontWeight.ExtraBold)
+                    }
+                }
+            }
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                border = BorderStroke(3.dp, Color(0xFFF2C94C)),
+                colors = CardDefaults.cardColors(containerColor = CreamSurface),
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        text = "Ayuda",
+                        color = ForestGreen,
+                        fontWeight = FontWeight.ExtraBold,
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Repasa cómo funcionan las misiones, las postulaciones y la convivencia.",
+                        color = BarkBrown,
+                        textAlign = TextAlign.Center,
+                    )
+                    Spacer(modifier = Modifier.height(20.dp))
+                    Button(
+                        onClick = onOpenGuide,
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .height(54.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors =
+                            ButtonDefaults.buttonColors(
+                                containerColor = ForestGreen,
+                                contentColor = CreamSurface,
+                            ),
+                    ) {
+                        Text("Ver guía de la app", fontWeight = FontWeight.ExtraBold)
+                    }
+                }
+            }
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                border = BorderStroke(3.dp, RiverTeal),
+                colors = CardDefaults.cardColors(containerColor = CreamSurface),
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        text = "Privacidad",
+                        color = ForestGreen,
+                        fontWeight = FontWeight.ExtraBold,
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Consulta cómo se tratan tu ubicación y tus datos personales.",
+                        color = BarkBrown,
+                        textAlign = TextAlign.Center,
+                    )
+                    Spacer(modifier = Modifier.height(20.dp))
+                    Button(
+                        onClick = onOpenPrivacyPolicy,
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .height(54.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors =
+                            ButtonDefaults.buttonColors(
+                                containerColor = ForestGreen,
+                                contentColor = CreamSurface,
+                            ),
+                    ) {
+                        Text("Políticas de Privacidad", fontWeight = FontWeight.ExtraBold)
+                    }
+                }
+            }
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(18.dp),
@@ -151,4 +274,5 @@ private val EarthOrange = Color(0xFFE58A3A)
 private val SandBackground = Color(0xFFF7F3E8)
 private val CreamSurface = Color(0xFFFFFCF3)
 private val BarkBrown = Color(0xFF594A3C)
+private val RiverTeal = Color(0xFF38A89D)
 private val AlertCoral = Color(0xFFE85D3F)

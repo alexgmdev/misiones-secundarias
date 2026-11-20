@@ -2,8 +2,8 @@ package com.groovycow.misionessecundarias.ui.missions
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.groovycow.misionessecundarias.domain.model.PublicProfile
-import com.groovycow.misionessecundarias.domain.usecase.GetPublicProfileUseCase
+import com.groovycow.misionessecundarias.domain.model.ApplicantPublicProfile
+import com.groovycow.misionessecundarias.domain.usecase.GetApplicantPublicProfileUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -11,12 +11,12 @@ import kotlinx.coroutines.launch
 
 data class PublicProfileUiState(
     val isLoading: Boolean = false,
-    val profile: PublicProfile? = null,
+    val profile: ApplicantPublicProfile? = null,
     val error: String? = null,
 )
 
 class PublicProfileViewModel(
-    private val getPublicProfile: GetPublicProfileUseCase,
+    private val getPublicProfile: GetApplicantPublicProfileUseCase,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(PublicProfileUiState())
     val uiState: StateFlow<PublicProfileUiState> = _uiState.asStateFlow()

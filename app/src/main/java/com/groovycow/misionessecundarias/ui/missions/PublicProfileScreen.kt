@@ -73,10 +73,13 @@ fun PublicProfileScreen(
 
             uiState.profile != null -> {
                 val profile = uiState.profile!!
+                val imageUrl =
+                    profile.photoUrl?.takeIf { it.isNotBlank() }
+                        ?: profile.avatarUrl?.takeIf { it.isNotBlank() }
 
-                if (!profile.avatarUrl.isNullOrBlank()) {
+                if (imageUrl != null) {
                     AsyncImage(
-                        model = profile.avatarUrl,
+                        model = imageUrl,
                         contentDescription = "Fotografía de perfil",
                         modifier =
                             Modifier

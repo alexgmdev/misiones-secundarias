@@ -133,6 +133,8 @@ class AuthRepositoryImpl(
             client.auth.signOut()
         }
 
+    override fun currentUserEmail(): String? = client.auth.currentUserOrNull()?.email
+
     /** Importa los tokens del login por celular y recupera el usuario antes de continuar. */
     private suspend fun importPhoneSession(body: String) {
         val json = Json.parseToJsonElement(body).jsonObject

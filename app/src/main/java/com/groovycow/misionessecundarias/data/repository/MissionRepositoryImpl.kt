@@ -2,6 +2,7 @@ package com.groovycow.misionessecundarias.data.repository
 
 import com.groovycow.misionessecundarias.domain.model.CreateMissionDraft
 import com.groovycow.misionessecundarias.domain.model.Mission
+import com.groovycow.misionessecundarias.domain.model.MissionDetailsUpdate
 import com.groovycow.misionessecundarias.domain.model.MissionModality
 import com.groovycow.misionessecundarias.domain.model.MissionSessionRequiredException
 import com.groovycow.misionessecundarias.domain.repository.MissionRepository
@@ -45,6 +46,7 @@ class MissionRepositoryImpl(private val supabase: SupabaseClient) : MissionRepos
         val description = draft.description.trim()
         val category = draft.category?.trim()?.takeIf(String::isNotEmpty)
         val requirements = draft.requirements.trim()
+        val reward = draft.reward.trim().takeIf(String::isNotEmpty)
         val dateTime = MissionDateTime.toIsoOffset(date, time)
         val meetingPoint =
             draft.meetingPoint.trim().takeIf {
@@ -64,6 +66,7 @@ class MissionRepositoryImpl(private val supabase: SupabaseClient) : MissionRepos
                         dateTime = dateTime,
                         location = location,
                         meetingPoint = meetingPoint,
+                        reward = reward,
                         maxParticipants = draft.maxParticipants,
                         status = "Borrador",
                     ),
@@ -84,6 +87,7 @@ class MissionRepositoryImpl(private val supabase: SupabaseClient) : MissionRepos
             dateTime = dateTime,
             location = location,
             meetingPoint = meetingPoint,
+            reward = reward,
             maxParticipants = draft.maxParticipants,
             status = "Borrador",
             publisherProfile = null,
@@ -119,6 +123,35 @@ class MissionRepositoryImpl(private val supabase: SupabaseClient) : MissionRepos
                 ?: error("La misión no existe, no te pertenece o no está en progreso.")
         }
 
+    override suspend fun updateMissionDetails(
+        id: String,
+        update: MissionDetailsUpdate,
+    ): Mission =
+        withContext(Dispatchers.IO) {
+            val publisherId = authenticatedUserId("editar una misión")
+            val updatedMission =
+                supabase.from("missions")
+                    .update(
+                        {
+                            set("title", update.title)
+                            set("description", update.description)
+                            set("requirements", update.requirements)
+                            set("category", update.category)
+                            set("reward", update.reward)
+                        },
+                    ) {
+                        filter {
+                            eq("id", id)
+                            eq("publisher_id", publisherId)
+                            eq("status", "Publicada")
+                        }
+                        select()
+                    }
+                    .decodeSingleOrNull<Mission>()
+
+            updatedMission ?: error("La misión no existe, no te pertenece o ya no se puede editar.")
+        }
+
     override suspend fun getMyMissions(): List<Mission> =
         withContext(Dispatchers.IO) {
             val publisherId = authenticatedUserId("consultar mis misiones")
@@ -137,6 +170,24 @@ class MissionRepositoryImpl(private val supabase: SupabaseClient) : MissionRepos
                         eq("id", id)
                     }
                 }.decodeSingleOrNull<Mission>()
+        }
+
+    override suspend fun generateVerificationCode(id: String): String =
+        withContext(Dispatchers.IO) {
+            val publisherId = authenticatedUserId("generar el código de verificación")
+            val mission =
+                findOwnMission(id, publisherId)
+                    ?: error("La misión no existe o no te pertenece.")
+
+            check(
+                mission.status == "En progreso" ||
+                    mission.status == "Completada" ||
+                    mission.status == "Rendida aprobada",
+            ) {
+                "La misión debe estar en progreso, completada o rendida aprobada para generar el código."
+            }
+
+            generateRandomVerificationCode()
         }
 
     override suspend fun publishMission(id: String): Mission =
@@ -203,7 +254,17 @@ class MissionRepositoryImpl(private val supabase: SupabaseClient) : MissionRepos
         return recoveredUser?.id ?: throw MissionSessionRequiredException()
     }
 
+    private fun generateRandomVerificationCode(): String {
+        val allowedChars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+        val randomPart =
+            (1..CODE_RANDOM_LENGTH)
+                .map { allowedChars.random() }
+                .joinToString("")
+        return "CALI-$randomPart"
+    }
+
     private companion object {
+        private const val CODE_RANDOM_LENGTH = 4
         val LOGGER: Logger = Logger.getLogger(MissionRepositoryImpl::class.java.name)
     }
 }
@@ -219,6 +280,7 @@ private data class MissionInsertDto(
     @SerialName("date_time") val dateTime: String,
     val location: String?,
     @SerialName("meeting_point") val meetingPoint: String?,
+    val reward: String?,
     @SerialName("max_participants") val maxParticipants: Int,
     val status: String,
 )

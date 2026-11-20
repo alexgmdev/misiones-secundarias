@@ -9,6 +9,9 @@ sealed interface AuthError {
     /** Correo o contraseña (o celular) incorrectos. */
     data object InvalidCredentials : AuthError
 
+    /** La contraseña actual digitada al cambiarla desde Ajustes no coincide con la de la cuenta. */
+    data object IncorrectCurrentPassword : AuthError
+
     /** El correo ya está registrado. */
     data object EmailInUse : AuthError
 

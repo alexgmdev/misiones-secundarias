@@ -38,6 +38,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -61,9 +62,11 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import com.groovycow.misionessecundarias.domain.model.PublisherReputation
 import com.groovycow.misionessecundarias.domain.util.LocationValidator
 import com.groovycow.misionessecundarias.ui.applications.ApplicationUiState
 import com.groovycow.misionessecundarias.ui.applications.ApplicationViewModel
+import com.groovycow.misionessecundarias.ui.missions.rating.PublisherReputationViewModel
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -78,16 +81,24 @@ fun MissionDetailRoute(
     modality: String,
     category: String?,
     requirements: String?,
+    missionReward: String?,
+    missionStatus: String,
     publisherName: String?,
     approximateZone: String,
     onBack: () -> Unit,
     onManageApplicants: () -> Unit,
+    onEditMission: () -> Unit = {},
     applicationViewModel: ApplicationViewModel = koinViewModel(),
+    reputationViewModel: PublisherReputationViewModel = koinViewModel(),
 ) {
     val applicationState by applicationViewModel.uiState.collectAsState()
+    val reputationState by reputationViewModel.uiState.collectAsState()
 
     LaunchedEffect(missionId) {
         applicationViewModel.loadMission(publisherId, missionId)
+    }
+    LaunchedEffect(publisherId) {
+        reputationViewModel.load(publisherId)
     }
 
     MissionDetailScreen(
@@ -99,10 +110,14 @@ fun MissionDetailRoute(
         modality = modality,
         category = category,
         requirements = requirements,
+        missionReward = missionReward,
+        missionStatus = missionStatus,
         publisherName = publisherName,
+        publisherReputation = reputationState.reputation,
         approximateZone = approximateZone,
         onBack = onBack,
         onManageApplicants = onManageApplicants,
+        onEditMission = onEditMission,
         onApply = { applicationViewModel.applyToMission(missionId) },
         onMarkOnWay = { applicationViewModel.markOnWay(missionId) },
         onArrived = { lat, lon -> applicationViewModel.markArrived(missionId, lat, lon) },
@@ -122,10 +137,14 @@ fun MissionDetailScreen(
     modality: String,
     category: String?,
     requirements: String?,
+    missionReward: String? = null,
+    missionStatus: String = "",
     publisherName: String?,
+    publisherReputation: PublisherReputation? = null,
     approximateZone: String,
     onBack: () -> Unit,
     onManageApplicants: () -> Unit = {},
+    onEditMission: () -> Unit = {},
     onApply: () -> Unit = {},
     onMarkOnWay: () -> Unit = {},
     onArrived: (Double?, Double?) -> Unit = { _, _ -> },
@@ -235,7 +254,7 @@ fun MissionDetailScreen(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-            PublisherCard(publisherName = publisherName)
+            PublisherCard(publisherName = publisherName, reputation = publisherReputation)
             Spacer(modifier = Modifier.height(14.dp))
 
             Text(
@@ -284,6 +303,16 @@ fun MissionDetailScreen(
                 backgroundColor = LightEarth,
             )
 
+            missionReward?.takeIf { it.isNotBlank() }?.let { reward ->
+                Spacer(modifier = Modifier.height(14.dp))
+                InfoSection(
+                    title = "Recompensa informativa",
+                    text = reward,
+                    accentColor = EarthOrange,
+                    backgroundColor = LightEarth,
+                )
+            }
+
             Spacer(modifier = Modifier.height(14.dp))
             MissionRewardsNotice()
 
@@ -299,9 +328,11 @@ fun MissionDetailScreen(
 
             MissionActionSection(
                 applicationState = applicationState,
+                canEditMission = missionStatus == "Publicada",
                 onMarkOnWay = onMarkOnWay,
                 onApply = onApply,
                 onManageApplicants = onManageApplicants,
+                onEditMission = onEditMission,
                 onValidateArrival = onValidateArrivalClick,
             )
 
@@ -345,11 +376,14 @@ fun MissionDetailScreen(
 }
 
 @Composable
+@Suppress("CyclomaticComplexMethod")
 private fun MissionActionSection(
     applicationState: ApplicationUiState,
+    canEditMission: Boolean,
     onMarkOnWay: () -> Unit,
     onApply: () -> Unit,
     onManageApplicants: () -> Unit,
+    onEditMission: () -> Unit,
     onValidateArrival: () -> Unit,
 ) {
     if (applicationState.isAccepted) {
@@ -423,6 +457,16 @@ private fun MissionActionSection(
                 PrimaryActionText(applicationState)
             }
         }
+        if (applicationState.isPublisher && canEditMission) {
+            OutlinedButton(
+                onClick = onEditMission,
+                modifier = Modifier.fillMaxWidth().padding(top = 10.dp).height(52.dp),
+                shape = RoundedCornerShape(14.dp),
+                border = BorderStroke(2.dp, EarthOrange),
+            ) {
+                Text("Editar misión", color = ForestGreen, fontWeight = FontWeight.ExtraBold)
+            }
+        }
     }
 }
 
@@ -441,7 +485,10 @@ private fun ApplicationUiState.canPerformPrimaryAction(): Boolean =
     !isCheckingOwnership && (isPublisher || (!isSubmitting && !wasSubmitted))
 
 @Composable
-private fun PublisherCard(publisherName: String?) {
+private fun PublisherCard(
+    publisherName: String?,
+    reputation: PublisherReputation?,
+) {
     Row(
         modifier =
             Modifier
@@ -452,7 +499,17 @@ private fun PublisherCard(publisherName: String?) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text("Publicado por", color = BarkBrown, fontWeight = FontWeight.Bold)
+        Column {
+            Text("Publicado por", color = BarkBrown, fontWeight = FontWeight.Bold)
+            reputation?.let {
+                Text(
+                    text = "★ ${it.average} · ${it.total} valoraciones",
+                    color = SunYellow,
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+        }
         Spacer(modifier = Modifier.width(12.dp))
         Text(
             text = publisherName ?: "Usuario desconocido",
@@ -590,4 +647,5 @@ private val SandBackground = Color(0xFFF7F3E8)
 private val CreamSurface = Color(0xFFFFFCF3)
 private val BarkBrown = Color(0xFF594A3C)
 private val AlertCoral = Color(0xFFE85D3F)
+private val SunYellow = Color(0xFFF2C94C)
 private val MapLine = Color(0xFF7ECAC2)

@@ -5,13 +5,15 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class PublicProfile(
+data class ApplicantPublicProfile(
     val id: String,
     @SerialName("full_name")
     val fullName: String? = null,
     val nickname: String? = null,
     @SerialName("avatar_url")
     val avatarUrl: String? = null,
+    @SerialName("photo_url")
+    val photoUrl: String? = null,
     val gender: String? = null,
     val description: String? = null,
     val level: String? = null,

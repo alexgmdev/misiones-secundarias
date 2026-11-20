@@ -1,13 +1,13 @@
 
 package com.groovycow.misionessecundarias.domain.usecase
 
-import com.groovycow.misionessecundarias.domain.model.PublicProfile
+import com.groovycow.misionessecundarias.domain.model.ApplicantPublicProfile
 import com.groovycow.misionessecundarias.domain.repository.ApplicationRepository
 
-class GetPublicProfileUseCase(
+class GetApplicantPublicProfileUseCase(
     private val repository: ApplicationRepository,
 ) {
-    suspend operator fun invoke(userId: String): Result<PublicProfile?> =
+    suspend operator fun invoke(userId: String): Result<ApplicantPublicProfile?> =
         runCatching {
             repository.getPublicProfile(userId)
         }
