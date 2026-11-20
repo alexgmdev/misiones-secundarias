@@ -31,6 +31,7 @@ import com.groovycow.misionessecundarias.ui.missions.edit.EditMissionScreen
 import com.groovycow.misionessecundarias.ui.missions.live.LiveMissionPanelScreen
 import com.groovycow.misionessecundarias.ui.profile.ProfileSummaryViewModel
 import com.groovycow.misionessecundarias.ui.profile.components.ProfileAvatar
+import com.groovycow.misionessecundarias.ui.profile.publicprofile.PublicProfileSheet
 import com.groovycow.misionessecundarias.ui.profile.setup.InitialProfileScreen
 import com.groovycow.misionessecundarias.ui.settings.ChangePasswordScreen
 import com.groovycow.misionessecundarias.ui.settings.PrivacyPolicyScreen
@@ -123,6 +124,7 @@ fun AppNavigation() {
     var detailOrigin by remember { mutableStateOf<AppDestination>(AppDestination.MissionList) }
     var destination by remember { mutableStateOf<AppDestination?>(null) }
     var loginNotice by remember { mutableStateOf<String?>(null) }
+    var publicProfileUserId by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(startDestination) {
         destination = resolveInitialDestination(destination, startDestination)
@@ -313,6 +315,7 @@ fun AppNavigation() {
                 },
                 onManageApplicants = { destination = AppDestination.MissionApplicants },
                 onEditMission = { destination = AppDestination.EditMission },
+                onPublisherClick = { publisherId -> publicProfileUserId = publisherId },
             )
         }
 
@@ -344,6 +347,7 @@ fun AppNavigation() {
                         selectedMission = started
                         destination = AppDestination.LiveMissionPanel
                     },
+                    onApplicantClick = { solverId -> publicProfileUserId = solverId },
                 )
             }
         }
@@ -401,6 +405,11 @@ fun AppNavigation() {
                 onBack = { destination = AppDestination.MainMenu },
             )
         }
+    }
+
+    // Ficha pública de otro usuario (HU-007), superpuesta sobre la pantalla de origen.
+    publicProfileUserId?.let { userId ->
+        PublicProfileSheet(userId = userId, onDismiss = { publicProfileUserId = null })
     }
 }
 
@@ -490,6 +499,7 @@ private fun MissionDetailDestination(
     onBack: () -> Unit,
     onManageApplicants: () -> Unit,
     onEditMission: () -> Unit,
+    onPublisherClick: (String) -> Unit,
 ) {
     if (mission == null) {
         onMissingMission()
@@ -513,5 +523,6 @@ private fun MissionDetailDestination(
         onBack = onBack,
         onManageApplicants = onManageApplicants,
         onEditMission = onEditMission,
+        onPublisherClick = { onPublisherClick(mission.publisherId) },
     )
 }

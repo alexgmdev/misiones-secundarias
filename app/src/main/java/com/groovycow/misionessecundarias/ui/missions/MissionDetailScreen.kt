@@ -8,6 +8,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -88,6 +89,7 @@ fun MissionDetailRoute(
     onBack: () -> Unit,
     onManageApplicants: () -> Unit,
     onEditMission: () -> Unit = {},
+    onPublisherClick: () -> Unit = {},
     applicationViewModel: ApplicationViewModel = koinViewModel(),
     reputationViewModel: PublisherReputationViewModel = koinViewModel(),
 ) {
@@ -118,6 +120,7 @@ fun MissionDetailRoute(
         onBack = onBack,
         onManageApplicants = onManageApplicants,
         onEditMission = onEditMission,
+        onPublisherClick = onPublisherClick,
         onApply = { applicationViewModel.applyToMission(missionId) },
         onMarkOnWay = { applicationViewModel.markOnWay(missionId) },
         onArrived = { lat, lon -> applicationViewModel.markArrived(missionId, lat, lon) },
@@ -145,6 +148,7 @@ fun MissionDetailScreen(
     onBack: () -> Unit,
     onManageApplicants: () -> Unit = {},
     onEditMission: () -> Unit = {},
+    onPublisherClick: () -> Unit = {},
     onApply: () -> Unit = {},
     onMarkOnWay: () -> Unit = {},
     onArrived: (Double?, Double?) -> Unit = { _, _ -> },
@@ -254,7 +258,7 @@ fun MissionDetailScreen(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-            PublisherCard(publisherName = publisherName, reputation = publisherReputation)
+            PublisherCard(publisherName = publisherName, reputation = publisherReputation, onClick = onPublisherClick)
             Spacer(modifier = Modifier.height(14.dp))
 
             Text(
@@ -488,6 +492,7 @@ private fun ApplicationUiState.canPerformPrimaryAction(): Boolean =
 private fun PublisherCard(
     publisherName: String?,
     reputation: PublisherReputation?,
+    onClick: () -> Unit,
 ) {
     Row(
         modifier =
@@ -495,6 +500,7 @@ private fun PublisherCard(
                 .fillMaxWidth()
                 .background(CreamSurface, RoundedCornerShape(14.dp))
                 .border(2.dp, EarthOrange, RoundedCornerShape(14.dp))
+                .clickable(onClick = onClick)
                 .padding(14.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,

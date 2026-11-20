@@ -2,6 +2,7 @@ package com.groovycow.misionessecundarias.ui.missions
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -67,6 +68,7 @@ fun PostulantesScreen(
     isMissionCompleted: Boolean = false,
     onOpenLivePanel: () -> Unit = {},
     onMissionStarted: (Mission) -> Unit = {},
+    onApplicantClick: (String) -> Unit = {},
     viewModel: ApplicantsViewModel = koinViewModel(),
     startViewModel: StartMissionViewModel = koinViewModel(),
 ) {
@@ -173,6 +175,7 @@ fun PostulantesScreen(
                             ApplicantCard(
                                 applicant = applicant,
                                 isUpdating = uiState.updatingApplicationId == applicant.id,
+                                onProfileClick = { onApplicantClick(applicant.solverId) },
                                 onAccept = {
                                     pendingDecision = applicant to ApplicationDecision.ACCEPT
                                 },
@@ -328,6 +331,7 @@ private fun StartErrorDialog(
 private fun ApplicantCard(
     applicant: MissionApplicant,
     isUpdating: Boolean,
+    onProfileClick: () -> Unit,
     onAccept: () -> Unit,
     onReject: () -> Unit,
 ) {
@@ -352,7 +356,10 @@ private fun ApplicantCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.clickable(onClick = onProfileClick),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Icon(
                     imageVector = Icons.Default.Person,
                     contentDescription = null,
