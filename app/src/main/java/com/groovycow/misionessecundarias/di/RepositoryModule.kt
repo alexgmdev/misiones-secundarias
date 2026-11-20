@@ -6,6 +6,7 @@ import com.groovycow.misionessecundarias.data.repository.ChecklistRepositoryImpl
 import com.groovycow.misionessecundarias.data.repository.LogbookRepositoryImpl
 import com.groovycow.misionessecundarias.data.repository.MissionRepositoryImpl
 import com.groovycow.misionessecundarias.data.repository.PauseRepositoryImpl
+import com.groovycow.misionessecundarias.data.repository.RatingRepositoryImpl
 import com.groovycow.misionessecundarias.domain.repository.AdminRepository
 import com.groovycow.misionessecundarias.domain.repository.ApplicationRepository
 import com.groovycow.misionessecundarias.domain.repository.ChecklistRepository
@@ -24,6 +25,7 @@ import com.groovycow.misionessecundarias.domain.usecase.DeleteChecklistItemUseCa
 import com.groovycow.misionessecundarias.domain.usecase.GenerateVerificationCodeUseCase
 import com.groovycow.misionessecundarias.domain.usecase.GetActivePausesUseCase
 import com.groovycow.misionessecundarias.domain.usecase.GetAdminMetricsUseCase
+import com.groovycow.misionessecundarias.domain.usecase.GetApplicantPublicProfileUseCase
 import com.groovycow.misionessecundarias.domain.usecase.GetChecklistUseCase
 import com.groovycow.misionessecundarias.domain.usecase.GetLivePanelParticipantsUseCase
 import com.groovycow.misionessecundarias.domain.usecase.GetMissionApplicantsUseCase
@@ -39,6 +41,7 @@ import com.groovycow.misionessecundarias.domain.usecase.SetChecklistItemDoneUseC
 import com.groovycow.misionessecundarias.domain.usecase.SetMissionPauseUseCase
 import com.groovycow.misionessecundarias.domain.usecase.StartMissionUseCase
 import com.groovycow.misionessecundarias.domain.usecase.UpdateApplicationStatusUseCase
+import com.groovycow.misionessecundarias.domain.usecase.UpdateMissionDetailsUseCase
 import com.groovycow.misionessecundarias.domain.validation.MissionDraftValidator
 import com.groovycow.misionessecundarias.ui.admin.AdminMenuViewModel
 import com.groovycow.misionessecundarias.ui.admin.AdminPanelViewModel

@@ -30,6 +30,7 @@ import com.groovycow.misionessecundarias.ui.missions.MissionDetailRoute
 import com.groovycow.misionessecundarias.ui.missions.MissionListScreen
 import com.groovycow.misionessecundarias.ui.missions.PostulantesScreen
 import com.groovycow.misionessecundarias.ui.missions.create.CreateMissionScreen
+import com.groovycow.misionessecundarias.ui.missions.edit.EditMissionScreen
 import com.groovycow.misionessecundarias.ui.missions.live.LiveMissionPanelScreen
 import com.groovycow.misionessecundarias.ui.profile.ProfileSummaryViewModel
 import com.groovycow.misionessecundarias.ui.profile.components.ProfileAvatar
@@ -76,6 +77,9 @@ sealed interface AppDestination {
 
     /** Detalle de la misión seleccionada. */
     data object MissionDetail : AppDestination
+
+    /** Edición de una misión seleccionada por su publicador. */
+    data object EditMission : AppDestination
 
     /** Misiones creadas por el usuario, alcanzable desde el estado de las misiones. */
     data object MyMissions : AppDestination
@@ -152,6 +156,9 @@ fun AppNavigation() {
     }
     BackHandler(enabled = currentDestination == AppDestination.ChangePassword) {
         destination = AppDestination.Settings
+    }
+    BackHandler(enabled = currentDestination == AppDestination.EditMission) {
+        destination = AppDestination.MissionDetail
     }
     BackHandler(enabled = currentDestination == AppDestination.RequestCode) {
         destination = AppDestination.Login
@@ -245,26 +252,8 @@ fun AppNavigation() {
             )
         }
 
-        AppDestination.MainMenu -> {
-            val profileSummaryViewModel: ProfileSummaryViewModel = koinViewModel()
-            val summary by profileSummaryViewModel.uiState.collectAsState()
-            val adminMenuViewModel: AdminMenuViewModel = koinViewModel()
-            val canShowAdminPanel by adminMenuViewModel.canShowAdminPanel.collectAsState()
-            LaunchedEffect(Unit) { profileSummaryViewModel.refresh() }
-            LaunchedEffect(adminMenuViewModel) { adminMenuViewModel.refreshAccess() }
-            DisposableEffect(adminMenuViewModel) {
-                onDispose(adminMenuViewModel::hideAdminPanelEntry)
-            }
-            MainMenuScreen(
-                onNavigate = { menuDestination -> destination = menuDestination.toAppDestination() },
-                username = summary.nickname,
-                showAdminPanel = canShowAdminPanel,
-                avatar =
-                    summary.avatarId?.let { avatarId ->
-                        { ProfileAvatar(avatar = avatarId, size = 148.dp) }
-                    },
-            )
-        }
+        AppDestination.MainMenu ->
+            MainMenuDestinationScreen { menuDestination -> destination = menuDestination.toAppDestination() }
 
         AppDestination.MissionList -> {
             MissionListScreen(
@@ -311,8 +300,20 @@ fun AppNavigation() {
                     destination = detailOrigin
                 },
                 onManageApplicants = { destination = AppDestination.MissionApplicants },
+                onEditMission = { destination = AppDestination.EditMission },
             )
         }
+
+        AppDestination.EditMission ->
+            EditMissionDestination(
+                mission = selectedMission,
+                onBack = { destination = AppDestination.MissionDetail },
+                onMissingMission = { destination = AppDestination.MissionList },
+                onSaved = { updatedMission ->
+                    selectedMission = updatedMission
+                    destination = AppDestination.MissionDetail
+                },
+            )
 
         AppDestination.MissionApplicants -> {
             val mission = selectedMission
@@ -391,6 +392,28 @@ fun AppNavigation() {
     }
 }
 
+@Composable
+private fun MainMenuDestinationScreen(onNavigate: (MainMenuDestination) -> Unit) {
+    val profileSummaryViewModel: ProfileSummaryViewModel = koinViewModel()
+    val summary by profileSummaryViewModel.uiState.collectAsState()
+    val adminMenuViewModel: AdminMenuViewModel = koinViewModel()
+    val canShowAdminPanel by adminMenuViewModel.canShowAdminPanel.collectAsState()
+    LaunchedEffect(Unit) { profileSummaryViewModel.refresh() }
+    LaunchedEffect(adminMenuViewModel) { adminMenuViewModel.refreshAccess() }
+    DisposableEffect(adminMenuViewModel) {
+        onDispose(adminMenuViewModel::hideAdminPanelEntry)
+    }
+    MainMenuScreen(
+        onNavigate = onNavigate,
+        username = summary.nickname,
+        showAdminPanel = canShowAdminPanel,
+        avatar =
+            summary.avatarId?.let { avatarId ->
+                { ProfileAvatar(avatar = avatarId, size = 148.dp) }
+            },
+    )
+}
+
 /** Mensaje mostrado en el login tras restablecer la contraseña. */
 private const val PASSWORD_CHANGED_NOTICE = "Contraseña actualizada. Inicia sesión con tu nueva contraseña"
 private const val SESSION_REQUIRED_NOTICE = "Debes iniciar sesión para ingresar a la aplicación"
@@ -455,6 +478,7 @@ private fun MissionDetailDestination(
     onMissingMission: () -> Unit,
     onBack: () -> Unit,
     onManageApplicants: () -> Unit,
+    onEditMission: () -> Unit,
 ) {
     if (mission == null) {
         onMissingMission()
@@ -471,9 +495,30 @@ private fun MissionDetailDestination(
         modality = mission.modality,
         category = mission.category,
         requirements = mission.requirements,
+        missionReward = mission.reward,
+        missionStatus = mission.status,
         publisherName = mission.publisherProfile?.fullName ?: "Usuario Desconocido",
         approximateZone = "Barrio San Fernando, Cali",
         onBack = onBack,
         onManageApplicants = onManageApplicants,
+        onEditMission = onEditMission,
+    )
+}
+
+@Composable
+private fun EditMissionDestination(
+    mission: Mission?,
+    onBack: () -> Unit,
+    onMissingMission: () -> Unit,
+    onSaved: (Mission) -> Unit,
+) {
+    if (mission == null) {
+        onMissingMission()
+        return
+    }
+    EditMissionScreen(
+        mission = mission,
+        onBack = onBack,
+        onSaved = onSaved,
     )
 }
