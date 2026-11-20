@@ -63,6 +63,7 @@ CREATE TABLE missions (
     date_time TIMESTAMP WITH TIME ZONE NOT NULL,
     location GEOGRAPHY(POINT) NULL,
     meeting_point TEXT NULL,
+    reward TEXT NULL,
     max_participants INTEGER DEFAULT 2,
     status TEXT DEFAULT 'Publicada' CHECK (status IN ('Borrador', 'Publicada', 'Asignada', 'En progreso', 'Completada', 'Cancelada', 'Reportada', 'Suspendida')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
@@ -73,6 +74,7 @@ CREATE TABLE missions (
     )
 );
 COMMENT ON COLUMN missions.meeting_point IS 'Punto de encuentro textual (solo misiones de campo)';
+COMMENT ON COLUMN missions.reward IS 'Recompensa informativa sin pasarela de pago (HU-024)';
 
 -- Tabla de Postulaciones
 CREATE TABLE applications (
@@ -115,6 +117,18 @@ CREATE TABLE mission_logbooks (
     CONSTRAINT unique_mission_author UNIQUE (mission_id, author_id)
 );
 
+-- Calificaciones al publicador (HU-124): un voto por solucionador y misión completada
+CREATE TABLE publisher_ratings (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    mission_id UUID REFERENCES missions(id) ON DELETE CASCADE NOT NULL,
+    solver_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+    publisher_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+    stars INTEGER NOT NULL CHECK (stars BETWEEN 1 AND 5),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    CONSTRAINT unique_rating_per_solver_mission UNIQUE (mission_id, solver_id)
+);
+CREATE INDEX publisher_ratings_publisher_idx ON publisher_ratings (publisher_id);
+
 -- ==========================================
 -- 3. SEGURIDAD (RLS Y POLÍTICAS)
 -- ==========================================
@@ -124,6 +138,7 @@ ALTER TABLE applications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mission_checklist_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mission_pauses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mission_logbooks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE publisher_ratings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE profile_private ENABLE ROW LEVEL SECURITY;
 ALTER TABLE login_attempts ENABLE ROW LEVEL SECURITY; -- sin políticas: solo service role
 
@@ -186,6 +201,22 @@ CREATE POLICY "Accepted solvers update own logbooks" ON mission_logbooks FOR UPD
 
 CREATE POLICY "Public logbooks viewable" ON mission_logbooks FOR SELECT USING (true);
 
+-- Calificaciones: inserta solo un participante aceptado de una misión completada; lectura pública para la reputación
+CREATE POLICY "Solvers rate completed missions" ON publisher_ratings FOR INSERT TO authenticated
+    WITH CHECK (
+        auth.uid() = solver_id
+        AND EXISTS (
+            SELECT 1 FROM applications a
+            JOIN missions m ON m.id = a.mission_id
+            WHERE a.mission_id = publisher_ratings.mission_id
+              AND a.solver_id = auth.uid()
+              AND a.status = 'Aceptado'
+              AND m.status = 'Completada'
+              AND m.publisher_id = publisher_ratings.publisher_id
+        )
+    );
+CREATE POLICY "Ratings viewable by everyone" ON publisher_ratings FOR SELECT USING (true);
+
 
 -- configuración para evitar problemas de permisos
 -- Permisos explícitos para la Data API (necesario desde Nov 2026)
@@ -200,6 +231,8 @@ GRANT UPDATE (is_done) ON public.mission_checklist_items TO authenticated;
 GRANT SELECT, INSERT ON public.mission_pauses TO authenticated;
 GRANT UPDATE (is_active) ON public.mission_pauses TO authenticated;
 GRANT SELECT, INSERT, UPDATE ON public.mission_logbooks TO authenticated;
+GRANT SELECT ON public.publisher_ratings TO anon, authenticated;
+GRANT INSERT ON public.publisher_ratings TO authenticated;
 
 -- Datos privados y intentos de login
 REVOKE ALL ON public.profile_private FROM anon, authenticated;

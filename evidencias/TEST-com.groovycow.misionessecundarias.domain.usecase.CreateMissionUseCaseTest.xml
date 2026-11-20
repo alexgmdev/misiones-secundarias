@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.groovycow.misionessecundarias.domain.usecase.CreateMissionUseCaseTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-11-18T23:37:01.834Z" hostname="SC306E05" time="0.116">
+  <properties/>
+  <testcase name="shouldReturnCreatedMissionWhenRepositorySucceeds" classname="com.groovycow.misionessecundarias.domain.usecase.CreateMissionUseCaseTest" time="0.079"/>
+  <testcase name="shouldReturnFailureWhenRepositoryThrows" classname="com.groovycow.misionessecundarias.domain.usecase.CreateMissionUseCaseTest" time="0.02"/>
+  <testcase name="shouldRethrowCancellation" classname="com.groovycow.misionessecundarias.domain.usecase.CreateMissionUseCaseTest" time="0.017"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

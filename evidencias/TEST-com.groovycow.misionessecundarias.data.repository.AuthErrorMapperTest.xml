@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.groovycow.misionessecundarias.data.repository.AuthErrorMapperTest" tests="14" skipped="0" failures="0" errors="0" timestamp="2026-11-18T23:36:50.481Z" hostname="SC306E05" time="0.079">
+  <properties/>
+  <testcase name="mapsUnknownThrowableToServerError" classname="com.groovycow.misionessecundarias.data.repository.AuthErrorMapperTest" time="0.055"/>
+  <testcase name="mapsIoExceptionAndTimeoutToNoConnection" classname="com.groovycow.misionessecundarias.data.repository.AuthErrorMapperTest" time="0.002"/>
+  <testcase name="mapsSamePasswordToSamePassword" classname="com.groovycow.misionessecundarias.data.repository.AuthErrorMapperTest" time="0.003"/>
+  <testcase name="mapsRateLimitOutsideLoginToServerError" classname="com.groovycow.misionessecundarias.data.repository.AuthErrorMapperTest" time="0.0"/>
+  <testcase name="mapsOther4xxInLoginToInvalidCredentials" classname="com.groovycow.misionessecundarias.data.repository.AuthErrorMapperTest" time="0.002"/>
+  <testcase name="mapsServerErrorsToServerErrorEvenInLogin" classname="com.groovycow.misionessecundarias.data.repository.AuthErrorMapperTest" time="0.001"/>
+  <testcase name="mapsWrappedIoExceptionToNoConnection" classname="com.groovycow.misionessecundarias.data.repository.AuthErrorMapperTest" time="0.0"/>
+  <testcase name="mapsEmailExistsToEmailInUse" classname="com.groovycow.misionessecundarias.data.repository.AuthErrorMapperTest" time="0.002"/>
+  <testcase name="mapsInvalidCredentialsDependingOnOperation" classname="com.groovycow.misionessecundarias.data.repository.AuthErrorMapperTest" time="0.003"/>
+  <testcase name="mapsOtpExpiredToInvalidOrExpiredCodeInAnyOperation" classname="com.groovycow.misionessecundarias.data.repository.AuthErrorMapperTest" time="0.0"/>
+  <testcase name="mapsWeakPasswordToWeakPassword" classname="com.groovycow.misionessecundarias.data.repository.AuthErrorMapperTest" time="0.002"/>
+  <testcase name="mapsEdgeFunctionGenericErrorsWithoutCodeToInvalidCredentialsInLogin" classname="com.groovycow.misionessecundarias.data.repository.AuthErrorMapperTest" time="0.0"/>
+  <testcase name="mapsClientRejectionsWhileVerifyingCodeToInvalidOrExpiredCode" classname="com.groovycow.misionessecundarias.data.repository.AuthErrorMapperTest" time="0.0"/>
+  <testcase name="mapsUserAlreadyExistsToEmailInUse" classname="com.groovycow.misionessecundarias.data.repository.AuthErrorMapperTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

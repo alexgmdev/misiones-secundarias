@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.groovycow.misionessecundarias.domain.util.GeoUtilsTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-11-18T23:37:04.109Z" hostname="SC306E05" time="0.002">
+  <properties/>
+  <testcase name="calculateDistanceInKm returns correct distance for known coordinates" classname="com.groovycow.misionessecundarias.domain.util.GeoUtilsTest" time="0.001"/>
+  <testcase name="parseWktPoint returns null for null input" classname="com.groovycow.misionessecundarias.domain.util.GeoUtilsTest" time="0.0"/>
+  <testcase name="calculateDistanceInKm returns 0 for the same point" classname="com.groovycow.misionessecundarias.domain.util.GeoUtilsTest" time="0.0"/>
+  <testcase name="parseWktPoint returns valid GeoPoint for correct WKT string" classname="com.groovycow.misionessecundarias.domain.util.GeoUtilsTest" time="0.001"/>
+  <testcase name="parseWktPoint returns null for malformed WKT string" classname="com.groovycow.misionessecundarias.domain.util.GeoUtilsTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

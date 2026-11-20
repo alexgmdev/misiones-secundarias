@@ -2,6 +2,7 @@ package com.groovycow.misionessecundarias.data.repository
 
 import com.groovycow.misionessecundarias.domain.model.CreateMissionDraft
 import com.groovycow.misionessecundarias.domain.model.Mission
+import com.groovycow.misionessecundarias.domain.model.MissionDetailsUpdate
 import com.groovycow.misionessecundarias.domain.model.MissionModality
 import com.groovycow.misionessecundarias.domain.model.MissionSessionRequiredException
 import com.groovycow.misionessecundarias.domain.repository.MissionRepository
@@ -45,6 +46,7 @@ class MissionRepositoryImpl(private val supabase: SupabaseClient) : MissionRepos
         val description = draft.description.trim()
         val category = draft.category?.trim()?.takeIf(String::isNotEmpty)
         val requirements = draft.requirements.trim()
+        val reward = draft.reward.trim().takeIf(String::isNotEmpty)
         val dateTime = MissionDateTime.toIsoOffset(date, time)
         val meetingPoint =
             draft.meetingPoint.trim().takeIf {
@@ -64,6 +66,7 @@ class MissionRepositoryImpl(private val supabase: SupabaseClient) : MissionRepos
                         dateTime = dateTime,
                         location = location,
                         meetingPoint = meetingPoint,
+                        reward = reward,
                         maxParticipants = draft.maxParticipants,
                         status = "Borrador",
                     ),
@@ -84,6 +87,7 @@ class MissionRepositoryImpl(private val supabase: SupabaseClient) : MissionRepos
             dateTime = dateTime,
             location = location,
             meetingPoint = meetingPoint,
+            reward = reward,
             maxParticipants = draft.maxParticipants,
             status = "Borrador",
             publisherProfile = null,
@@ -117,6 +121,35 @@ class MissionRepositoryImpl(private val supabase: SupabaseClient) : MissionRepos
 
             updatedMission ?: findOwnMission(id, publisherId)?.takeIf { it.status == "Completada" }
                 ?: error("La misión no existe, no te pertenece o no está en progreso.")
+        }
+
+    override suspend fun updateMissionDetails(
+        id: String,
+        update: MissionDetailsUpdate,
+    ): Mission =
+        withContext(Dispatchers.IO) {
+            val publisherId = authenticatedUserId("editar una misión")
+            val updatedMission =
+                supabase.from("missions")
+                    .update(
+                        {
+                            set("title", update.title)
+                            set("description", update.description)
+                            set("requirements", update.requirements)
+                            set("category", update.category)
+                            set("reward", update.reward)
+                        },
+                    ) {
+                        filter {
+                            eq("id", id)
+                            eq("publisher_id", publisherId)
+                            eq("status", "Publicada")
+                        }
+                        select()
+                    }
+                    .decodeSingleOrNull<Mission>()
+
+            updatedMission ?: error("La misión no existe, no te pertenece o ya no se puede editar.")
         }
 
     override suspend fun getMyMissions(): List<Mission> =
@@ -247,6 +280,7 @@ private data class MissionInsertDto(
     @SerialName("date_time") val dateTime: String,
     val location: String?,
     @SerialName("meeting_point") val meetingPoint: String?,
+    val reward: String?,
     @SerialName("max_participants") val maxParticipants: Int,
     val status: String,
 )

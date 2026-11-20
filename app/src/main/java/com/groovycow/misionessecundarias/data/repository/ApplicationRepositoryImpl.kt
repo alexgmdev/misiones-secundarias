@@ -1,5 +1,7 @@
+
 package com.groovycow.misionessecundarias.data.repository
 
+import com.groovycow.misionessecundarias.domain.model.ApplicantPublicProfile
 import com.groovycow.misionessecundarias.domain.model.Application
 import com.groovycow.misionessecundarias.domain.model.ApplicationDecision
 import com.groovycow.misionessecundarias.domain.model.MissionApplicant
@@ -34,13 +36,30 @@ class ApplicationRepositoryImpl(
                     columns =
                         Columns.raw(
                             "id,mission_id,solver_id,status,applied_at," +
-                                "applicant:profiles!applications_solver_id_fkey(full_name)",
+                                "applicant:profiles!applications_solver_id_fkey(" +
+                                "full_name,nickname,avatar_url,gender,description,level)",
                         ),
                 ) {
                     filter { eq("mission_id", missionId) }
                 }
                 .decodeList<MissionApplicant>()
                 .sortedByDescending { it.appliedAt }
+        }
+
+    override suspend fun getPublicProfile(userId: String): ApplicantPublicProfile? =
+        withContext(Dispatchers.IO) {
+            authenticatedUserId("consultar el perfil público")
+
+            supabase.from("profiles")
+                .select(
+                    columns =
+                        Columns.raw(
+                            "id,full_name,nickname,avatar_url,photo_url,gender,description,level",
+                        ),
+                ) {
+                    filter { eq("id", userId) }
+                }
+                .decodeSingleOrNull<ApplicantPublicProfile>()
         }
 
     override suspend fun updateApplicationStatus(

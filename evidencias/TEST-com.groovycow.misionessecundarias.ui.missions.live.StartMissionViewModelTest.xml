@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.groovycow.misionessecundarias.ui.missions.live.StartMissionViewModelTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-11-18T23:37:07.316Z" hostname="SC306E05" time="0.123">
+  <properties/>
+  <testcase name="unknownFailureMapsToServerError" classname="com.groovycow.misionessecundarias.ui.missions.live.StartMissionViewModelTest" time="0.071"/>
+  <testcase name="businessErrorIsExposedWithoutStartedMission" classname="com.groovycow.misionessecundarias.ui.missions.live.StartMissionViewModelTest" time="0.006"/>
+  <testcase name="consumeStartedMissionResetsState" classname="com.groovycow.misionessecundarias.ui.missions.live.StartMissionViewModelTest" time="0.005"/>
+  <testcase name="secondStartAfterSuccessDoesNotCallUseCaseAgain" classname="com.groovycow.misionessecundarias.ui.missions.live.StartMissionViewModelTest" time="0.011"/>
+  <testcase name="successExposesStartedMission" classname="com.groovycow.misionessecundarias.ui.missions.live.StartMissionViewModelTest" time="0.006"/>
+  <testcase name="networkFailureMapsToNoConnection" classname="com.groovycow.misionessecundarias.ui.missions.live.StartMissionViewModelTest" time="0.007"/>
+  <testcase name="dismissErrorAllowsRetry" classname="com.groovycow.misionessecundarias.ui.missions.live.StartMissionViewModelTest" time="0.016"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

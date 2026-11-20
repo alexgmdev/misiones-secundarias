@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.groovycow.misionessecundarias.ui.missions.live.PausesViewModelTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-11-18T23:37:07.155Z" hostname="SC306E05" time="0.155">
+  <properties/>
+  <testcase name="loadShowsActivePauses" classname="com.groovycow.misionessecundarias.ui.missions.live.PausesViewModelTest" time="0.016"/>
+  <testcase name="failedToggleKeepsPreviousStateAndShowsError" classname="com.groovycow.misionessecundarias.ui.missions.live.PausesViewModelTest" time="0.017"/>
+  <testcase name="togglingActivatesHydrationPause" classname="com.groovycow.misionessecundarias.ui.missions.live.PausesViewModelTest" time="0.028"/>
+  <testcase name="togglingAnActivePauseDeactivatesIt" classname="com.groovycow.misionessecundarias.ui.missions.live.PausesViewModelTest" time="0.018"/>
+  <testcase name="severalPausesCanBeActiveAtTheSameTime" classname="com.groovycow.misionessecundarias.ui.missions.live.PausesViewModelTest" time="0.046"/>
+  <testcase name="loadWithoutPausesLeavesEverythingOff" classname="com.groovycow.misionessecundarias.ui.missions.live.PausesViewModelTest" time="0.001"/>
+  <testcase name="loadFailureKeepsVisiblePausesAndSetsError" classname="com.groovycow.misionessecundarias.ui.missions.live.PausesViewModelTest" time="0.007"/>
+  <testcase name="dismissErrorClearsMessage" classname="com.groovycow.misionessecundarias.ui.missions.live.PausesViewModelTest" time="0.022"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

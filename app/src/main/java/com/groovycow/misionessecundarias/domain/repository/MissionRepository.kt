@@ -2,6 +2,7 @@ package com.groovycow.misionessecundarias.domain.repository
 
 import com.groovycow.misionessecundarias.domain.model.CreateMissionDraft
 import com.groovycow.misionessecundarias.domain.model.Mission
+import com.groovycow.misionessecundarias.domain.model.MissionDetailsUpdate
 
 interface MissionRepository {
     /** Guarda un borrador de misión asociado al usuario autenticado. */
@@ -15,6 +16,12 @@ interface MissionRepository {
 
     /** Cambia a "Completada" una misión propia en progreso y devuelve el estado resultante. */
     suspend fun completeMission(id: String): Mission
+
+    /** Actualiza los datos descriptivos de una misión propia publicada (HU-032). */
+    suspend fun updateMissionDetails(
+        id: String,
+        update: MissionDetailsUpdate,
+    ): Mission
 
     /** Misiones creadas por el usuario autenticado, en cualquier estado (incluye borradores). */
     suspend fun getMyMissions(): List<Mission>

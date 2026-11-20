@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.groovycow.misionessecundarias.domain.usecase.StartMissionUseCaseTest" tests="10" skipped="0" failures="0" errors="0" timestamp="2026-11-18T23:37:03.776Z" hostname="SC306E05" time="0.232">
+  <properties/>
+  <testcase name="reportsUnreadableDateTime" classname="com.groovycow.misionessecundarias.domain.usecase.StartMissionUseCaseTest" time="0.028"/>
+  <testcase name="rejectsStartWithoutAcceptedParticipants" classname="com.groovycow.misionessecundarias.domain.usecase.StartMissionUseCaseTest" time="0.033"/>
+  <testcase name="startsMissionWhenTimeReachedAndParticipantsAccepted" classname="com.groovycow.misionessecundarias.domain.usecase.StartMissionUseCaseTest" time="0.029"/>
+  <testcase name="startsAssignedMissionAtExactScheduledTime" classname="com.groovycow.misionessecundarias.domain.usecase.StartMissionUseCaseTest" time="0.026"/>
+  <testcase name="rejectsStartWhenMissionHasNoApplicants" classname="com.groovycow.misionessecundarias.domain.usecase.StartMissionUseCaseTest" time="0.016"/>
+  <testcase name="reportsMissingMission" classname="com.groovycow.misionessecundarias.domain.usecase.StartMissionUseCaseTest" time="0.01"/>
+  <testcase name="rejectsStartBeforeScheduledTime" classname="com.groovycow.misionessecundarias.domain.usecase.StartMissionUseCaseTest" time="0.022"/>
+  <testcase name="wrapsRepositoryFailure" classname="com.groovycow.misionessecundarias.domain.usecase.StartMissionUseCaseTest" time="0.021"/>
+  <testcase name="alreadyInProgressMissionSucceedsWithoutUpdating" classname="com.groovycow.misionessecundarias.domain.usecase.StartMissionUseCaseTest" time="0.019"/>
+  <testcase name="rejectsStartFromNonStartableStatuses" classname="com.groovycow.misionessecundarias.domain.usecase.StartMissionUseCaseTest" time="0.025"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

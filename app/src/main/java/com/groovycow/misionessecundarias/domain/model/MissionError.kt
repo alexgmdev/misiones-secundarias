@@ -70,6 +70,18 @@ sealed interface MissionError {
 
     /** El relato de la bitácora es obligatorio. */
     data object LogbookEntryRequired : MissionError
+
+    /** La misión solicitada no existe o ya no está disponible. */
+    data object NotFound : MissionError
+
+    /** Solo se pueden editar misiones publicadas propias. */
+    data object NotEditable : MissionError
+
+    /** La misión ya tiene participantes aceptados y no admite cambios descriptivos. */
+    data object HasAcceptedParticipants : MissionError
+
+    /** Los datos descriptivos enviados están incompletos. */
+    data object InvalidDetails : MissionError
 }
 
 /** Campo del formulario asociado a un error de validación. */

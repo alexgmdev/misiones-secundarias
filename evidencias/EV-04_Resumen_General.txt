@@ -1,0 +1,15 @@
+﻿RESUMEN GENERAL DE EVIDENCIAS
+Fecha: 2026-11-18 18:52
+
+PRUEBAS UNITARIAS
+Suites XML: 50
+Total de pruebas: 307
+Fallidas: 0
+Errores: 0
+Omitidas: 0
+
+COMPILACION DEBUG
+BUILD SUCCESSFUL
+
+CONFIGURACION SUPABASE
+Consultar EV-02_Configuracion_Supabase.txt.
