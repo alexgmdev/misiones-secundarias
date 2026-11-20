@@ -13,6 +13,8 @@ data class CreateMissionDraft(
     val requirements: String,
     /** Categoría opcional de la misión. */
     val category: String?,
+    /** Recompensa informativa ofrecida a los participantes; vacía cuando no aplica. */
+    val reward: String = "",
     /** Modalidad seleccionada. */
     val modality: MissionModality,
     /** Día de inicio, nulo mientras no se seleccione. */

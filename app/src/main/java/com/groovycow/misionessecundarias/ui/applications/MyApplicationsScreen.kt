@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -50,8 +51,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.groovycow.misionessecundarias.domain.model.MyApplication
 import com.groovycow.misionessecundarias.domain.model.pauseNotice
+import com.groovycow.misionessecundarias.ui.missions.rating.RatePublisherViewModel
 import kotlinx.coroutines.delay
 import org.koin.androidx.compose.koinViewModel
 import java.time.OffsetDateTime
@@ -62,14 +65,17 @@ import java.util.Locale
 private const val PAUSE_REFRESH_MILLIS = 10_000L
 
 @OptIn(ExperimentalMaterial3Api::class)
+@Suppress("CyclomaticComplexMethod")
 @Composable
 fun MyApplicationsScreen(
     onBack: () -> Unit,
     onExploreMissions: () -> Unit = {},
     onMyMissions: () -> Unit = {},
     viewModel: MyApplicationsViewModel = koinViewModel(),
+    rateViewModel: RatePublisherViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val rateState by rateViewModel.uiState.collectAsState()
     var applicationToCancel by remember { mutableStateOf<MyApplication?>(null) }
 
     LaunchedEffect(Unit) {
@@ -150,6 +156,7 @@ fun MyApplicationsScreen(
                                 application = application,
                                 isCancelling = uiState.cancellingApplicationId == application.id,
                                 onCancel = { applicationToCancel = application },
+                                onRate = { rateViewModel.open(application.missionId) },
                                 pauseNotice = pauseNotice(uiState.activePauses[application.missionId].orEmpty()),
                             )
                         }
@@ -192,6 +199,67 @@ fun MyApplicationsScreen(
                     Text("Volver", color = ForestGreen)
                 }
             },
+        )
+    }
+
+    rateState.missionId?.let {
+        AlertDialog(
+            onDismissRequest = { if (!rateState.isSubmitting) rateViewModel.dismiss() },
+            containerColor = CreamSurface,
+            title = {
+                Text(
+                    text = if (rateState.isCompleted) "¡Gracias!" else "Calificar publicador",
+                    color = ForestGreen,
+                    fontWeight = FontWeight.ExtraBold,
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    if (!rateState.isCompleted) {
+                        Text("¿Cómo fue el desempeño del publicador?", color = BarkBrown)
+                        StarSelector(
+                            selected = rateState.stars,
+                            enabled = !rateState.isSubmitting,
+                            onSelect = rateViewModel::selectStars,
+                        )
+                    }
+                    rateState.message?.let { message ->
+                        Text(
+                            text = message,
+                            color = if (rateState.isError) AlertCoral else ForestGreen,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                if (rateState.isCompleted) {
+                    TextButton(onClick = rateViewModel::dismiss) {
+                        Text("Cerrar", color = ForestGreen, fontWeight = FontWeight.Bold)
+                    }
+                } else {
+                    TextButton(
+                        onClick = rateViewModel::submit,
+                        enabled = !rateState.isSubmitting,
+                    ) {
+                        Text(
+                            text = if (rateState.isSubmitting) "Enviando..." else "Enviar",
+                            color = ForestGreen,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                }
+            },
+            dismissButton =
+                if (rateState.isCompleted) {
+                    null
+                } else {
+                    {
+                        TextButton(onClick = rateViewModel::dismiss) {
+                            Text("Cancelar", color = BarkBrown)
+                        }
+                    }
+                },
         )
     }
 
@@ -333,6 +401,7 @@ private fun ApplicationStatusCard(
     application: MyApplication,
     isCancelling: Boolean,
     onCancel: () -> Unit,
+    onRate: () -> Unit,
     pauseNotice: String? = null,
 ) {
     val statusStyle =
@@ -362,6 +431,8 @@ private fun ApplicationStatusCard(
                     application.status == "Aceptado"
             missionHasNotStarted && cancellableMission && cancellableApplication
         }.getOrDefault(false)
+
+    val canRate = application.status == "Aceptado" && application.mission.status == "Completada"
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -441,6 +512,22 @@ private fun ApplicationStatusCard(
                     }
                 }
             }
+
+            if (canRate) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Button(
+                    onClick = onRate,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors =
+                        ButtonDefaults.buttonColors(
+                            containerColor = ForestGreen,
+                            contentColor = CreamSurface,
+                        ),
+                ) {
+                    Text("Calificar publicador", fontWeight = FontWeight.ExtraBold)
+                }
+            }
         }
     }
 }
@@ -450,6 +537,24 @@ private data class StatusStyle(
     val background: Color,
     val label: String,
 )
+
+@Composable
+private fun StarSelector(
+    selected: Int,
+    enabled: Boolean,
+    onSelect: (Int) -> Unit,
+) {
+    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        for (star in 1..5) {
+            Text(
+                text = "★",
+                fontSize = 36.sp,
+                color = if (star <= selected) SunYellow else Color(0xFFD9D3C7),
+                modifier = Modifier.clickable(enabled = enabled) { onSelect(star) },
+            )
+        }
+    }
+}
 
 private val ForestGreen = Color(0xFF214E34)
 private val LeafGreen = Color(0xFF64A95C)

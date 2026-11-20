@@ -47,6 +47,7 @@ fun SettingsScreen(
     onSignedOut: () -> Unit,
     onChangePassword: () -> Unit = {},
     onOpenGuide: () -> Unit = {},
+    onOpenPrivacyPolicy: () -> Unit = {},
     viewModel: SettingsViewModel = koinViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -166,6 +167,45 @@ fun SettingsScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(18.dp),
+                border = BorderStroke(3.dp, RiverTeal),
+                colors = CardDefaults.cardColors(containerColor = CreamSurface),
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        text = "Privacidad",
+                        color = ForestGreen,
+                        fontWeight = FontWeight.ExtraBold,
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Consulta cómo se tratan tu ubicación y tus datos personales.",
+                        color = BarkBrown,
+                        textAlign = TextAlign.Center,
+                    )
+                    Spacer(modifier = Modifier.height(20.dp))
+                    Button(
+                        onClick = onOpenPrivacyPolicy,
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .height(54.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors =
+                            ButtonDefaults.buttonColors(
+                                containerColor = ForestGreen,
+                                contentColor = CreamSurface,
+                            ),
+                    ) {
+                        Text("Políticas de Privacidad", fontWeight = FontWeight.ExtraBold)
+                    }
+                }
+            }
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
                 border = BorderStroke(3.dp, EarthOrange),
                 colors = CardDefaults.cardColors(containerColor = CreamSurface),
             ) {
@@ -234,4 +274,5 @@ private val EarthOrange = Color(0xFFE58A3A)
 private val SandBackground = Color(0xFFF7F3E8)
 private val CreamSurface = Color(0xFFFFFCF3)
 private val BarkBrown = Color(0xFF594A3C)
+private val RiverTeal = Color(0xFF38A89D)
 private val AlertCoral = Color(0xFFE85D3F)
