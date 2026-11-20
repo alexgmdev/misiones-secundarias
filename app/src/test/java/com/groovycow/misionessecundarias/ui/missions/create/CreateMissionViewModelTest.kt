@@ -11,9 +11,11 @@ import com.groovycow.misionessecundarias.testutil.MainDispatcherRule
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.CompletableDeferred
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -114,6 +116,45 @@ class CreateMissionViewModelTest {
         assertEquals(MissionError.SessionRequired, viewModel.uiState.value.submissionError)
         assertEquals("Siembra en Parque Dog", viewModel.uiState.value.title)
         assertNull(viewModel.uiState.value.savedMission)
+    }
+
+    @Test
+    fun validDraftPreviewShowsTheSameDataWithoutPersisting() {
+        val viewModel = newViewModel()
+        viewModel.fillValidDraft()
+        viewModel.onRewardChange("Hidratación y fruta")
+
+        viewModel.onPreview()
+
+        val preview = viewModel.uiState.value.previewDraft
+        assertNotNull(preview)
+        assertEquals("Hidratación y fruta", preview?.reward)
+        assertFalse(viewModel.uiState.value.isSaving)
+        coVerify(exactly = 0) { createMissionUseCase(any()) }
+    }
+
+    @Test
+    fun invalidPreviewShowsFieldErrorsAndDoesNotOpenPreview() {
+        val viewModel = newViewModel()
+        viewModel.onModalitySelected(MissionModality.CAMPO)
+
+        viewModel.onPreview()
+
+        assertNull(viewModel.uiState.value.previewDraft)
+        assertEquals(MissionError.Required, viewModel.uiState.value.fieldErrors[MissionField.TITLE])
+    }
+
+    @Test
+    fun rewardIsIncludedInThePersistedDraft() {
+        val viewModel = newViewModel()
+        viewModel.fillValidDraft()
+        viewModel.onRewardChange("Certificado y refrigerio")
+        val draftSlot = slot<com.groovycow.misionessecundarias.domain.model.CreateMissionDraft>()
+        coEvery { createMissionUseCase(capture(draftSlot)) } returns Result.success(createdMission)
+
+        viewModel.saveDraft()
+
+        assertEquals("Certificado y refrigerio", draftSlot.captured.reward)
     }
 
     private fun newViewModel() = CreateMissionViewModel(createMissionUseCase, validator)

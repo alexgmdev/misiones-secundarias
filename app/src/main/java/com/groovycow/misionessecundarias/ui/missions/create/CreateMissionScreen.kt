@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import com.groovycow.misionessecundarias.domain.model.MissionError
 import com.groovycow.misionessecundarias.domain.model.MissionField
 import com.groovycow.misionessecundarias.domain.model.MissionModality
+import com.groovycow.misionessecundarias.ui.missions.preview.MissionPreviewScreen
 import com.groovycow.misionessecundarias.ui.missions.publish.PublishMissionViewModel
 import com.groovycow.misionessecundarias.ui.missions.toMessage
 import org.koin.androidx.compose.koinViewModel
@@ -86,17 +87,28 @@ fun CreateMissionScreen(
         publishViewModel.reset()
     }
     BackHandler(enabled = state.modality != null && state.savedMission == null) {
-        viewModel.onChangeModality()
+        if (state.previewDraft != null) viewModel.onBackToEdit() else viewModel.onChangeModality()
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Crear borrador", fontWeight = FontWeight.Bold) },
+                title = {
+                    Text(
+                        if (state.previewDraft != null) "Previsualización" else "Crear borrador",
+                        fontWeight = FontWeight.Bold,
+                    )
+                },
                 navigationIcon = {
                     IconButton(
                         onClick = {
-                            if (state.modality == null || state.savedMission != null) onBack() else viewModel.onChangeModality()
+                            if (state.previewDraft != null) {
+                                viewModel.onBackToEdit()
+                            } else if (state.modality == null || state.savedMission != null) {
+                                onBack()
+                            } else {
+                                viewModel.onChangeModality()
+                            }
                         },
                     ) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
@@ -105,19 +117,34 @@ fun CreateMissionScreen(
             )
         },
     ) { padding ->
-        if (state.modality == null) {
-            ModalitySelector(
-                modifier = Modifier.padding(padding),
-                onSelect = viewModel::onModalitySelected,
-            )
-        } else {
-            MissionDraftForm(
-                state = state,
-                viewModel = viewModel,
-                modifier = Modifier.padding(padding),
-                onChooseDate = { showDatePicker = true },
-                onChooseTime = { showTimePicker = true },
-            )
+        val previewDraft = state.previewDraft
+        when {
+            previewDraft != null -> {
+                MissionPreviewScreen(
+                    draft = previewDraft,
+                    isSaving = state.isSaving,
+                    onBackToEdit = viewModel::onBackToEdit,
+                    onSave = viewModel::saveDraft,
+                    modifier = Modifier.padding(padding),
+                )
+            }
+
+            state.modality == null -> {
+                ModalitySelector(
+                    modifier = Modifier.padding(padding),
+                    onSelect = viewModel::onModalitySelected,
+                )
+            }
+
+            else -> {
+                MissionDraftForm(
+                    state = state,
+                    viewModel = viewModel,
+                    modifier = Modifier.padding(padding),
+                    onChooseDate = { showDatePicker = true },
+                    onChooseTime = { showTimePicker = true },
+                )
+            }
         }
     }
 
@@ -321,6 +348,19 @@ private fun MissionDraftForm(
             onValueChange = viewModel::onCategoryChange,
             enabled = !state.isSaving,
         )
+        MissionInputField(
+            label = "Recompensa informativa (opcional)",
+            value = state.reward,
+            onValueChange = viewModel::onRewardChange,
+            singleLine = false,
+            placeholder = "Ej.: hidratación y fruta",
+            enabled = !state.isSaving,
+        )
+        Text(
+            text = "Las recompensas son informativas: la plataforma no procesa pagos ni transacciones económicas.",
+            style = MaterialTheme.typography.bodySmall,
+            color = BarkBrown,
+        )
 
         if (state.modality == MissionModality.CAMPO) {
             MissionInputField(
@@ -385,6 +425,13 @@ private fun MissionDraftForm(
 
         state.submissionError?.let { error ->
             Text(error.toMessage(), color = MaterialTheme.colorScheme.error)
+        }
+        OutlinedButton(
+            onClick = viewModel::onPreview,
+            enabled = !state.isSaving,
+            modifier = Modifier.fillMaxWidth().height(52.dp),
+        ) {
+            Text("Previsualizar")
         }
         Button(
             onClick = viewModel::saveDraft,
