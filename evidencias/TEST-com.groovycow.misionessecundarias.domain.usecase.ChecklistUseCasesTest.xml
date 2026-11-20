@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.groovycow.misionessecundarias.domain.usecase.ChecklistUseCasesTest" tests="14" skipped="0" failures="0" errors="0" timestamp="2026-11-18T23:36:59.621Z" hostname="SC306E05" time="1.37">
+  <properties/>
+  <testcase name="getChecklistWrapsFailure" classname="com.groovycow.misionessecundarias.domain.usecase.ChecklistUseCasesTest" time="0.894"/>
+  <testcase name="deleteDelegatesToRepositoryAndWrapsFailure" classname="com.groovycow.misionessecundarias.domain.usecase.ChecklistUseCasesTest" time="0.041"/>
+  <testcase name="addAcceptsTitleAtLimit" classname="com.groovycow.misionessecundarias.domain.usecase.ChecklistUseCasesTest" time="0.136"/>
+  <testcase name="getChecklistReturnsRepositoryItems" classname="com.groovycow.misionessecundarias.domain.usecase.ChecklistUseCasesTest" time="0.119"/>
+  <testcase name="progressIsZeroWithoutItems" classname="com.groovycow.misionessecundarias.domain.usecase.ChecklistUseCasesTest" time="0.002"/>
+  <testcase name="progressIsZeroWhenNothingIsDone" classname="com.groovycow.misionessecundarias.domain.usecase.ChecklistUseCasesTest" time="0.0"/>
+  <testcase name="progressIsHundredWhenEverythingIsDone" classname="com.groovycow.misionessecundarias.domain.usecase.ChecklistUseCasesTest" time="0.001"/>
+  <testcase name="addRejectsTitleLongerThanLimit" classname="com.groovycow.misionessecundarias.domain.usecase.ChecklistUseCasesTest" time="0.031"/>
+  <testcase name="setDoneDelegatesToRepository" classname="com.groovycow.misionessecundarias.domain.usecase.ChecklistUseCasesTest" time="0.107"/>
+  <testcase name="addRejectsBlankTitle" classname="com.groovycow.misionessecundarias.domain.usecase.ChecklistUseCasesTest" time="0.018"/>
+  <testcase name="addTrimsTitleBeforeSaving" classname="com.groovycow.misionessecundarias.domain.usecase.ChecklistUseCasesTest" time="0.018"/>
+  <testcase name="progressIsSixtyWithThreeOfFiveDone" classname="com.groovycow.misionessecundarias.domain.usecase.ChecklistUseCasesTest" time="0.0"/>
+  <testcase name="progressIsFiftyWithHalfDone" classname="com.groovycow.misionessecundarias.domain.usecase.ChecklistUseCasesTest" time="0.001"/>
+  <testcase name="progressRoundsToNearestInteger" classname="com.groovycow.misionessecundarias.domain.usecase.ChecklistUseCasesTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

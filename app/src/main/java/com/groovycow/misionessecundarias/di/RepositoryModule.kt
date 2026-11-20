@@ -1,3 +1,4 @@
+
 package com.groovycow.misionessecundarias.di
 
 import com.groovycow.misionessecundarias.data.repository.ApplicationRepositoryImpl
@@ -21,6 +22,7 @@ import com.groovycow.misionessecundarias.domain.usecase.CreateMissionUseCase
 import com.groovycow.misionessecundarias.domain.usecase.DeleteChecklistItemUseCase
 import com.groovycow.misionessecundarias.domain.usecase.GenerateVerificationCodeUseCase
 import com.groovycow.misionessecundarias.domain.usecase.GetActivePausesUseCase
+import com.groovycow.misionessecundarias.domain.usecase.GetApplicantPublicProfileUseCase
 import com.groovycow.misionessecundarias.domain.usecase.GetChecklistUseCase
 import com.groovycow.misionessecundarias.domain.usecase.GetLivePanelParticipantsUseCase
 import com.groovycow.misionessecundarias.domain.usecase.GetMissionApplicantsUseCase
@@ -42,6 +44,7 @@ import com.groovycow.misionessecundarias.ui.applications.ApplicationViewModel
 import com.groovycow.misionessecundarias.ui.applications.MyApplicationsViewModel
 import com.groovycow.misionessecundarias.ui.missions.ApplicantsViewModel
 import com.groovycow.misionessecundarias.ui.missions.MissionViewModel
+import com.groovycow.misionessecundarias.ui.missions.PublicProfileViewModel
 import com.groovycow.misionessecundarias.ui.missions.create.CreateMissionViewModel
 import com.groovycow.misionessecundarias.ui.missions.edit.EditMissionViewModel
 import com.groovycow.misionessecundarias.ui.missions.live.ChecklistViewModel
@@ -80,6 +83,7 @@ val repositoryModule =
         factory { GetMissionApplicantsUseCase(get()) }
         factory { UpdateApplicationStatusUseCase(get()) }
         factory { GetLivePanelParticipantsUseCase(get()) }
+        factory { GetApplicantPublicProfileUseCase(get()) }
         factory { GetChecklistUseCase(get()) }
         factory { GetActivePausesUseCase(get()) }
         factory { SetMissionPauseUseCase(get()) }
@@ -97,6 +101,7 @@ val repositoryModule =
         factory { RatePublisherUseCase(get(), get(), get()) }
         factory { GetPublisherReputationUseCase(get()) }
 
+        // ViewModels
         viewModel { MissionViewModel(get(), get()) }
         viewModel { CreateMissionViewModel(get(), get()) }
         viewModel { PublishMissionViewModel(get()) }
@@ -106,6 +111,7 @@ val repositoryModule =
         viewModel { ApplicationViewModel(get(), get(), get(), get(), get()) }
         viewModel { MyApplicationsViewModel(get(), get(), get()) }
         viewModel { ApplicantsViewModel(get(), get()) }
+        viewModel { PublicProfileViewModel(get()) }
         viewModel { LivePanelViewModel(get()) }
         viewModel { ChecklistViewModel(get(), get(), get(), get()) }
         viewModel { PausesViewModel(get(), get()) }

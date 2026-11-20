@@ -1,12 +1,15 @@
 package com.groovycow.misionessecundarias.domain.repository
 
 import com.groovycow.misionessecundarias.data.repository.ApplicationStatusDto
+import com.groovycow.misionessecundarias.domain.model.ApplicantPublicProfile
 import com.groovycow.misionessecundarias.domain.model.Application
 import com.groovycow.misionessecundarias.domain.model.ApplicationDecision
 import com.groovycow.misionessecundarias.domain.model.MissionApplicant
 import com.groovycow.misionessecundarias.domain.model.MyApplication
 
 interface ApplicationRepository {
+    suspend fun getPublicProfile(userId: String): ApplicantPublicProfile?
+
     suspend fun applyToMission(missionId: String): Application
 
     suspend fun getMyApplications(): List<MyApplication>

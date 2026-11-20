@@ -1,3 +1,4 @@
+
 package com.groovycow.misionessecundarias.ui.navigation
 
 import androidx.activity.compose.BackHandler
@@ -26,6 +27,7 @@ import com.groovycow.misionessecundarias.ui.auth.register.RegisterScreen
 import com.groovycow.misionessecundarias.ui.missions.MissionDetailRoute
 import com.groovycow.misionessecundarias.ui.missions.MissionListScreen
 import com.groovycow.misionessecundarias.ui.missions.PostulantesScreen
+import com.groovycow.misionessecundarias.ui.missions.PublicProfileScreen
 import com.groovycow.misionessecundarias.ui.missions.create.CreateMissionScreen
 import com.groovycow.misionessecundarias.ui.missions.edit.EditMissionScreen
 import com.groovycow.misionessecundarias.ui.missions.live.LiveMissionPanelScreen
@@ -81,6 +83,9 @@ sealed interface AppDestination {
 
     /** Gestión de postulantes de la misión seleccionada (HU-041, HU-044 y HU-045). */
     data object MissionApplicants : AppDestination
+
+    /** Perfil público de un participante (HU-043). */
+    data class PublicProfile(val userId: String) : AppDestination
 
     /** Panel de ejecución en vivo con avatares de los solucionadores (HU-051). */
     data object LiveMissionPanel : AppDestination
@@ -163,6 +168,9 @@ fun AppNavigation() {
     }
     BackHandler(enabled = currentDestination == AppDestination.RequestCode) {
         destination = AppDestination.Login
+    }
+    BackHandler(enabled = currentDestination is AppDestination.PublicProfile) {
+        destination = AppDestination.MissionApplicants
     }
 
     when (currentDestination) {
@@ -344,8 +352,20 @@ fun AppNavigation() {
                         selectedMission = started
                         destination = AppDestination.LiveMissionPanel
                     },
+                    onOpenPublicProfile = { userId ->
+                        destination = AppDestination.PublicProfile(userId)
+                    },
                 )
             }
+        }
+
+        is AppDestination.PublicProfile -> {
+            PublicProfileScreen(
+                userId = currentDestination.userId,
+                onBack = {
+                    destination = AppDestination.MissionApplicants
+                },
+            )
         }
 
         AppDestination.LiveMissionPanel -> {

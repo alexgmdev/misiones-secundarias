@@ -1,8 +1,11 @@
+
 package com.groovycow.misionessecundarias.ui.missions
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -44,10 +47,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.groovycow.misionessecundarias.domain.model.ApplicationDecision
 import com.groovycow.misionessecundarias.domain.model.Mission
 import com.groovycow.misionessecundarias.domain.model.MissionApplicant
@@ -67,11 +72,13 @@ fun PostulantesScreen(
     isMissionCompleted: Boolean = false,
     onOpenLivePanel: () -> Unit = {},
     onMissionStarted: (Mission) -> Unit = {},
+    onOpenPublicProfile: (String) -> Unit = {},
     viewModel: ApplicantsViewModel = koinViewModel(),
     startViewModel: StartMissionViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val startState by startViewModel.uiState.collectAsState()
+
     var pendingDecision by remember {
         mutableStateOf<Pair<MissionApplicant, ApplicationDecision>?>(null)
     }
@@ -107,95 +114,281 @@ fun PostulantesScreen(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = ApplicantsSand),
+                colors =
+                    TopAppBarDefaults.topAppBarColors(
+                        containerColor = ApplicantsSand,
+                    ),
             )
         },
     ) { paddingValues ->
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(horizontal = 16.dp),
-        ) {
-            Text(
-                text = missionTitle,
-                modifier = Modifier.fillMaxWidth(),
-                color = ApplicantsForest,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.ExtraBold,
-                textAlign = TextAlign.Center,
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-
-            ApplicantsGuide(
-                message = "Revisa a quienes quieren unirse y decide quién participará en tu misión.",
-            )
-            Spacer(modifier = Modifier.height(10.dp))
-
-            LiveActionButton(
-                isMissionInProgress = isMissionInProgress,
-                isMissionCompleted = isMissionCompleted,
-                isStarting = startState.isStarting,
-                onStart = { startViewModel.start(missionId) },
-                onOpenLivePanel = onOpenLivePanel,
-            )
-            Spacer(modifier = Modifier.height(14.dp))
-
-            when {
-                uiState.isLoading -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.CenterHorizontally),
-                        color = ApplicantsTeal,
-                    )
-                }
-
-                uiState.error != null -> {
-                    ApplicantsMessage(
-                        message = uiState.error!!,
-                        accentColor = ApplicantsCoral,
-                    )
-                }
-
-                uiState.applicants.isEmpty() -> {
-                    ApplicantsMessage(
-                        message = "Todavía no hay postulantes. ¡Pronto podría llegar un nuevo compañero de aventura!",
-                        accentColor = ApplicantsOrange,
-                    )
-                }
-
-                else -> {
-                    LazyColumn(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        items(uiState.applicants, key = { it.id }) { applicant ->
-                            ApplicantCard(
-                                applicant = applicant,
-                                isUpdating = uiState.updatingApplicationId == applicant.id,
-                                onAccept = {
-                                    pendingDecision = applicant to ApplicationDecision.ACCEPT
-                                },
-                                onReject = {
-                                    pendingDecision = applicant to ApplicationDecision.REJECT
-                                },
-                            )
-                        }
-                        item { Spacer(modifier = Modifier.height(12.dp)) }
-                    }
-                }
-            }
-        }
+        ApplicantsScreenContent(
+            missionTitle = missionTitle,
+            modifier = Modifier.padding(paddingValues),
+            isMissionInProgress = isMissionInProgress,
+            isMissionCompleted = isMissionCompleted,
+            isStarting = startState.isStarting,
+            onStart = { startViewModel.start(missionId) },
+            onOpenLivePanel = onOpenLivePanel,
+            isLoading = uiState.isLoading,
+            error = uiState.error,
+            applicants = uiState.applicants,
+            updatingApplicationId = uiState.updatingApplicationId,
+            onAccept = { applicant ->
+                pendingDecision = applicant to ApplicationDecision.ACCEPT
+            },
+            onReject = { applicant ->
+                pendingDecision = applicant to ApplicationDecision.REJECT
+            },
+            onOpenPublicProfile = onOpenPublicProfile,
+        )
     }
 
+    DecisionConfirmationDialog(
+        pendingDecision = pendingDecision,
+        onDismiss = { pendingDecision = null },
+        onConfirm = { applicant, decision ->
+            viewModel.decide(applicant.id, decision)
+            pendingDecision = null
+        },
+    )
+
+    startState.error?.let { error ->
+        StartErrorDialog(
+            message = error.toMessage(),
+            onDismiss = startViewModel::dismissError,
+        )
+    }
+
+    ActionMessageDialog(
+        message = uiState.actionMessage,
+        isError = uiState.isActionError,
+        onDismiss = viewModel::dismissNotice,
+    )
+}
+
+@Composable
+private fun ApplicantsScreenContent(
+    missionTitle: String,
+    modifier: Modifier = Modifier,
+    isMissionInProgress: Boolean,
+    isMissionCompleted: Boolean,
+    isStarting: Boolean,
+    onStart: () -> Unit,
+    onOpenLivePanel: () -> Unit,
+    isLoading: Boolean,
+    error: String?,
+    applicants: List<MissionApplicant>,
+    updatingApplicationId: String?,
+    onAccept: (MissionApplicant) -> Unit,
+    onReject: (MissionApplicant) -> Unit,
+    onOpenPublicProfile: (String) -> Unit,
+) {
+    Column(
+        modifier =
+            modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+    ) {
+        Text(
+            text = missionTitle,
+            modifier = Modifier.fillMaxWidth(),
+            color = ApplicantsForest,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.ExtraBold,
+            textAlign = TextAlign.Center,
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        ApplicantsGuide(
+            message = "Revisa a quienes quieren unirse y decide quién participará en tu misión.",
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        LiveActionButton(
+            isMissionInProgress = isMissionInProgress,
+            isMissionCompleted = isMissionCompleted,
+            isStarting = isStarting,
+            onStart = onStart,
+            onOpenLivePanel = onOpenLivePanel,
+        )
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        ApplicantsListContent(
+            isLoading = isLoading,
+            error = error,
+            applicants = applicants,
+            updatingApplicationId = updatingApplicationId,
+            onAccept = onAccept,
+            onReject = onReject,
+            onOpenPublicProfile = onOpenPublicProfile,
+        )
+    }
+}
+
+@Composable
+private fun ApplicantsListContent(
+    isLoading: Boolean,
+    error: String?,
+    applicants: List<MissionApplicant>,
+    updatingApplicationId: String?,
+    onAccept: (MissionApplicant) -> Unit,
+    onReject: (MissionApplicant) -> Unit,
+    onOpenPublicProfile: (String) -> Unit,
+) {
+    when {
+        isLoading -> {
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator(
+                    color = ApplicantsTeal,
+                )
+            }
+        }
+
+        error != null -> {
+            ApplicantsMessage(
+                message = error,
+                accentColor = ApplicantsCoral,
+            )
+        }
+
+        applicants.isEmpty() -> {
+            ApplicantsMessage(
+                message = "Todavía no hay postulantes. ¡Pronto podría llegar un nuevo compañero de aventura!",
+                accentColor = ApplicantsOrange,
+            )
+        }
+
+        else -> {
+            ApplicantsLazyList(
+                applicants = applicants,
+                updatingApplicationId = updatingApplicationId,
+                onAccept = onAccept,
+                onReject = onReject,
+                onOpenPublicProfile = onOpenPublicProfile,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ApplicantsLazyList(
+    applicants: List<MissionApplicant>,
+    updatingApplicationId: String?,
+    onAccept: (MissionApplicant) -> Unit,
+    onReject: (MissionApplicant) -> Unit,
+    onOpenPublicProfile: (String) -> Unit,
+) {
+    val acceptedApplicants =
+        applicants.filter {
+            it.status == "Aceptado"
+        }
+
+    val otherApplicants =
+        applicants.filter {
+            it.status != "Aceptado"
+        }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        if (acceptedApplicants.isNotEmpty()) {
+            item {
+                Text(
+                    text = "Participantes aceptados (${acceptedApplicants.size})",
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(top = 4.dp),
+                    color = ApplicantsForest,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.ExtraBold,
+                )
+            }
+
+            items(
+                items = acceptedApplicants,
+                key = { "accepted_${it.id}" },
+            ) { applicant ->
+                ApplicantCard(
+                    applicant = applicant,
+                    isUpdating = false,
+                    onAccept = {},
+                    onReject = {},
+                    onOpenProfile = {
+                        onOpenPublicProfile(applicant.solverId)
+                    },
+                )
+            }
+        }
+
+        if (otherApplicants.isNotEmpty()) {
+            item {
+                Text(
+                    text = "Postulaciones",
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp),
+                    color = ApplicantsForest,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.ExtraBold,
+                )
+            }
+
+            items(
+                items = otherApplicants,
+                key = { it.id },
+            ) { applicant ->
+                ApplicantCard(
+                    applicant = applicant,
+                    isUpdating = updatingApplicationId == applicant.id,
+                    onAccept = { onAccept(applicant) },
+                    onReject = { onReject(applicant) },
+                    onOpenProfile = {
+                        onOpenPublicProfile(applicant.solverId)
+                    },
+                )
+            }
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+    }
+}
+
+@Composable
+private fun DecisionConfirmationDialog(
+    pendingDecision: Pair<MissionApplicant, ApplicationDecision>?,
+    onDismiss: () -> Unit,
+    onConfirm: (MissionApplicant, ApplicationDecision) -> Unit,
+) {
     pendingDecision?.let { (applicant, decision) ->
-        val verb = if (decision == ApplicationDecision.ACCEPT) "aceptar" else "rechazar"
+        val verb =
+            if (decision == ApplicationDecision.ACCEPT) {
+                "aceptar"
+            } else {
+                "rechazar"
+            }
+
         AlertDialog(
-            onDismissRequest = { pendingDecision = null },
+            onDismissRequest = onDismiss,
             containerColor = ApplicantsCream,
             title = {
                 Text(
-                    text = if (decision == ApplicationDecision.ACCEPT) "Aceptar postulación" else "Rechazar postulación",
+                    text =
+                        if (decision == ApplicationDecision.ACCEPT) {
+                            "Aceptar postulación"
+                        } else {
+                            "Rechazar postulación"
+                        },
                     color = ApplicantsForest,
                     fontWeight = FontWeight.ExtraBold,
                 )
@@ -209,40 +402,62 @@ fun PostulantesScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        viewModel.decide(applicant.id, decision)
-                        pendingDecision = null
+                        onConfirm(applicant, decision)
                     },
                 ) {
-                    Text("Confirmar", color = ApplicantsOrange, fontWeight = FontWeight.Bold)
+                    Text(
+                        "Confirmar",
+                        color = ApplicantsOrange,
+                        fontWeight = FontWeight.Bold,
+                    )
                 }
             },
             dismissButton = {
-                TextButton(onClick = { pendingDecision = null }) {
+                TextButton(onClick = onDismiss) {
                     Text("Volver", color = ApplicantsForest)
                 }
             },
         )
     }
+}
 
-    startState.error?.let { error ->
-        StartErrorDialog(message = error.toMessage(), onDismiss = startViewModel::dismissError)
-    }
-
-    uiState.actionMessage?.let { message ->
+@Composable
+private fun ActionMessageDialog(
+    message: String?,
+    isError: Boolean,
+    onDismiss: () -> Unit,
+) {
+    if (message != null) {
         AlertDialog(
-            onDismissRequest = viewModel::dismissNotice,
+            onDismissRequest = onDismiss,
             containerColor = ApplicantsCream,
             title = {
                 Text(
-                    text = if (uiState.isActionError) "No fue posible guardar" else "Decisión guardada",
-                    color = if (uiState.isActionError) ApplicantsCoral else ApplicantsForest,
+                    text =
+                        if (isError) {
+                            "No fue posible guardar"
+                        } else {
+                            "Decisión guardada"
+                        },
+                    color =
+                        if (isError) {
+                            ApplicantsCoral
+                        } else {
+                            ApplicantsForest
+                        },
                     fontWeight = FontWeight.ExtraBold,
                 )
             },
-            text = { Text(message, color = ApplicantsBrown) },
+            text = {
+                Text(message, color = ApplicantsBrown)
+            },
             confirmButton = {
-                TextButton(onClick = viewModel::dismissNotice) {
-                    Text("Aceptar", color = ApplicantsForest, fontWeight = FontWeight.Bold)
+                TextButton(onClick = onDismiss) {
+                    Text(
+                        "Aceptar",
+                        color = ApplicantsForest,
+                        fontWeight = FontWeight.Bold,
+                    )
                 }
             },
         )
@@ -271,7 +486,10 @@ private fun LiveActionButton(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             border = BorderStroke(2.dp, ApplicantsTeal),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = ApplicantsTeal),
+            colors =
+                ButtonDefaults.outlinedButtonColors(
+                    contentColor = ApplicantsTeal,
+                ),
         ) {
             Text("Ver panel en vivo", fontWeight = FontWeight.ExtraBold)
         }
@@ -315,10 +533,16 @@ private fun StartErrorDialog(
                 fontWeight = FontWeight.ExtraBold,
             )
         },
-        text = { Text(message, color = ApplicantsBrown) },
+        text = {
+            Text(message, color = ApplicantsBrown)
+        },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Aceptar", color = ApplicantsForest, fontWeight = FontWeight.Bold)
+                Text(
+                    "Aceptar",
+                    color = ApplicantsForest,
+                    fontWeight = FontWeight.Bold,
+                )
             }
         },
     )
@@ -330,6 +554,7 @@ private fun ApplicantCard(
     isUpdating: Boolean,
     onAccept: () -> Unit,
     onReject: () -> Unit,
+    onOpenProfile: () -> Unit,
 ) {
     val accent =
         when (applicant.status) {
@@ -337,93 +562,193 @@ private fun ApplicantCard(
             "Rechazado" -> ApplicantsCoral
             else -> ApplicantsOrange
         }
+
     val formattedDate =
         runCatching {
             OffsetDateTime.parse(applicant.appliedAt).format(
-                DateTimeFormatter.ofPattern("d 'de' MMMM 'a las' HH:mm", Locale("es", "CO")),
+                DateTimeFormatter.ofPattern(
+                    "d 'de' MMMM 'a las' HH:mm",
+                    Locale("es", "CO"),
+                ),
             )
         }.getOrDefault(applicant.appliedAt)
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onOpenProfile),
         shape = RoundedCornerShape(16.dp),
         border = BorderStroke(3.dp, accent),
-        colors = CardDefaults.cardColors(containerColor = ApplicantsCream),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = ApplicantsCream,
+            ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Default.Person,
-                    contentDescription = null,
-                    tint = ApplicantsForest,
-                    modifier =
-                        Modifier
-                            .size(46.dp)
-                            .background(ApplicantsLightLeaf, CircleShape)
-                            .padding(8.dp),
+        Column(
+            modifier = Modifier.padding(16.dp),
+        ) {
+            ApplicantCardHeader(
+                applicant = applicant,
+                accent = accent,
+                formattedDate = formattedDate,
+            )
+
+            Text(
+                text = "Ver perfil público",
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                color = ApplicantsTeal,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.End,
+            )
+
+            if (applicant.status == "Postulado") {
+                ApplicantDecisionButtons(
+                    isUpdating = isUpdating,
+                    onAccept = onAccept,
+                    onReject = onReject,
                 )
-                Spacer(modifier = Modifier.width(12.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = applicant.profile.fullName,
-                        color = ApplicantsForest,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.ExtraBold,
-                    )
-                    Text(
-                        text = "Se postuló el $formattedDate",
-                        color = ApplicantsBrown,
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ApplicantCardHeader(
+    applicant: MissionApplicant,
+    accent: Color,
+    formattedDate: String,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        ApplicantAvatar(applicant = applicant)
+
+        Spacer(modifier = Modifier.width(12.dp))
+
+        Column(
+            modifier = Modifier.weight(1f),
+        ) {
+            Text(
+                text =
+                    applicant.profile.nickname
+                        ?.takeIf { it.isNotBlank() }
+                        ?: applicant.profile.fullName,
+                color = ApplicantsForest,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.ExtraBold,
+            )
+
+            if (
+                !applicant.profile.nickname.isNullOrBlank() &&
+                applicant.profile.nickname != applicant.profile.fullName
+            ) {
                 Text(
-                    text = applicant.status,
-                    color = accent,
-                    fontWeight = FontWeight.ExtraBold,
-                    style = MaterialTheme.typography.labelLarge,
+                    text = applicant.profile.fullName,
+                    color = ApplicantsBrown,
+                    style = MaterialTheme.typography.bodySmall,
                 )
             }
 
-            if (applicant.status == "Postulado") {
-                Spacer(modifier = Modifier.height(14.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    Button(
-                        onClick = onAccept,
-                        enabled = !isUpdating,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp),
-                        colors =
-                            ButtonDefaults.buttonColors(
-                                containerColor = ApplicantsLeaf,
-                                contentColor = ApplicantsCream,
-                            ),
-                    ) {
-                        if (isUpdating) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                color = ApplicantsCream,
-                                strokeWidth = 2.dp,
-                            )
-                        } else {
-                            Text("Aceptar", fontWeight = FontWeight.ExtraBold)
-                        }
-                    }
-                    OutlinedButton(
-                        onClick = onReject,
-                        enabled = !isUpdating,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp),
-                        border = BorderStroke(2.dp, ApplicantsCoral),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = ApplicantsCoral),
-                    ) {
-                        Text("Rechazar", fontWeight = FontWeight.ExtraBold)
-                    }
-                }
+            Text(
+                text = "Se postuló el $formattedDate",
+                color = ApplicantsBrown,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+
+        Text(
+            text = applicant.status,
+            color = accent,
+            fontWeight = FontWeight.ExtraBold,
+            style = MaterialTheme.typography.labelLarge,
+        )
+    }
+}
+
+@Composable
+private fun ApplicantAvatar(applicant: MissionApplicant) {
+    if (!applicant.profile.avatarUrl.isNullOrBlank()) {
+        AsyncImage(
+            model = applicant.profile.avatarUrl,
+            contentDescription = "Foto de perfil de ${applicant.profile.nickname ?: applicant.profile.fullName}",
+            modifier =
+                Modifier
+                    .size(46.dp)
+                    .clip(CircleShape)
+                    .background(ApplicantsLightLeaf),
+        )
+    } else {
+        Icon(
+            imageVector = Icons.Default.Person,
+            contentDescription = "Foto de perfil no disponible",
+            tint = ApplicantsForest,
+            modifier =
+                Modifier
+                    .size(46.dp)
+                    .background(ApplicantsLightLeaf, CircleShape)
+                    .padding(8.dp),
+        )
+    }
+}
+
+@Composable
+private fun ApplicantDecisionButtons(
+    isUpdating: Boolean,
+    onAccept: () -> Unit,
+    onReject: () -> Unit,
+) {
+    Spacer(modifier = Modifier.height(14.dp))
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Button(
+            onClick = onAccept,
+            enabled = !isUpdating,
+            modifier = Modifier.weight(1f),
+            shape = RoundedCornerShape(12.dp),
+            colors =
+                ButtonDefaults.buttonColors(
+                    containerColor = ApplicantsLeaf,
+                    contentColor = ApplicantsCream,
+                ),
+        ) {
+            if (isUpdating) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    color = ApplicantsCream,
+                    strokeWidth = 2.dp,
+                )
+            } else {
+                Text(
+                    "Aceptar",
+                    fontWeight = FontWeight.ExtraBold,
+                )
             }
+        }
+
+        OutlinedButton(
+            onClick = onReject,
+            enabled = !isUpdating,
+            modifier = Modifier.weight(1f),
+            shape = RoundedCornerShape(12.dp),
+            border = BorderStroke(2.dp, ApplicantsCoral),
+            colors =
+                ButtonDefaults.outlinedButtonColors(
+                    contentColor = ApplicantsCoral,
+                ),
+        ) {
+            Text(
+                "Rechazar",
+                fontWeight = FontWeight.ExtraBold,
+            )
         }
     }
 }
@@ -434,7 +759,10 @@ private fun ApplicantsGuide(message: String) {
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
         border = BorderStroke(3.dp, ApplicantsTeal),
-        colors = CardDefaults.cardColors(containerColor = ApplicantsLightRiver),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = ApplicantsLightRiver,
+            ),
     ) {
         Text(
             text = message,
@@ -455,7 +783,10 @@ private fun ApplicantsMessage(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         border = BorderStroke(3.dp, accentColor),
-        colors = CardDefaults.cardColors(containerColor = ApplicantsCream),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = ApplicantsCream,
+            ),
     ) {
         Text(
             text = message,
