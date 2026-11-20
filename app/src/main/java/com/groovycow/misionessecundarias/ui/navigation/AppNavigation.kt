@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -15,6 +16,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.groovycow.misionessecundarias.domain.model.Mission
+import com.groovycow.misionessecundarias.ui.admin.AdminMenuViewModel
+import com.groovycow.misionessecundarias.ui.admin.AdminPanelScreen
 import com.groovycow.misionessecundarias.ui.applications.MyApplicationsScreen
 import com.groovycow.misionessecundarias.ui.auth.SessionViewModel
 import com.groovycow.misionessecundarias.ui.auth.StartDestination
@@ -91,6 +94,9 @@ sealed interface AppDestination {
 
     /** Cambio de contraseña con la sesión activa, abierto desde Ajustes → Seguridad (HU-010). */
     data object ChangePassword : AppDestination
+
+    /** Panel Administrativo exclusivo para moderadores y administradores. */
+    data object AdminPanel : AppDestination
 
     /**
      * Pantalla de funcionalidad aún no implementada.
@@ -242,10 +248,17 @@ fun AppNavigation() {
         AppDestination.MainMenu -> {
             val profileSummaryViewModel: ProfileSummaryViewModel = koinViewModel()
             val summary by profileSummaryViewModel.uiState.collectAsState()
+            val adminMenuViewModel: AdminMenuViewModel = koinViewModel()
+            val canShowAdminPanel by adminMenuViewModel.canShowAdminPanel.collectAsState()
             LaunchedEffect(Unit) { profileSummaryViewModel.refresh() }
+            LaunchedEffect(adminMenuViewModel) { adminMenuViewModel.refreshAccess() }
+            DisposableEffect(adminMenuViewModel) {
+                onDispose(adminMenuViewModel::hideAdminPanelEntry)
+            }
             MainMenuScreen(
                 onNavigate = { menuDestination -> destination = menuDestination.toAppDestination() },
                 username = summary.nickname,
+                showAdminPanel = canShowAdminPanel,
                 avatar =
                     summary.avatarId?.let { avatarId ->
                         { ProfileAvatar(avatar = avatarId, size = 148.dp) }
@@ -363,6 +376,12 @@ fun AppNavigation() {
             ChangePasswordScreen(onBack = { destination = AppDestination.Settings })
         }
 
+        AppDestination.AdminPanel -> {
+            AdminPanelScreen(
+                onBack = { destination = AppDestination.MainMenu },
+            )
+        }
+
         is AppDestination.Placeholder -> {
             FeaturePlaceholderScreen(
                 title = currentDestination.menuDestination.title,
@@ -419,6 +438,7 @@ private fun MainMenuDestination.toAppDestination(): AppDestination =
         MainMenuDestination.SETTINGS -> AppDestination.Settings
         MainMenuDestination.PROFILE -> ProfileFlowDestination.MyProfile
         MainMenuDestination.AVATAR -> ProfileFlowDestination.EditProfile
+        MainMenuDestination.ADMIN_PANEL -> AppDestination.AdminPanel
         else -> AppDestination.Placeholder(this)
     }
 

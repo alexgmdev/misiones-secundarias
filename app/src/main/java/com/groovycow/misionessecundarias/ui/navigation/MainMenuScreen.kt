@@ -57,6 +57,7 @@ enum class MainMenuDestination(
     SEARCH_MISSIONS("Buscar misiones", "Encuentra oportunidades de colaboración"),
     PUBLISH_MISSION("Publicar misión", "Solicita colaboración para una actividad"),
     MY_APPLICATIONS("Estado de mis postulaciones", "Consulta tus solicitudes y su estado"),
+    ADMIN_PANEL("Panel administrativo", "Supervisión y métricas operativas de la plataforma"),
 }
 
 @Composable
@@ -64,6 +65,7 @@ fun MainMenuScreen(
     onNavigate: (MainMenuDestination) -> Unit,
     username: String? = null,
     avatar: (@Composable () -> Unit)? = null,
+    showAdminPanel: Boolean = false,
 ) {
     Scaffold(containerColor = SandBackground) { paddingValues ->
         Row(
@@ -78,6 +80,7 @@ fun MainMenuScreen(
             MainMenuContent(
                 username = username,
                 avatar = avatar,
+                showAdminPanel = showAdminPanel,
                 onNavigate = onNavigate,
                 modifier = Modifier.weight(1f),
             )
@@ -148,6 +151,7 @@ private fun SideRailButton(
 private fun MainMenuContent(
     username: String?,
     avatar: (@Composable () -> Unit)?,
+    showAdminPanel: Boolean,
     onNavigate: (MainMenuDestination) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -211,6 +215,15 @@ private fun MainMenuContent(
             borderColor = RiverTeal,
             onClick = { onNavigate(MainMenuDestination.MY_APPLICATIONS) },
         )
+        if (showAdminPanel) {
+            Spacer(modifier = Modifier.height(14.dp))
+            GameMenuButton(
+                text = "Panel administrativo",
+                backgroundColor = MintPanel,
+                borderColor = RiverTeal,
+                onClick = { onNavigate(MainMenuDestination.ADMIN_PANEL) },
+            )
+        }
         Spacer(modifier = Modifier.height(16.dp))
     }
 }

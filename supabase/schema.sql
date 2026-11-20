@@ -138,11 +138,15 @@ CREATE POLICY "Owner can read own private data" ON profile_private FOR SELECT TO
 -- Misiones
 CREATE POLICY "Published missions viewable" ON missions FOR SELECT USING (status != 'Borrador');
 CREATE POLICY "Publishers can view own drafts" ON missions FOR SELECT TO authenticated USING (auth.uid() = publisher_id AND status = 'Borrador');
+CREATE POLICY "Moderators can view all missions" ON missions FOR SELECT TO authenticated
+    USING (EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role = 'moderator'));
 CREATE POLICY "Publishers can insert missions" ON missions FOR INSERT WITH CHECK (auth.uid() = publisher_id);
 CREATE POLICY "Publishers can update missions" ON missions FOR UPDATE USING (auth.uid() = publisher_id);
 
 -- Postulaciones
 CREATE POLICY "View applications based on role" ON applications FOR SELECT USING (auth.uid() = solver_id OR auth.uid() IN (SELECT publisher_id FROM missions WHERE id = mission_id));
+CREATE POLICY "Moderators can view all applications" ON applications FOR SELECT TO authenticated
+    USING (EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role = 'moderator'));
 CREATE POLICY "Solvers can apply" ON applications FOR INSERT WITH CHECK (auth.uid() = solver_id);
 CREATE POLICY "Solvers can delete own applications" ON applications FOR DELETE USING (auth.uid() = solver_id);
 CREATE POLICY "Publishers can update application status" ON applications FOR UPDATE USING (auth.uid() IN (SELECT publisher_id FROM missions WHERE id = mission_id));
