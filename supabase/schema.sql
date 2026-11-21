@@ -117,6 +117,19 @@ CREATE TABLE mission_logbooks (
     CONSTRAINT unique_mission_author UNIQUE (mission_id, author_id)
 );
 
+-- Reportes de moderación (HU - Moderación y Seguridad)
+CREATE TABLE moderation_reports (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    reporter_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+    target_type TEXT NOT NULL CHECK (target_type IN ('Misión', 'Usuario', 'Comentario')),
+    target_id TEXT NOT NULL,
+    reason TEXT NOT NULL CONSTRAINT report_reason_not_empty CHECK (char_length(btrim(reason)) >= 1),
+    details TEXT,
+    priority TEXT DEFAULT 'Media' CHECK (priority IN ('Alta', 'Media', 'Baja')),
+    status TEXT DEFAULT 'Pendiente' CHECK (status IN ('Pendiente', 'En revisión', 'Resuelto', 'Desestimado')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
 -- Calificaciones al publicador (HU-124): un voto por solucionador y misión completada
 CREATE TABLE publisher_ratings (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
@@ -139,6 +152,7 @@ ALTER TABLE mission_checklist_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mission_pauses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mission_logbooks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE publisher_ratings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE moderation_reports ENABLE ROW LEVEL SECURITY;
 ALTER TABLE profile_private ENABLE ROW LEVEL SECURITY;
 ALTER TABLE login_attempts ENABLE ROW LEVEL SECURITY; -- sin políticas: solo service role
 
@@ -201,6 +215,17 @@ CREATE POLICY "Accepted solvers update own logbooks" ON mission_logbooks FOR UPD
 
 CREATE POLICY "Public logbooks viewable" ON mission_logbooks FOR SELECT USING (true);
 
+-- Reportes de moderación: moderadores gestionan todos los reportes, usuarios crean reportes
+CREATE POLICY "Moderators read all reports" ON moderation_reports FOR SELECT TO authenticated
+    USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'moderator'));
+
+CREATE POLICY "Moderators update reports" ON moderation_reports FOR UPDATE TO authenticated
+    USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'moderator'))
+    WITH CHECK (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'moderator'));
+
+CREATE POLICY "Authenticated users create reports" ON moderation_reports FOR INSERT TO authenticated
+    WITH CHECK (auth.uid() = reporter_id);
+
 -- Calificaciones: inserta solo un participante aceptado de una misión completada; lectura pública para la reputación
 CREATE POLICY "Solvers rate completed missions" ON publisher_ratings FOR INSERT TO authenticated
     WITH CHECK (
@@ -233,6 +258,7 @@ GRANT UPDATE (is_active) ON public.mission_pauses TO authenticated;
 GRANT SELECT, INSERT, UPDATE ON public.mission_logbooks TO authenticated;
 GRANT SELECT ON public.publisher_ratings TO anon, authenticated;
 GRANT INSERT ON public.publisher_ratings TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON public.moderation_reports TO authenticated;
 
 -- Datos privados y intentos de login
 REVOKE ALL ON public.profile_private FROM anon, authenticated;
