@@ -1,12 +1,13 @@
-
 package com.groovycow.misionessecundarias.di
 
+import com.groovycow.misionessecundarias.data.repository.AdminRepositoryImpl
 import com.groovycow.misionessecundarias.data.repository.ApplicationRepositoryImpl
 import com.groovycow.misionessecundarias.data.repository.ChecklistRepositoryImpl
 import com.groovycow.misionessecundarias.data.repository.LogbookRepositoryImpl
 import com.groovycow.misionessecundarias.data.repository.MissionRepositoryImpl
 import com.groovycow.misionessecundarias.data.repository.PauseRepositoryImpl
 import com.groovycow.misionessecundarias.data.repository.RatingRepositoryImpl
+import com.groovycow.misionessecundarias.domain.repository.AdminRepository
 import com.groovycow.misionessecundarias.domain.repository.ApplicationRepository
 import com.groovycow.misionessecundarias.domain.repository.ChecklistRepository
 import com.groovycow.misionessecundarias.domain.repository.LogbookRepository
@@ -15,6 +16,7 @@ import com.groovycow.misionessecundarias.domain.repository.PauseRepository
 import com.groovycow.misionessecundarias.domain.repository.RatingRepository
 import com.groovycow.misionessecundarias.domain.usecase.AddChecklistItemUseCase
 import com.groovycow.misionessecundarias.domain.usecase.ApplyToMissionUseCase
+import com.groovycow.misionessecundarias.domain.usecase.CanAccessAdminPanelUseCase
 import com.groovycow.misionessecundarias.domain.usecase.CancelApplicationUseCase
 import com.groovycow.misionessecundarias.domain.usecase.CheckMissionOwnershipUseCase
 import com.groovycow.misionessecundarias.domain.usecase.CompleteMissionUseCase
@@ -22,6 +24,7 @@ import com.groovycow.misionessecundarias.domain.usecase.CreateMissionUseCase
 import com.groovycow.misionessecundarias.domain.usecase.DeleteChecklistItemUseCase
 import com.groovycow.misionessecundarias.domain.usecase.GenerateVerificationCodeUseCase
 import com.groovycow.misionessecundarias.domain.usecase.GetActivePausesUseCase
+import com.groovycow.misionessecundarias.domain.usecase.GetAdminMetricsUseCase
 import com.groovycow.misionessecundarias.domain.usecase.GetApplicantPublicProfileUseCase
 import com.groovycow.misionessecundarias.domain.usecase.GetChecklistUseCase
 import com.groovycow.misionessecundarias.domain.usecase.GetLivePanelParticipantsUseCase
@@ -40,6 +43,8 @@ import com.groovycow.misionessecundarias.domain.usecase.StartMissionUseCase
 import com.groovycow.misionessecundarias.domain.usecase.UpdateApplicationStatusUseCase
 import com.groovycow.misionessecundarias.domain.usecase.UpdateMissionDetailsUseCase
 import com.groovycow.misionessecundarias.domain.validation.MissionDraftValidator
+import com.groovycow.misionessecundarias.ui.admin.AdminMenuViewModel
+import com.groovycow.misionessecundarias.ui.admin.AdminPanelViewModel
 import com.groovycow.misionessecundarias.ui.applications.ApplicationViewModel
 import com.groovycow.misionessecundarias.ui.applications.MyApplicationsViewModel
 import com.groovycow.misionessecundarias.ui.missions.ApplicantsViewModel
@@ -66,6 +71,7 @@ val repositoryModule =
         // Repositorios
         single<MissionRepository> { MissionRepositoryImpl(get()) }
         single<ApplicationRepository> { ApplicationRepositoryImpl(get()) }
+        single<AdminRepository> { AdminRepositoryImpl(get()) }
         single<ChecklistRepository> { ChecklistRepositoryImpl(get()) }
         single<PauseRepository> { PauseRepositoryImpl(get()) }
         single<LogbookRepository> { LogbookRepositoryImpl(get()) }
@@ -93,6 +99,8 @@ val repositoryModule =
         factory { StartMissionUseCase(get(), get(), Clock.system(ZoneId.of("America/Bogota"))) }
         factory { CompleteMissionUseCase(get(), get()) }
         factory { GenerateVerificationCodeUseCase(get()) }
+        factory { GetAdminMetricsUseCase(get()) }
+        factory { CanAccessAdminPanelUseCase(get()) }
         factory { com.groovycow.misionessecundarias.domain.usecase.SaveMissionLogbookUseCase(get()) }
         factory { MissionDraftValidator(Clock.system(ZoneId.of("America/Bogota"))) }
         factory { MarkOnWayUseCase(get()) }
@@ -118,5 +126,7 @@ val repositoryModule =
         viewModel { StartMissionViewModel(get()) }
         viewModel { CompleteMissionViewModel(get()) }
         viewModel { GenerateCodeViewModel(get()) }
+        viewModel { AdminPanelViewModel(get()) }
+        viewModel { AdminMenuViewModel(get()) }
         viewModel { com.groovycow.misionessecundarias.ui.missions.live.MissionLogbookViewModel(get()) }
     }

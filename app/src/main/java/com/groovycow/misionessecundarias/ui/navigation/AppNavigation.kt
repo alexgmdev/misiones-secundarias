@@ -1,4 +1,3 @@
-
 package com.groovycow.misionessecundarias.ui.navigation
 
 import androidx.activity.compose.BackHandler
@@ -6,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -16,6 +16,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.groovycow.misionessecundarias.domain.model.Mission
+import com.groovycow.misionessecundarias.ui.admin.AdminMenuViewModel
+import com.groovycow.misionessecundarias.ui.admin.AdminPanelScreen
 import com.groovycow.misionessecundarias.ui.applications.MyApplicationsScreen
 import com.groovycow.misionessecundarias.ui.auth.SessionViewModel
 import com.groovycow.misionessecundarias.ui.auth.StartDestination
@@ -27,7 +29,6 @@ import com.groovycow.misionessecundarias.ui.auth.register.RegisterScreen
 import com.groovycow.misionessecundarias.ui.missions.MissionDetailRoute
 import com.groovycow.misionessecundarias.ui.missions.MissionListScreen
 import com.groovycow.misionessecundarias.ui.missions.PostulantesScreen
-import com.groovycow.misionessecundarias.ui.missions.PublicProfileScreen
 import com.groovycow.misionessecundarias.ui.missions.create.CreateMissionScreen
 import com.groovycow.misionessecundarias.ui.missions.edit.EditMissionScreen
 import com.groovycow.misionessecundarias.ui.missions.live.LiveMissionPanelScreen
@@ -35,7 +36,6 @@ import com.groovycow.misionessecundarias.ui.profile.ProfileSummaryViewModel
 import com.groovycow.misionessecundarias.ui.profile.components.ProfileAvatar
 import com.groovycow.misionessecundarias.ui.profile.setup.InitialProfileScreen
 import com.groovycow.misionessecundarias.ui.settings.ChangePasswordScreen
-import com.groovycow.misionessecundarias.ui.settings.PrivacyPolicyScreen
 import com.groovycow.misionessecundarias.ui.settings.SettingsScreen
 import org.koin.androidx.compose.koinViewModel
 
@@ -78,14 +78,14 @@ sealed interface AppDestination {
     /** Detalle de la misión seleccionada. */
     data object MissionDetail : AppDestination
 
+    /** Edición de una misión seleccionada por su publicador. */
+    data object EditMission : AppDestination
+
     /** Misiones creadas por el usuario, alcanzable desde el estado de las misiones. */
     data object MyMissions : AppDestination
 
     /** Gestión de postulantes de la misión seleccionada (HU-041, HU-044 y HU-045). */
     data object MissionApplicants : AppDestination
-
-    /** Perfil público de un participante (HU-043). */
-    data class PublicProfile(val userId: String) : AppDestination
 
     /** Panel de ejecución en vivo con avatares de los solucionadores (HU-051). */
     data object LiveMissionPanel : AppDestination
@@ -99,11 +99,8 @@ sealed interface AppDestination {
     /** Cambio de contraseña con la sesión activa, abierto desde Ajustes → Seguridad (HU-010). */
     data object ChangePassword : AppDestination
 
-    /** Políticas de privacidad y uso de datos, abiertas desde Ajustes (HU-122). */
-    data object PrivacyPolicy : AppDestination
-
-    /** Edición de los datos descriptivos de una misión publicada propia (HU-032). */
-    data object EditMission : AppDestination
+    /** Panel Administrativo exclusivo para moderadores y administradores. */
+    data object AdminPanel : AppDestination
 
     /**
      * Pantalla de funcionalidad aún no implementada.
@@ -118,7 +115,7 @@ sealed interface AppDestination {
  * (Welcome sin sesión, MainMenu con sesión) y luego enruta entre destinos.
  */
 @Composable
-@Suppress("CyclomaticComplexMethod", "LongMethod") // Enrutador central: una rama por destino.
+@Suppress("CyclomaticComplexMethod")
 fun AppNavigation() {
     val sessionViewModel: SessionViewModel = koinViewModel()
     val startDestination by sessionViewModel.startDestination.collectAsState()
@@ -160,17 +157,11 @@ fun AppNavigation() {
     BackHandler(enabled = currentDestination == AppDestination.ChangePassword) {
         destination = AppDestination.Settings
     }
-    BackHandler(enabled = currentDestination == AppDestination.PrivacyPolicy) {
-        destination = AppDestination.Settings
-    }
     BackHandler(enabled = currentDestination == AppDestination.EditMission) {
         destination = AppDestination.MissionDetail
     }
     BackHandler(enabled = currentDestination == AppDestination.RequestCode) {
         destination = AppDestination.Login
-    }
-    BackHandler(enabled = currentDestination is AppDestination.PublicProfile) {
-        destination = AppDestination.MissionApplicants
     }
 
     when (currentDestination) {
@@ -261,19 +252,8 @@ fun AppNavigation() {
             )
         }
 
-        AppDestination.MainMenu -> {
-            val profileSummaryViewModel: ProfileSummaryViewModel = koinViewModel()
-            val summary by profileSummaryViewModel.uiState.collectAsState()
-            LaunchedEffect(Unit) { profileSummaryViewModel.refresh() }
-            MainMenuScreen(
-                onNavigate = { menuDestination -> destination = menuDestination.toAppDestination() },
-                username = summary.nickname,
-                avatar =
-                    summary.avatarId?.let { avatarId ->
-                        { ProfileAvatar(avatar = avatarId, size = 148.dp) }
-                    },
-            )
-        }
+        AppDestination.MainMenu ->
+            MainMenuDestinationScreen { menuDestination -> destination = menuDestination.toAppDestination() }
 
         AppDestination.MissionList -> {
             MissionListScreen(
@@ -324,17 +304,16 @@ fun AppNavigation() {
             )
         }
 
-        AppDestination.EditMission -> {
+        AppDestination.EditMission ->
             EditMissionDestination(
                 mission = selectedMission,
-                onMissing = { destination = AppDestination.MissionDetail },
                 onBack = { destination = AppDestination.MissionDetail },
-                onSaved = { updated ->
-                    selectedMission = updated
+                onMissingMission = { destination = AppDestination.MissionList },
+                onSaved = { updatedMission ->
+                    selectedMission = updatedMission
                     destination = AppDestination.MissionDetail
                 },
             )
-        }
 
         AppDestination.MissionApplicants -> {
             val mission = selectedMission
@@ -352,20 +331,8 @@ fun AppNavigation() {
                         selectedMission = started
                         destination = AppDestination.LiveMissionPanel
                     },
-                    onOpenPublicProfile = { userId ->
-                        destination = AppDestination.PublicProfile(userId)
-                    },
                 )
             }
-        }
-
-        is AppDestination.PublicProfile -> {
-            PublicProfileScreen(
-                userId = currentDestination.userId,
-                onBack = {
-                    destination = AppDestination.MissionApplicants
-                },
-            )
         }
 
         AppDestination.LiveMissionPanel -> {
@@ -398,7 +365,6 @@ fun AppNavigation() {
                 onBack = { destination = AppDestination.MainMenu },
                 onChangePassword = { destination = AppDestination.ChangePassword },
                 onOpenGuide = { destination = ProfileFlowDestination.Onboarding(fromSettings = true) },
-                onOpenPrivacyPolicy = { destination = AppDestination.PrivacyPolicy },
                 onSignedOut = {
                     sessionViewModel.updateLoginState(false)
                     loginNotice = SIGNED_OUT_NOTICE
@@ -411,8 +377,10 @@ fun AppNavigation() {
             ChangePasswordScreen(onBack = { destination = AppDestination.Settings })
         }
 
-        AppDestination.PrivacyPolicy -> {
-            PrivacyPolicyScreen(onBack = { destination = AppDestination.Settings })
+        AppDestination.AdminPanel -> {
+            AdminPanelScreen(
+                onBack = { destination = AppDestination.MainMenu },
+            )
         }
 
         is AppDestination.Placeholder -> {
@@ -422,6 +390,28 @@ fun AppNavigation() {
             )
         }
     }
+}
+
+@Composable
+private fun MainMenuDestinationScreen(onNavigate: (MainMenuDestination) -> Unit) {
+    val profileSummaryViewModel: ProfileSummaryViewModel = koinViewModel()
+    val summary by profileSummaryViewModel.uiState.collectAsState()
+    val adminMenuViewModel: AdminMenuViewModel = koinViewModel()
+    val canShowAdminPanel by adminMenuViewModel.canShowAdminPanel.collectAsState()
+    LaunchedEffect(Unit) { profileSummaryViewModel.refresh() }
+    LaunchedEffect(adminMenuViewModel) { adminMenuViewModel.refreshAccess() }
+    DisposableEffect(adminMenuViewModel) {
+        onDispose(adminMenuViewModel::hideAdminPanelEntry)
+    }
+    MainMenuScreen(
+        onNavigate = onNavigate,
+        username = summary.nickname,
+        showAdminPanel = canShowAdminPanel,
+        avatar =
+            summary.avatarId?.let { avatarId ->
+                { ProfileAvatar(avatar = avatarId, size = 148.dp) }
+            },
+    )
 }
 
 /** Mensaje mostrado en el login tras restablecer la contraseña. */
@@ -471,30 +461,9 @@ private fun MainMenuDestination.toAppDestination(): AppDestination =
         MainMenuDestination.SETTINGS -> AppDestination.Settings
         MainMenuDestination.PROFILE -> ProfileFlowDestination.MyProfile
         MainMenuDestination.AVATAR -> ProfileFlowDestination.EditProfile
+        MainMenuDestination.ADMIN_PANEL -> AppDestination.AdminPanel
         else -> AppDestination.Placeholder(this)
     }
-
-/**
- * Edición de una misión propia; si no hay misión seleccionada vuelve al detalle.
- *
- * @param mission Misión seleccionada, o `null` si no hay ninguna.
- * @param onMissing Acción cuando no hay misión seleccionada.
- * @param onBack Acción al volver sin guardar.
- * @param onSaved Acción al guardar la misión actualizada.
- */
-@Composable
-private fun EditMissionDestination(
-    mission: Mission?,
-    onMissing: () -> Unit,
-    onBack: () -> Unit,
-    onSaved: (Mission) -> Unit,
-) {
-    if (mission == null) {
-        onMissing()
-        return
-    }
-    EditMissionScreen(mission = mission, onBack = onBack, onSaved = onSaved)
-}
 
 /**
  * Detalle de misión; si no hay misión seleccionada invoca [onMissingMission] para volver a la lista.
@@ -533,5 +502,23 @@ private fun MissionDetailDestination(
         onBack = onBack,
         onManageApplicants = onManageApplicants,
         onEditMission = onEditMission,
+    )
+}
+
+@Composable
+private fun EditMissionDestination(
+    mission: Mission?,
+    onBack: () -> Unit,
+    onMissingMission: () -> Unit,
+    onSaved: (Mission) -> Unit,
+) {
+    if (mission == null) {
+        onMissingMission()
+        return
+    }
+    EditMissionScreen(
+        mission = mission,
+        onBack = onBack,
+        onSaved = onSaved,
     )
 }
