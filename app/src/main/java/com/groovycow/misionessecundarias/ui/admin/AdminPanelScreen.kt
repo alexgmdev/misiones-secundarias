@@ -2,6 +2,7 @@ package com.groovycow.misionessecundarias.ui.admin
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,6 +27,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -62,6 +64,7 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun AdminPanelScreen(
     onBack: () -> Unit,
+    onOpenReports: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: AdminPanelViewModel = koinViewModel(),
 ) {
@@ -132,6 +135,7 @@ fun AdminPanelScreen(
                 is AdminPanelUiState.Success -> {
                     MetricsDashboard(
                         metrics = state.metrics,
+                        onOpenReports = onOpenReports,
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
@@ -144,6 +148,7 @@ fun AdminPanelScreen(
 @Composable
 private fun MetricsDashboard(
     metrics: AdminMetrics,
+    onOpenReports: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -154,6 +159,40 @@ private fun MetricsDashboard(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         ExecutiveHeader()
+
+        // Botón de acceso directo a la Cola de Moderación / Reportes
+        Card(
+            modifier = Modifier.fillMaxWidth().clickable(onClick = onOpenReports),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = AdminCream),
+            border = BorderStroke(2.dp, AdminCoral),
+        ) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Warning,
+                    contentDescription = null,
+                    tint = AdminCoral,
+                    modifier = Modifier.size(28.dp),
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Column {
+                    Text(
+                        text = "Cola de Moderación",
+                        color = AdminForest,
+                        fontWeight = FontWeight.ExtraBold,
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                    Text(
+                        text = "Gestionar denuncias y reportes pendientes",
+                        color = AdminBrown,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+            }
+        }
 
         Text(
             text = "Indicadores clave",

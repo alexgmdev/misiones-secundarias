@@ -5,6 +5,7 @@ import com.groovycow.misionessecundarias.data.repository.ApplicationRepositoryIm
 import com.groovycow.misionessecundarias.data.repository.ChecklistRepositoryImpl
 import com.groovycow.misionessecundarias.data.repository.LogbookRepositoryImpl
 import com.groovycow.misionessecundarias.data.repository.MissionRepositoryImpl
+import com.groovycow.misionessecundarias.data.repository.ModerationRepositoryImpl
 import com.groovycow.misionessecundarias.data.repository.PauseRepositoryImpl
 import com.groovycow.misionessecundarias.data.repository.RatingRepositoryImpl
 import com.groovycow.misionessecundarias.domain.repository.AdminRepository
@@ -12,6 +13,7 @@ import com.groovycow.misionessecundarias.domain.repository.ApplicationRepository
 import com.groovycow.misionessecundarias.domain.repository.ChecklistRepository
 import com.groovycow.misionessecundarias.domain.repository.LogbookRepository
 import com.groovycow.misionessecundarias.domain.repository.MissionRepository
+import com.groovycow.misionessecundarias.domain.repository.ModerationRepository
 import com.groovycow.misionessecundarias.domain.repository.PauseRepository
 import com.groovycow.misionessecundarias.domain.repository.RatingRepository
 import com.groovycow.misionessecundarias.domain.usecase.AddChecklistItemUseCase
@@ -37,6 +39,7 @@ import com.groovycow.misionessecundarias.domain.usecase.MarkArrivedUseCase
 import com.groovycow.misionessecundarias.domain.usecase.MarkOnWayUseCase
 import com.groovycow.misionessecundarias.domain.usecase.PublishMissionUseCase
 import com.groovycow.misionessecundarias.domain.usecase.RatePublisherUseCase
+import com.groovycow.misionessecundarias.domain.usecase.SaveMissionLogbookUseCase
 import com.groovycow.misionessecundarias.domain.usecase.SetChecklistItemDoneUseCase
 import com.groovycow.misionessecundarias.domain.usecase.SetMissionPauseUseCase
 import com.groovycow.misionessecundarias.domain.usecase.StartMissionUseCase
@@ -56,6 +59,7 @@ import com.groovycow.misionessecundarias.ui.missions.live.ChecklistViewModel
 import com.groovycow.misionessecundarias.ui.missions.live.CompleteMissionViewModel
 import com.groovycow.misionessecundarias.ui.missions.live.GenerateCodeViewModel
 import com.groovycow.misionessecundarias.ui.missions.live.LivePanelViewModel
+import com.groovycow.misionessecundarias.ui.missions.live.MissionLogbookViewModel
 import com.groovycow.misionessecundarias.ui.missions.live.PausesViewModel
 import com.groovycow.misionessecundarias.ui.missions.live.StartMissionViewModel
 import com.groovycow.misionessecundarias.ui.missions.publish.PublishMissionViewModel
@@ -76,6 +80,7 @@ val repositoryModule =
         single<PauseRepository> { PauseRepositoryImpl(get()) }
         single<LogbookRepository> { LogbookRepositoryImpl(get()) }
         single<RatingRepository> { RatingRepositoryImpl(get()) }
+        single<ModerationRepository> { ModerationRepositoryImpl(get()) }
 
         // Casos de Uso
         factory { GetMissionsUseCase(get()) }
@@ -101,7 +106,8 @@ val repositoryModule =
         factory { GenerateVerificationCodeUseCase(get()) }
         factory { GetAdminMetricsUseCase(get()) }
         factory { CanAccessAdminPanelUseCase(get()) }
-        factory { com.groovycow.misionessecundarias.domain.usecase.SaveMissionLogbookUseCase(get()) }
+        factory { SaveMissionLogbookUseCase(get()) }
+        factory { com.groovycow.misionessecundarias.domain.usecase.GetModerationReportsUseCase(get()) }
         factory { MissionDraftValidator(Clock.system(ZoneId.of("America/Bogota"))) }
         factory { MarkOnWayUseCase(get()) }
         factory { MarkArrivedUseCase(get()) }
@@ -128,5 +134,6 @@ val repositoryModule =
         viewModel { GenerateCodeViewModel(get()) }
         viewModel { AdminPanelViewModel(get()) }
         viewModel { AdminMenuViewModel(get()) }
-        viewModel { com.groovycow.misionessecundarias.ui.missions.live.MissionLogbookViewModel(get()) }
+        viewModel { MissionLogbookViewModel(get()) }
+        viewModel { com.groovycow.misionessecundarias.ui.moderation.ModerationReportsViewModel(get()) }
     }

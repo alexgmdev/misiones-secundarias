@@ -32,6 +32,7 @@ import com.groovycow.misionessecundarias.ui.missions.PostulantesScreen
 import com.groovycow.misionessecundarias.ui.missions.create.CreateMissionScreen
 import com.groovycow.misionessecundarias.ui.missions.edit.EditMissionScreen
 import com.groovycow.misionessecundarias.ui.missions.live.LiveMissionPanelScreen
+import com.groovycow.misionessecundarias.ui.moderation.ModerationReportsScreen
 import com.groovycow.misionessecundarias.ui.profile.ProfileSummaryViewModel
 import com.groovycow.misionessecundarias.ui.profile.components.ProfileAvatar
 import com.groovycow.misionessecundarias.ui.profile.setup.InitialProfileScreen
@@ -101,6 +102,9 @@ sealed interface AppDestination {
 
     /** Panel Administrativo exclusivo para moderadores y administradores. */
     data object AdminPanel : AppDestination
+
+    /** Cola de Reportes de Moderación (HU - Moderación y Seguridad). */
+    data object ModerationReports : AppDestination
 
     /**
      * Pantalla de funcionalidad aún no implementada.
@@ -379,6 +383,13 @@ fun AppNavigation() {
 
         AppDestination.AdminPanel -> {
             AdminPanelScreen(
+                onBack = { destination = AppDestination.MainMenu },
+                onOpenReports = { destination = AppDestination.ModerationReports },
+            )
+        }
+
+        AppDestination.ModerationReports -> {
+            ModerationReportsScreen(
                 onBack = { destination = AppDestination.MainMenu },
             )
         }
