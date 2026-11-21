@@ -203,7 +203,12 @@ private fun FilterAndSortBar(
                             containerColor = ModerationCream,
                             labelColor = ModerationForest,
                         ),
-                    border = FilterChipDefaults.filterChipBorder(borderColor = ModerationLeaf, enabled = true, selected = sortOrder == order),
+                    border =
+                        FilterChipDefaults.filterChipBorder(
+                            borderColor = ModerationLeaf,
+                            enabled = true,
+                            selected = sortOrder == order,
+                        ),
                 )
             }
         }
@@ -249,7 +254,10 @@ private fun FilterAndSortBar(
         Spacer(modifier = Modifier.height(8.dp))
         Text("ESTADO", color = ModerationForest, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(4.dp))
-        Row(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             FilterChip(
                 selected = selectedStatus == null,
                 onClick = { onStatusFilterChanged(null) },
@@ -269,7 +277,10 @@ private fun FilterAndSortBar(
         Spacer(modifier = Modifier.height(8.dp))
         Text("TIPO DE CONTENIDO", color = ModerationForest, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(4.dp))
-        Row(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             FilterChip(
                 selected = selectedTargetType == null,
                 onClick = { onTargetTypeFilterChanged(null) },
@@ -289,15 +300,19 @@ private fun FilterAndSortBar(
 }
 
 @Composable
-private fun moderationChipColors() = FilterChipDefaults.filterChipColors(
-    selectedContainerColor = ModerationForest,
-    selectedLabelColor = ModerationCream,
-    containerColor = ModerationCream,
-    labelColor = ModerationForest,
-)
+private fun moderationChipColors() =
+    FilterChipDefaults.filterChipColors(
+        selectedContainerColor = ModerationForest,
+        selectedLabelColor = ModerationCream,
+        containerColor = ModerationCream,
+        labelColor = ModerationForest,
+    )
 
 @Composable
-private fun QueueSummary(total: Int, urgent: Int) {
+private fun QueueSummary(
+    total: Int,
+    urgent: Int,
+) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = ModerationForest,
@@ -309,17 +324,43 @@ private fun QueueSummary(total: Int, urgent: Int) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column {
-                Text("CENTRO DE SEGURIDAD", color = ModerationLightLeaf, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                Text(
+                    "CENTRO DE SEGURIDAD",
+                    color = ModerationLightLeaf,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp,
+                )
                 Spacer(Modifier.height(4.dp))
-                Text("Cola de revisión", color = ModerationCream, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
-                Text("Casos priorizados para tu equipo", color = ModerationCream.copy(alpha = 0.8f), style = MaterialTheme.typography.bodySmall)
+                Text(
+                    "Cola de revisión",
+                    color = ModerationCream,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.ExtraBold,
+                )
+                Text(
+                    "Casos priorizados para tu equipo",
+                    color = ModerationCream.copy(alpha = 0.8f),
+                    style = MaterialTheme.typography.bodySmall,
+                )
             }
             Column(horizontalAlignment = Alignment.End) {
-                Text(total.toString(), color = ModerationCream, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold)
+                Text(
+                    total.toString(),
+                    color = ModerationCream,
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.ExtraBold,
+                )
                 Text("casos visibles", color = ModerationCream.copy(alpha = 0.85f), style = MaterialTheme.typography.labelSmall)
                 Spacer(Modifier.height(4.dp))
                 Surface(color = ModerationCoral, shape = RoundedCornerShape(20.dp)) {
-                    Text("$urgent urgentes", modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp), color = Color.White, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                    Text(
+                        "$urgent urgentes",
+                        modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp),
+                        color = Color.White,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                    )
                 }
             }
         }
@@ -415,21 +456,21 @@ private fun ModerationReportCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-            Column {
-                Text(
-                    text = "Reportado por ${report.reporterProfile?.fullName ?: "Usuario"}",
-                    color = ModerationBrown,
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                report.createdAt?.let { createdAt ->
+                Column {
                     Text(
-                        text = "Recibido · ${createdAt.take(16).replace('T', ' ')}",
-                        color = ModerationBrown.copy(alpha = 0.75f),
+                        text = "Reportado por ${report.reporterProfile?.fullName ?: "Usuario"}",
+                        color = ModerationBrown,
                         style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
                     )
+                    report.createdAt?.let { createdAt ->
+                        Text(
+                            text = "Recibido · ${createdAt.take(16).replace('T', ' ')}",
+                            color = ModerationBrown.copy(alpha = 0.75f),
+                            style = MaterialTheme.typography.labelSmall,
+                        )
+                    }
                 }
-            }
 
                 Surface(
                     color = ModerationLightLeaf,

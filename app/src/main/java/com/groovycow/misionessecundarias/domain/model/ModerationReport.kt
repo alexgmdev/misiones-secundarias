@@ -7,11 +7,11 @@ import kotlinx.serialization.Serializable
 enum class ReportPriority(val dbValue: String, val label: String) {
     ALTA("Alta", "Prioridad Alta"),
     MEDIA("Media", "Prioridad Media"),
-    BAJA("Baja", "Prioridad Baja");
+    BAJA("Baja", "Prioridad Baja"),
+    ;
 
     companion object {
-        fun fromDbValue(value: String?): ReportPriority =
-            entries.firstOrNull { it.dbValue.equals(value, ignoreCase = true) } ?: MEDIA
+        fun fromDbValue(value: String?): ReportPriority = entries.firstOrNull { it.dbValue.equals(value, ignoreCase = true) } ?: MEDIA
     }
 }
 
@@ -20,11 +20,11 @@ enum class ReportStatus(val dbValue: String, val label: String) {
     PENDIENTE("Pendiente", "Pendiente"),
     EN_REVISION("En revisión", "En revisión"),
     RESUELTO("Resuelto", "Resuelto"),
-    DESESTIMADO("Desestimado", "Desestimado");
+    DESESTIMADO("Desestimado", "Desestimado"),
+    ;
 
     companion object {
-        fun fromDbValue(value: String?): ReportStatus =
-            entries.firstOrNull { it.dbValue.equals(value, ignoreCase = true) } ?: PENDIENTE
+        fun fromDbValue(value: String?): ReportStatus = entries.firstOrNull { it.dbValue.equals(value, ignoreCase = true) } ?: PENDIENTE
     }
 }
 

@@ -63,21 +63,23 @@ class ModerationReportsViewModel(
                 sortOrder = currentSortOrder,
             ).fold(
                 onSuccess = { reports ->
-                    _uiState.value = ModerationReportsUiState.Success(
-                        reports = reports,
-                        selectedPriority = currentPriorityFilter,
-                        selectedStatus = currentStatusFilter,
-                        selectedTargetType = currentTargetTypeFilter,
-                        sortOrder = currentSortOrder,
-                    )
+                    _uiState.value =
+                        ModerationReportsUiState.Success(
+                            reports = reports,
+                            selectedPriority = currentPriorityFilter,
+                            selectedStatus = currentStatusFilter,
+                            selectedTargetType = currentTargetTypeFilter,
+                            sortOrder = currentSortOrder,
+                        )
                 },
                 onFailure = { exception ->
                     val error = exception.toModerationError()
-                    _uiState.value = if (error == ModerationError.AccessDenied) {
-                        ModerationReportsUiState.AccessDenied
-                    } else {
-                        ModerationReportsUiState.Error(error)
-                    }
+                    _uiState.value =
+                        if (error == ModerationError.AccessDenied) {
+                            ModerationReportsUiState.AccessDenied
+                        } else {
+                            ModerationReportsUiState.Error(error)
+                        }
                 },
             )
         }

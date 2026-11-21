@@ -37,26 +37,29 @@ class GetModerationReportsUseCase(
                 throw ModerationValidationException(ModerationError.AccessDenied)
             }
 
-            val reports = moderationRepository.getReports(
-                priorityFilter = priorityFilter,
-                statusFilter = statusFilter,
-                targetTypeFilter = targetTypeFilter,
-                sortOrder = sortOrder,
-            )
-
-            val sorted = when (sortOrder) {
-                ReportSortOrder.PRIORITY_HIGH_FIRST -> reports.sortedWith(
-                    compareBy<ModerationReport> {
-                        when (it.reportPriority) {
-                            ReportPriority.ALTA -> 0
-                            ReportPriority.MEDIA -> 1
-                            ReportPriority.BAJA -> 2
-                        }
-                    }.thenByDescending { it.createdAt.orEmpty() },
+            val reports =
+                moderationRepository.getReports(
+                    priorityFilter = priorityFilter,
+                    statusFilter = statusFilter,
+                    targetTypeFilter = targetTypeFilter,
+                    sortOrder = sortOrder,
                 )
-                ReportSortOrder.DATE_NEWEST_FIRST -> reports.sortedByDescending { it.createdAt.orEmpty() }
-                ReportSortOrder.DATE_OLDEST_FIRST -> reports.sortedBy { it.createdAt.orEmpty() }
-            }
+
+            val sorted =
+                when (sortOrder) {
+                    ReportSortOrder.PRIORITY_HIGH_FIRST ->
+                        reports.sortedWith(
+                            compareBy<ModerationReport> {
+                                when (it.reportPriority) {
+                                    ReportPriority.ALTA -> 0
+                                    ReportPriority.MEDIA -> 1
+                                    ReportPriority.BAJA -> 2
+                                }
+                            }.thenByDescending { it.createdAt.orEmpty() },
+                        )
+                    ReportSortOrder.DATE_NEWEST_FIRST -> reports.sortedByDescending { it.createdAt.orEmpty() }
+                    ReportSortOrder.DATE_OLDEST_FIRST -> reports.sortedBy { it.createdAt.orEmpty() }
+                }
 
             Result.success(sorted)
         } catch (cancellation: CancellationException) {
