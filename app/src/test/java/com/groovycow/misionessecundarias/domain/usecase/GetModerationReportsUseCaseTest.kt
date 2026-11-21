@@ -21,9 +21,39 @@ class GetModerationReportsUseCaseTest {
     private val moderationRepository = mockk<ModerationRepository>()
     private val useCase = GetModerationReportsUseCase(moderationRepository)
 
-    private val reportLow = ModerationReport("r1", "u1", "Misión", "m1", "Spam", priority = "Baja", createdAt = "2026-11-20T10:00:00Z", reporterProfile = ReporterProfile("Ana"))
-    private val reportHigh = ModerationReport("r2", "u2", "Usuario", "u3", "Lenguaje inapropiado", priority = "Alta", createdAt = "2026-11-21T11:00:00Z", reporterProfile = ReporterProfile("Carlos"))
-    private val reportMedium = ModerationReport("r3", "u3", "Comentario", "c1", "Contenido duplicado", priority = "Media", createdAt = "2026-11-21T12:00:00Z", reporterProfile = ReporterProfile("Beatriz"))
+    private val reportLow =
+        ModerationReport(
+            id = "r1",
+            reporterId = "u1",
+            targetType = "Misión",
+            targetId = "m1",
+            reason = "Spam",
+            priority = "Baja",
+            createdAt = "2026-11-20T10:00:00Z",
+            reporterProfile = ReporterProfile("Ana"),
+        )
+    private val reportHigh =
+        ModerationReport(
+            id = "r2",
+            reporterId = "u2",
+            targetType = "Usuario",
+            targetId = "u3",
+            reason = "Lenguaje inapropiado",
+            priority = "Alta",
+            createdAt = "2026-11-21T11:00:00Z",
+            reporterProfile = ReporterProfile("Carlos"),
+        )
+    private val reportMedium =
+        ModerationReport(
+            id = "r3",
+            reporterId = "u3",
+            targetType = "Comentario",
+            targetId = "c1",
+            reason = "Contenido duplicado",
+            priority = "Media",
+            createdAt = "2026-11-21T12:00:00Z",
+            reporterProfile = ReporterProfile("Beatriz"),
+        )
 
     @Test
     fun ordersHighPriorityReportsFirstWhenSortingByPriorityHighFirst() =
@@ -36,16 +66,18 @@ class GetModerationReportsUseCaseTest {
 
             val reports = result.getOrNull()
             assertTrue(reports != null)
-            assertEquals("r2", reports!![0].id) // reportHigh debe desplegarse en primer lugar
+            assertEquals("r2", reports!![0].id)
             assertEquals(ReportPriority.ALTA, reports[0].reportPriority)
-            assertEquals("r3", reports[1].id) // reportMedium
-            assertEquals("r1", reports[2].id) // reportLow
+            assertEquals("r3", reports[1].id)
+            assertEquals("r1", reports[2].id)
             coVerify(exactly = 1) { moderationRepository.getReports(any(), any(), any(), ReportSortOrder.PRIORITY_HIGH_FIRST) }
         }
 
     @Test
     fun forwardsStatusAndContentFiltersAndOrdersByOldestDate() =
         runTest {
+            val high1 = reportHigh.copy(createdAt = "2026-11-21T12:00:00Z")
+            val high2 = reportHigh.copy(id = "r4", createdAt = "2026-11-20T12:00:00Z")
             coEvery { moderationRepository.getUserRole() } returns "moderator"
             coEvery {
                 moderationRepository.getReports(
@@ -54,14 +86,15 @@ class GetModerationReportsUseCaseTest {
                     "Comentario",
                     ReportSortOrder.DATE_OLDEST_FIRST,
                 )
-            } returns listOf(reportHigh.copy(createdAt = "2026-11-21T12:00:00Z"), reportHigh.copy(id = "r4", createdAt = "2026-11-20T12:00:00Z"))
+            } returns listOf(high1, high2)
 
-            val result = useCase(
-                priorityFilter = ReportPriority.ALTA,
-                statusFilter = ReportStatus.RESUELTO,
-                targetTypeFilter = "Comentario",
-                sortOrder = ReportSortOrder.DATE_OLDEST_FIRST,
-            )
+            val result =
+                useCase(
+                    priorityFilter = ReportPriority.ALTA,
+                    statusFilter = ReportStatus.RESUELTO,
+                    targetTypeFilter = "Comentario",
+                    sortOrder = ReportSortOrder.DATE_OLDEST_FIRST,
+                )
 
             assertEquals(listOf("r4", "r2"), result.getOrThrow().map { it.id })
             coVerify(exactly = 1) {
@@ -98,5 +131,6 @@ class GetModerationReportsUseCaseTest {
             assertTrue(result.isFailure)
         }
 
-    private fun Result<List<ModerationReport>>.errorOrNull(): ModerationError? = (exceptionOrNull() as? ModerationValidationException)?.error
+    private fun Result<List<ModerationReport>>.errorOrNull(): ModerationError? =
+        (exceptionOrNull() as? ModerationValidationException)?.error
 }

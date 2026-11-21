@@ -3,7 +3,6 @@ package com.groovycow.misionessecundarias.ui.moderation
 import com.groovycow.misionessecundarias.domain.model.ModerationError
 import com.groovycow.misionessecundarias.domain.model.ModerationReport
 import com.groovycow.misionessecundarias.domain.model.ModerationValidationException
-import com.groovycow.misionessecundarias.domain.model.ReportPriority
 import com.groovycow.misionessecundarias.domain.model.ReportSortOrder
 import com.groovycow.misionessecundarias.domain.model.ReporterProfile
 import com.groovycow.misionessecundarias.domain.usecase.GetModerationReportsUseCase
@@ -23,7 +22,16 @@ class ModerationReportsViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     private val getModerationReportsUseCase = mockk<GetModerationReportsUseCase>()
-    private val reportHigh = ModerationReport("r1", "u1", "Misión", "m1", "Inapropiado", priority = "Alta", reporterProfile = ReporterProfile("Juan"))
+    private val reportHigh =
+        ModerationReport(
+            id = "r1",
+            reporterId = "u1",
+            targetType = "Misión",
+            targetId = "m1",
+            reason = "Inapropiado",
+            priority = "Alta",
+            reporterProfile = ReporterProfile("Juan"),
+        )
 
     @Before
     fun setUp() {
@@ -64,7 +72,8 @@ class ModerationReportsViewModelTest {
 
     @Test
     fun networkFailureExposesNoConnectionErrorState() {
-        coEvery { getModerationReportsUseCase(any(), any(), any(), any()) } returns Result.failure(IllegalStateException("x", IOException()))
+        val failure = Result.failure<List<ModerationReport>>(IllegalStateException("x", IOException()))
+        coEvery { getModerationReportsUseCase(any(), any(), any(), any()) } returns failure
 
         val viewModel = ModerationReportsViewModel(getModerationReportsUseCase)
 
