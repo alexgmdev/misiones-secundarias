@@ -134,17 +134,15 @@ fun AppNavigation() {
         destination = resolveInitialDestination(destination, startDestination)
     }
 
-    LaunchedEffect(isSessionResolved, isLoggedIn, destination) {
-        if (shouldRedirectToWelcome(isSessionResolved, isLoggedIn, destination)) {
-            selectedMission = null
-            loginNotice =
-                if (destination == AppDestination.Settings) {
-                    SIGNED_OUT_NOTICE
-                } else {
-                    SESSION_REQUIRED_NOTICE
-                }
-            destination = AppDestination.Welcome
-        }
+    SessionRedirectEffect(isSessionResolved, isLoggedIn, destination) { expiredDestination ->
+        selectedMission = null
+        loginNotice =
+            if (expiredDestination == AppDestination.Settings) {
+                SIGNED_OUT_NOTICE
+            } else {
+                SESSION_REQUIRED_NOTICE
+            }
+        destination = AppDestination.Welcome
     }
 
     val currentDestination = destination
@@ -182,12 +180,9 @@ fun AppNavigation() {
         }
 
         AppDestination.Login -> {
-            LoginScreen(
-                onSignedIn = {
-                    sessionViewModel.updateLoginState(true)
-                    destination = AppDestination.CheckingProfile
-                },
-                onRegister = { destination = AppDestination.Register },
+            LoginDestination(
+                sessionViewModel = sessionViewModel,
+                onNavigate = { destination = it },
                 onForgotPassword = {
                     loginNotice = null
                     destination = AppDestination.RequestCode
@@ -205,7 +200,7 @@ fun AppNavigation() {
         }
 
         is AppDestination.ResetPassword -> {
-            ResetPasswordScreen(
+            ResetPasswordDestination(
                 email = currentDestination.email,
                 onPasswordChanged = {
                     loginNotice = PASSWORD_CHANGED_NOTICE
@@ -401,6 +396,53 @@ fun AppNavigation() {
             )
         }
     }
+}
+
+@Composable
+private fun SessionRedirectEffect(
+    isSessionResolved: Boolean,
+    isLoggedIn: Boolean,
+    destination: AppDestination?,
+    onSessionExpired: (AppDestination?) -> Unit,
+) {
+    LaunchedEffect(isSessionResolved, isLoggedIn, destination) {
+        if (shouldRedirectToWelcome(isSessionResolved, isLoggedIn, destination)) {
+            onSessionExpired(destination)
+        }
+    }
+}
+
+@Composable
+private fun LoginDestination(
+    sessionViewModel: SessionViewModel,
+    onNavigate: (AppDestination) -> Unit,
+    onForgotPassword: () -> Unit,
+    notice: String?,
+    onNoticeDismissed: () -> Unit,
+) {
+    LoginScreen(
+        onSignedIn = {
+            sessionViewModel.updateLoginState(true)
+            onNavigate(AppDestination.CheckingProfile)
+        },
+        onRegister = { onNavigate(AppDestination.Register) },
+        onForgotPassword = onForgotPassword,
+        notice = notice,
+        onNoticeDismissed = onNoticeDismissed,
+    )
+}
+
+@Composable
+private fun ResetPasswordDestination(
+    email: String,
+    onPasswordChanged: () -> Unit,
+    onBack: () -> Unit,
+) {
+    ResetPasswordScreen(
+        email = email,
+        onPasswordChanged = onPasswordChanged,
+        onBack = onBack,
+    )
 }
 
 @Composable
