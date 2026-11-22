@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.groovycow.misionessecundarias.ui.missions.MissionViewModelTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-11-18T23:37:06.362Z" hostname="SC306E05" time="0.155">
+  <properties/>
+  <testcase name="loadMissionsShowsPublishedMissions" classname="com.groovycow.misionessecundarias.ui.missions.MissionViewModelTest" time="0.101"/>
+  <testcase name="switchingBackToAllShowsPublishedMissionsAgain" classname="com.groovycow.misionessecundarias.ui.missions.MissionViewModelTest" time="0.023"/>
+  <testcase name="loadMyMissionsFailureShowsErrorAndNoMissions" classname="com.groovycow.misionessecundarias.ui.missions.MissionViewModelTest" time="0.015"/>
+  <testcase name="loadMyMissionsReplacesListWithOwnMissions" classname="com.groovycow.misionessecundarias.ui.missions.MissionViewModelTest" time="0.014"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

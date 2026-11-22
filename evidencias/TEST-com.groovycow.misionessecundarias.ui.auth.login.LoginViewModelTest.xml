@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.groovycow.misionessecundarias.ui.auth.login.LoginViewModelTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-11-18T23:37:05.019Z" hostname="SC306E05" time="0.189">
+  <properties/>
+  <testcase name="noConnectionAndUnexpectedFailuresAreMapped" classname="com.groovycow.misionessecundarias.ui.auth.login.LoginViewModelTest" time="0.075"/>
+  <testcase name="blankIdentifierOnlyFlagsThatField" classname="com.groovycow.misionessecundarias.ui.auth.login.LoginViewModelTest" time="0.007"/>
+  <testcase name="validCredentialsSignInAndMarkSignedIn" classname="com.groovycow.misionessecundarias.ui.auth.login.LoginViewModelTest" time="0.014"/>
+  <testcase name="missingPasswordOnlyFlagsThatField" classname="com.groovycow.misionessecundarias.ui.auth.login.LoginViewModelTest" time="0.009"/>
+  <testcase name="editingAFieldClearsPreviousErrors" classname="com.groovycow.misionessecundarias.ui.auth.login.LoginViewModelTest" time="0.014"/>
+  <testcase name="emptyFieldsShowRequiredPerFieldAndDoNotCallBackend" classname="com.groovycow.misionessecundarias.ui.auth.login.LoginViewModelTest" time="0.012"/>
+  <testcase name="secondTapWhileLoadingDoesNotSendASecondRequest" classname="com.groovycow.misionessecundarias.ui.auth.login.LoginViewModelTest" time="0.039"/>
+  <testcase name="handledSignInDoesNotRemainTrueWhenLoginScreenIsOpenedAgain" classname="com.groovycow.misionessecundarias.ui.auth.login.LoginViewModelTest" time="0.008"/>
+  <testcase name="failureExposesTypedErrorKeepsFieldsAndStaysSignedOut" classname="com.groovycow.misionessecundarias.ui.auth.login.LoginViewModelTest" time="0.01"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

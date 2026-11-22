@@ -97,6 +97,20 @@ class MissionLogbookViewModelTest {
     }
 
     @Test
+    fun saveParticipantLogbookSuccessExposesSavedLogbook() {
+        val participantLogbook = MissionLogbook("l2", "m1", "s1", "participante", "Fue genial", emptyList(), emptyList())
+        coEvery { saveMissionLogbookUseCase.saveParticipantEntry("m1", "Fue genial") } returns Result.success(participantLogbook)
+        val viewModel = MissionLogbookViewModel(saveMissionLogbookUseCase)
+        viewModel.onEntryChanged("Fue genial")
+
+        viewModel.saveParticipantLogbook("m1")
+
+        assertEquals(participantLogbook, viewModel.uiState.value.savedLogbook)
+        assertFalse(viewModel.uiState.value.isSaving)
+        assertNull(viewModel.uiState.value.error)
+    }
+
+    @Test
     fun dismissErrorClearsError() {
         val viewModel = MissionLogbookViewModel(saveMissionLogbookUseCase)
         viewModel.onEntryChanged("")

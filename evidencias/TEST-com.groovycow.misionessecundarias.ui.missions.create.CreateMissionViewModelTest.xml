@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.groovycow.misionessecundarias.ui.missions.create.CreateMissionViewModelTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-11-18T23:37:06.531Z" hostname="SC306E05" time="0.163">
+  <properties/>
+  <testcase name="networkFailureKeepsDraftAndSetsConnectionError" classname="com.groovycow.misionessecundarias.ui.missions.create.CreateMissionViewModelTest" time="0.069"/>
+  <testcase name="invalidDraftShowsFieldErrorsAndDoesNotCallUseCase" classname="com.groovycow.misionessecundarias.ui.missions.create.CreateMissionViewModelTest" time="0.007"/>
+  <testcase name="validDraftCallsUseCaseAndExposesSavedMission" classname="com.groovycow.misionessecundarias.ui.missions.create.CreateMissionViewModelTest" time="0.028"/>
+  <testcase name="missingSessionShowsAuthenticationErrorWithoutClearingDraft" classname="com.groovycow.misionessecundarias.ui.missions.create.CreateMissionViewModelTest" time="0.017"/>
+  <testcase name="unexpectedFailureSetsServerErrorWithoutClearingDraft" classname="com.groovycow.misionessecundarias.ui.missions.create.CreateMissionViewModelTest" time="0.015"/>
+  <testcase name="savingGuardPreventsDuplicateSubmission" classname="com.groovycow.misionessecundarias.ui.missions.create.CreateMissionViewModelTest" time="0.026"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

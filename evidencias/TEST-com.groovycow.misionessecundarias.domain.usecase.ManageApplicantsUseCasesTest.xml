@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.groovycow.misionessecundarias.domain.usecase.ManageApplicantsUseCasesTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-11-18T23:37:02.332Z" hostname="SC306E05" time="0.086">
+  <properties/>
+  <testcase name="ownershipFailureIsReturned" classname="com.groovycow.misionessecundarias.domain.usecase.ManageApplicantsUseCasesTest" time="0.021"/>
+  <testcase name="getApplicantsReturnsRepositoryData" classname="com.groovycow.misionessecundarias.domain.usecase.ManageApplicantsUseCasesTest" time="0.02"/>
+  <testcase name="updateStatusDelegatesAcceptedDecision" classname="com.groovycow.misionessecundarias.domain.usecase.ManageApplicantsUseCasesTest" time="0.043"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

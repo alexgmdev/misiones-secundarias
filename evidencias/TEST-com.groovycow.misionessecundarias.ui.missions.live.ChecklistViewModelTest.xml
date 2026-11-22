@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.groovycow.misionessecundarias.ui.missions.live.ChecklistViewModelTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-11-18T23:37:06.709Z" hostname="SC306E05" time="0.165">
+  <properties/>
+  <testcase name="failedRefreshKeepsVisibleItemsWithoutError" classname="com.groovycow.misionessecundarias.ui.missions.live.ChecklistViewModelTest" time="0.036"/>
+  <testcase name="uncheckingItemLowersProgress" classname="com.groovycow.misionessecundarias.ui.missions.live.ChecklistViewModelTest" time="0.034"/>
+  <testcase name="togglingItemUpdatesProgress" classname="com.groovycow.misionessecundarias.ui.missions.live.ChecklistViewModelTest" time="0.02"/>
+  <testcase name="dismissActionErrorClearsMessage" classname="com.groovycow.misionessecundarias.ui.missions.live.ChecklistViewModelTest" time="0.005"/>
+  <testcase name="deletingItemRemovesItAndRecalculatesProgress" classname="com.groovycow.misionessecundarias.ui.missions.live.ChecklistViewModelTest" time="0.013"/>
+  <testcase name="refreshPicksUpExternalChanges" classname="com.groovycow.misionessecundarias.ui.missions.live.ChecklistViewModelTest" time="0.01"/>
+  <testcase name="loadExposesItemsAndZeroProgress" classname="com.groovycow.misionessecundarias.ui.missions.live.ChecklistViewModelTest" time="0.002"/>
+  <testcase name="loadFailureShowsError" classname="com.groovycow.misionessecundarias.ui.missions.live.ChecklistViewModelTest" time="0.007"/>
+  <testcase name="failedToggleKeepsItemAndShowsError" classname="com.groovycow.misionessecundarias.ui.missions.live.ChecklistViewModelTest" time="0.022"/>
+  <testcase name="addingBlankItemShowsValidationMessageAndSkipsCallback" classname="com.groovycow.misionessecundarias.ui.missions.live.ChecklistViewModelTest" time="0.003"/>
+  <testcase name="addingItemAppendsAndCallsCallback" classname="com.groovycow.misionessecundarias.ui.missions.live.ChecklistViewModelTest" time="0.013"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

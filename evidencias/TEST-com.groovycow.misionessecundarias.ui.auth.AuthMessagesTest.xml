@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.groovycow.misionessecundarias.ui.auth.AuthMessagesTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-11-18T23:37:04.935Z" hostname="SC306E05" time="0.006">
+  <properties/>
+  <testcase name="everyFieldErrorHasANonBlankMessage" classname="com.groovycow.misionessecundarias.ui.auth.AuthMessagesTest" time="0.006"/>
+  <testcase name="authErrorsUseExactSpecMessages" classname="com.groovycow.misionessecundarias.ui.auth.AuthMessagesTest" time="0.0"/>
+  <testcase name="fieldErrorsUseExactSpecMessages" classname="com.groovycow.misionessecundarias.ui.auth.AuthMessagesTest" time="0.0"/>
+  <testcase name="recoveryMessagesUseExactSpecText" classname="com.groovycow.misionessecundarias.ui.auth.AuthMessagesTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
