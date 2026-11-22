@@ -249,6 +249,7 @@ fun AppNavigation() {
                 onEditProfile = { destination = ProfileFlowDestination.EditProfile },
                 onOpenHistory = { destination = ProfileFlowDestination.MissionHistory },
                 onProfileEdited = { destination = ProfileFlowDestination.MyProfile },
+                onHistoryBack = { destination = ProfileFlowDestination.MyProfile },
                 onOnboardingFinished = { fromSettings ->
                     destination = if (fromSettings) AppDestination.Settings else AppDestination.MainMenu
                 },
@@ -460,6 +461,7 @@ private fun MainMenuDestination.toAppDestination(): AppDestination =
         MainMenuDestination.SETTINGS -> AppDestination.Settings
         MainMenuDestination.PROFILE -> ProfileFlowDestination.MyProfile
         MainMenuDestination.AVATAR -> ProfileFlowDestination.EditProfile
+        MainMenuDestination.HISTORY -> ProfileFlowDestination.MissionHistory
         else -> AppDestination.Placeholder(this)
     }
 

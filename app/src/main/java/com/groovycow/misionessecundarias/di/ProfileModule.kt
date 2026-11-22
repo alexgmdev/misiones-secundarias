@@ -8,6 +8,8 @@ import com.groovycow.misionessecundarias.domain.repository.PhotoCompressor
 import com.groovycow.misionessecundarias.domain.repository.ProfileRepository
 import com.groovycow.misionessecundarias.domain.usecase.CompleteInitialProfileUseCase
 import com.groovycow.misionessecundarias.domain.usecase.CompressProfilePhotoUseCase
+import com.groovycow.misionessecundarias.domain.usecase.GetMissionHistoryUseCase
+import com.groovycow.misionessecundarias.domain.usecase.GetMissionLogbookSectionsUseCase
 import com.groovycow.misionessecundarias.domain.usecase.GetMyProfileUseCase
 import com.groovycow.misionessecundarias.domain.usecase.GetPublicProfileUseCase
 import com.groovycow.misionessecundarias.domain.usecase.IsProfileCompleteUseCase
@@ -18,6 +20,7 @@ import com.groovycow.misionessecundarias.domain.validation.NicknameValidator
 import com.groovycow.misionessecundarias.domain.validation.ProfileDraftValidator
 import com.groovycow.misionessecundarias.ui.profile.ProfileSummaryViewModel
 import com.groovycow.misionessecundarias.ui.profile.edit.EditProfileViewModel
+import com.groovycow.misionessecundarias.ui.profile.history.MissionHistoryViewModel
 import com.groovycow.misionessecundarias.ui.profile.me.MyProfileViewModel
 import com.groovycow.misionessecundarias.ui.profile.publicprofile.PublicProfileViewModel
 import com.groovycow.misionessecundarias.ui.profile.setup.InitialProfileViewModel
@@ -43,9 +46,13 @@ val profileModule =
         factory { UpdateProfileUseCase(get(), get()) }
         factory { CompleteInitialProfileUseCase(get(), get()) }
 
+        factory { GetMissionHistoryUseCase(get(), get()) }
+        factory { GetMissionLogbookSectionsUseCase(get()) }
+
         viewModel { InitialProfileViewModel(get(), get()) }
         viewModel { MyProfileViewModel(get()) }
         viewModel { EditProfileViewModel(get(), get(), get(), get()) }
         viewModel { ProfileSummaryViewModel(get()) }
         viewModel { PublicProfileViewModel(get()) }
+        viewModel { MissionHistoryViewModel(get(), get()) }
     }
